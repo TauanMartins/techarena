@@ -2,22 +2,19 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Support\Facades\DB;
-
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PreferenceSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
         DB::table('preference')->insert([
-            'desc_preference' => 'prefered_theme',
-            'default_value' => null
+            [
+                'id' => 1,
+                'desc_preference' => 'prefered_theme',
+                'default_value' => null,
+            ],
         ]);
     }
 }

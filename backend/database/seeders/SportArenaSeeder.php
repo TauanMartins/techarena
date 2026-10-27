@@ -2,117 +2,191 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class SportArenaSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
         DB::table('sport_arena')->insert([
-            ["id" => 1, "sport_id" => 2, "arena_id" => 1],
-            ["id" => 2, "sport_id" => 3, "arena_id" => 1],
-            ["id" => 3, "sport_id" => 1, "arena_id" => 1],
-            ["id" => 4, "sport_id" => 1, "arena_id" => 31],
-            ["id" => 5, "sport_id" => 2, "arena_id" => 31],
-            ["id" => 6, "sport_id" => 6, "arena_id" => 1],
-            ["id" => 18, "sport_id" => 4, "arena_id" => 33],
-            ["id" => 19, "sport_id" => 6, "arena_id" => 33],
-            ["id" => 20, "sport_id" => 1, "arena_id" => 33],
-            ["id" => 21, "sport_id" => 11, "arena_id" => 33],
-            ["id" => 22, "sport_id" => 3, "arena_id" => 33],
-            ["id" => 23, "sport_id" => 2, "arena_id" => 33],
-            ["id" => 24, "sport_id" => 12, "arena_id" => 33],
-            ["id" => 25, "sport_id" => 2, "arena_id" => 34],
-            ["id" => 26, "sport_id" => 3, "arena_id" => 34],
-            ["id" => 27, "sport_id" => 6, "arena_id" => 34],
-            ["id" => 36, "sport_id" => 6, "arena_id" => 38],
-            ["id" => 37, "sport_id" => 2, "arena_id" => 38],
-            ["id" => 38, "sport_id" => 5, "arena_id" => 39],
-            ["id" => 39, "sport_id" => 4, "arena_id" => 37],
-            ["id" => 40, "sport_id" => 2, "arena_id" => 40],
-            ["id" => 41, "sport_id" => 3, "arena_id" => 40],
-            ["id" => 42, "sport_id" => 1, "arena_id" => 40],
-            ["id" => 43, "sport_id" => 12, "arena_id" => 40],
-            ["id" => 44, "sport_id" => 7, "arena_id" => 40],
-            ["id" => 45, "sport_id" => 12, "arena_id" => 41],
-            ["id" => 46, "sport_id" => 2, "arena_id" => 41],
-            ["id" => 47, "sport_id" => 1, "arena_id" => 41],
-            ["id" => 48, "sport_id" => 3, "arena_id" => 41],
-            ["id" => 49, "sport_id" => 5, "arena_id" => 42],
-            ["id" => 50, "sport_id" => 2, "arena_id" => 43],
-            ["id" => 51, "sport_id" => 1, "arena_id" => 44],
-            ["id" => 52, "sport_id" => 3, "arena_id" => 44],
-            ["id" => 53, "sport_id" => 2, "arena_id" => 44],
-            ["id" => 54, "sport_id" => 6, "arena_id" => 44],
-            ["id" => 55, "sport_id" => 4, "arena_id" => 45],
-            ["id" => 56, "sport_id" => 2, "arena_id" => 46],
-            ["id" => 57, "sport_id" => 6, "arena_id" => 46],
-            ["id" => 58, "sport_id" => 3, "arena_id" => 46],
-            ["id" => 59, "sport_id" => 1, "arena_id" => 46],
-            ["id" => 60, "sport_id" => 6, "arena_id" => 47],
-            ["id" => 61, "sport_id" => 1, "arena_id" => 47],
-            ["id" => 62, "sport_id" => 2, "arena_id" => 47],
-            ["id" => 63, "sport_id" => 3, "arena_id" => 47],
-            ["id" => 64, "sport_id" => 11, "arena_id" => 48],
-            ["id" => 65, "sport_id" => 12, "arena_id" => 48],
-            ["id" => 66, "sport_id" => 6, "arena_id" => 49],
-            ["id" => 67, "sport_id" => 1, "arena_id" => 49],
-            ["id" => 68, "sport_id" => 2, "arena_id" => 49],
-            ["id" => 69, "sport_id" => 3, "arena_id" => 49],
-            ["id" => 70, "sport_id" => 2, "arena_id" => 50],
-            ["id" => 71, "sport_id" => 3, "arena_id" => 50],
-            ["id" => 72, "sport_id" => 1, "arena_id" => 50],
-            ["id" => 73, "sport_id" => 6, "arena_id" => 50],
-            ["id" => 74, "sport_id" => 2, "arena_id" => 51],
-            ["id" => 75, "sport_id" => 3, "arena_id" => 51],
-            ["id" => 76, "sport_id" => 6, "arena_id" => 51],
-            ["id" => 77, "sport_id" => 1, "arena_id" => 51],
-            ["id" => 78, "sport_id" => 3, "arena_id" => 52],
-            ["id" => 79, "sport_id" => 2, "arena_id" => 52],
-            ["id" => 80, "sport_id" => 6, "arena_id" => 52],
-            ["id" => 81, "sport_id" => 1, "arena_id" => 52],
-            ["id" => 82, "sport_id" => 3, "arena_id" => 53],
-            ["id" => 83, "sport_id" => 2, "arena_id" => 53],
-            ["id" => 84, "sport_id" => 6, "arena_id" => 53],
-            ["id" => 85, "sport_id" => 1, "arena_id" => 53],
-            ["id" => 86, "sport_id" => 2, "arena_id" => 54],
-            ["id" => 87, "sport_id" => 3, "arena_id" => 54],
-            ["id" => 88, "sport_id" => 6, "arena_id" => 54],
-            ["id" => 89, "sport_id" => 1, "arena_id" => 54],
-            ["id" => 90, "sport_id" => 5, "arena_id" => 55],
-            ["id" => 91, "sport_id" => 6, "arena_id" => 56],
-            ["id" => 92, "sport_id" => 3, "arena_id" => 56],
-            ["id" => 93, "sport_id" => 2, "arena_id" => 56],
-            ["id" => 94, "sport_id" => 2, "arena_id" => 57],
-            ["id" => 95, "sport_id" => 3, "arena_id" => 57],
-            ["id" => 96, "sport_id" => 6, "arena_id" => 57],
-            ["id" => 97, "sport_id" => 4, "arena_id" => 58],
-            ["id" => 98, "sport_id" => 2, "arena_id" => 59],
-            ["id" => 99, "sport_id" => 6, "arena_id" => 59],
-            ["id" => 100, "sport_id" => 2, "arena_id" => 60],
-            ["id" => 101, "sport_id" => 3, "arena_id" => 60],
-            ["id" => 102, "sport_id" => 3, "arena_id" => 61],
-            ["id" => 103, "sport_id" => 2, "arena_id" => 62],
-            ["id" => 104, "sport_id" => 6, "arena_id" => 62],
-            ["id" => 105, "sport_id" => 2, "arena_id" => 63],
-            ["id" => 106, "sport_id" => 6, "arena_id" => 63],
-            ["id" => 107, "sport_id" => 5, "arena_id" => 64],
-            ["id" => 108, "sport_id" => 11, "arena_id" => 65],
-            ["id" => 109, "sport_id" => 12, "arena_id" => 65],
-            ["id" => 110, "sport_id" => 4, "arena_id" => 66],
-            ["id" => 112, "sport_id" => 6, "arena_id" => 67],
-            ["id" => 113, "sport_id" => 2, "arena_id" => 67],
-            ["id" => 114, "sport_id" => 3, "arena_id" => 67],
-            ["id" => 115, "sport_id" => 2, "arena_id" => 68],
-            ["id" => 116, "sport_id" => 6, "arena_id" => 68],
-            ["id" => 117, "sport_id" => 3, "arena_id" => 68],
-            ["id" => 118, "sport_id" => 1, "arena_id" => 68],
+            // Arena 1: Quadra de Areia SQN 206
+            ['sport_id' => 11, 'arena_id' => 1],
+            ['sport_id' => 12, 'arena_id' => 1],
+
+            // Arena 2: Quadra de Esportes SQN 408
+            ['sport_id' => 1, 'arena_id' => 2],
+            ['sport_id' => 2, 'arena_id' => 2],
+            ['sport_id' => 3, 'arena_id' => 2],
+            ['sport_id' => 6, 'arena_id' => 2],
+
+            // Arena 3: Quadra de Esportes SQN 106/107
+            ['sport_id' => 1, 'arena_id' => 3],
+            ['sport_id' => 2, 'arena_id' => 3],
+            ['sport_id' => 3, 'arena_id' => 3],
+            ['sport_id' => 6, 'arena_id' => 3],
+
+            // Arena 4: Quadra Esportiva SQS 403
+            ['sport_id' => 1, 'arena_id' => 4],
+            ['sport_id' => 2, 'arena_id' => 4],
+            ['sport_id' => 3, 'arena_id' => 4],
+            ['sport_id' => 6, 'arena_id' => 4],
+
+            // Arena 5: Quadra Esportiva SQS 303
+            ['sport_id' => 1, 'arena_id' => 5],
+            ['sport_id' => 2, 'arena_id' => 5],
+            ['sport_id' => 3, 'arena_id' => 5],
+            ['sport_id' => 6, 'arena_id' => 5],
+
+            // Arena 6: Quadra de Esportes SQS 704
+            ['sport_id' => 1, 'arena_id' => 6],
+            ['sport_id' => 2, 'arena_id' => 6],
+            ['sport_id' => 3, 'arena_id' => 6],
+            ['sport_id' => 6, 'arena_id' => 6],
+
+            // Arena 7: Quadra de Esportes SQN 316
+            ['sport_id' => 1, 'arena_id' => 7],
+            ['sport_id' => 2, 'arena_id' => 7],
+            ['sport_id' => 3, 'arena_id' => 7],
+            ['sport_id' => 6, 'arena_id' => 7],
+
+            // Arena 8: Q. 301 Rua C - Águas Claras
+            ['sport_id' => 2, 'arena_id' => 8],
+            ['sport_id' => 3, 'arena_id' => 8],
+            ['sport_id' => 6, 'arena_id' => 8],
+
+            // Arena 9: Av. das Araucárias - Águas Claras
+            ['sport_id' => 2, 'arena_id' => 9],
+            ['sport_id' => 3, 'arena_id' => 9],
+            ['sport_id' => 6, 'arena_id' => 9],
+
+            // Arena 10: Quadra de esportes comunitária Guará
+            ['sport_id' => 2, 'arena_id' => 10],
+            ['sport_id' => 3, 'arena_id' => 10],
+            ['sport_id' => 6, 'arena_id' => 10],
+
+            // Arena 11: Quadra Poliesportiva da Vila Mathia - Taguatinga Sul
+            ['sport_id' => 1, 'arena_id' => 11],
+            ['sport_id' => 2, 'arena_id' => 11],
+            ['sport_id' => 3, 'arena_id' => 11],
+            ['sport_id' => 6, 'arena_id' => 11],
+
+            // Arena 12: Quadra de Esportes Taguatinga
+            ['sport_id' => 2, 'arena_id' => 12],
+            ['sport_id' => 3, 'arena_id' => 12],
+
+            // Arena 13: Quadra de Basquete do Taguaparque
+            ['sport_id' => 3, 'arena_id' => 13],
+
+            // Arena 14: Quadra Poliesportiva Qsf15 - Taguatinga
+            ['sport_id' => 2, 'arena_id' => 14],
+            ['sport_id' => 6, 'arena_id' => 14],
+
+            // Arena 15: Quadra da Qsf11 - Taguatinga
+            ['sport_id' => 2, 'arena_id' => 15],
+            ['sport_id' => 6, 'arena_id' => 15],
+
+            // Arena 16: Skate Park Aguas Claras
+            ['sport_id' => 5, 'arena_id' => 16],
+
+            // Arena 17: Vôlei de Praia - Parque Ecológico Águas Claras
+            ['sport_id' => 11, 'arena_id' => 17],
+            ['sport_id' => 12, 'arena_id' => 17],
+
+            // Arena 18: Quadra de Esporte da Quadra 4
+            ['sport_id' => 3, 'arena_id' => 18],
+            ['sport_id' => 4, 'arena_id' => 18],
+
+            // Arena 19: Quadra de esportes 210 Asa Sul
+            ['sport_id' => 2, 'arena_id' => 19],
+            ['sport_id' => 3, 'arena_id' => 19],
+            ['sport_id' => 6, 'arena_id' => 19],
+
+            // Arena 20: Quadra Esportiva SQN 102
+            ['sport_id' => 1, 'arena_id' => 20],
+            ['sport_id' => 2, 'arena_id' => 20],
+            ['sport_id' => 3, 'arena_id' => 20],
+            ['sport_id' => 6, 'arena_id' => 20],
+
+            // Arena 21: Skate Park Sukata
+            ['sport_id' => 5, 'arena_id' => 21],
+
+            // Arena 22: Quadra de Esportes SQN 206
+            ['sport_id' => 2, 'arena_id' => 22],
+            ['sport_id' => 6, 'arena_id' => 22],
+
+            // Arena 23: Quadra de futebol EQS 110/111
+            ['sport_id' => 4, 'arena_id' => 23],
+
+            // Arena 24: Quadras Poliesportivas - Parque da Cidade
+            ['sport_id' => 1,  'arena_id' => 24],
+            ['sport_id' => 2,  'arena_id' => 24],
+            ['sport_id' => 3,  'arena_id' => 24],
+            ['sport_id' => 4,  'arena_id' => 24],
+            ['sport_id' => 6,  'arena_id' => 24],
+            ['sport_id' => 11, 'arena_id' => 24],
+            ['sport_id' => 12, 'arena_id' => 24],
+
+            // Arena 25: Rua 6 - Quadra 6 LE 5
+            ['sport_id' => 2, 'arena_id' => 25],
+            ['sport_id' => 3, 'arena_id' => 25],
+            ['sport_id' => 6, 'arena_id' => 25],
+
+            // Arena 26: Quadra 06 De Sobradinho
+            ['sport_id' => 1, 'arena_id' => 26],
+            ['sport_id' => 2, 'arena_id' => 26],
+
+            // Arena 27: Condomínio Fazendinha Q 2 Conjunto A
+            ['sport_id' => 1,  'arena_id' => 27],
+            ['sport_id' => 2,  'arena_id' => 27],
+            ['sport_id' => 3,  'arena_id' => 27],
+            ['sport_id' => 7,  'arena_id' => 27],
+            ['sport_id' => 12, 'arena_id' => 27],
+
+            // Arena 28: 1428 Condomínio Fazendinha Q 2 Conjunto A
+            ['sport_id' => 1,  'arena_id' => 28],
+            ['sport_id' => 2,  'arena_id' => 28],
+            ['sport_id' => 3,  'arena_id' => 28],
+            ['sport_id' => 12, 'arena_id' => 28],
+
+            // Arena 29: Condomínio Del Lago I Q 4
+            ['sport_id' => 5, 'arena_id' => 29],
+
+            // Arena 30: Q. 1 Del Lago
+            ['sport_id' => 2, 'arena_id' => 30],
+
+            // Arena 31: Quadra da 9, Paranoá
+            ['sport_id' => 1, 'arena_id' => 31],
+            ['sport_id' => 2, 'arena_id' => 31],
+            ['sport_id' => 3, 'arena_id' => 31],
+            ['sport_id' => 6, 'arena_id' => 31],
+
+            // Arena 32: Paranoá 7 Praça Central Conjunto 3
+            ['sport_id' => 4, 'arena_id' => 32],
+
+            // Arena 33: 12 Praça Central
+            ['sport_id' => 1, 'arena_id' => 33],
+            ['sport_id' => 2, 'arena_id' => 33],
+            ['sport_id' => 3, 'arena_id' => 33],
+            ['sport_id' => 6, 'arena_id' => 33],
+
+            // Arena 34: Condomínio Mansões Entre Lagos Etapa 2
+            ['sport_id' => 1, 'arena_id' => 34],
+            ['sport_id' => 2, 'arena_id' => 34],
+            ['sport_id' => 3, 'arena_id' => 34],
+            ['sport_id' => 6, 'arena_id' => 34],
+
+            // Arena 35: Condomínio Mansões Entre lagos Etapa 2
+            ['sport_id' => 1, 'arena_id' => 35],
+            ['sport_id' => 2, 'arena_id' => 35],
+            ['sport_id' => 3, 'arena_id' => 35],
+            ['sport_id' => 6, 'arena_id' => 35],
+
+            // Arena 36: Quadra de Esportes SQN 208
+            ['sport_id' => 1, 'arena_id' => 36],
+            ['sport_id' => 2, 'arena_id' => 36],
+            ['sport_id' => 3, 'arena_id' => 36],
+            ['sport_id' => 6, 'arena_id' => 36],
         ]);
     }
 }

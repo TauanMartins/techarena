@@ -4,23 +4,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('league_team', function (Blueprint $table) {
-            $table->foreignId('team_id')->constrained('team');
-            $table->foreignId('league_id')->constrained('league');
+            $table->foreignId('team_id')
+                ->constrained('team')
+                ->cascadeOnDelete();
+            $table->foreignId('league_id')
+                ->constrained('league')
+                ->cascadeOnDelete();
 
             $table->primary(['team_id', 'league_id']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('league_team');

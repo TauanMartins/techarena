@@ -6,21 +6,17 @@ use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
         $this->call([
-            PreferenceSeeder::class,
             PermissionSeeder::class,
+            PreferenceSeeder::class,
             ScheduleSeeder::class,
             SportSeeder::class,
             MaterialSeeder::class,
-            SportMaterialSeeder::class
+            ArenaSeeder::class,
+            SportMaterialSeeder::class,
+            SportArenaSeeder::class,
         ]);
-
     }
 }

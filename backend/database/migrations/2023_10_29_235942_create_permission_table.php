@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('permission', function (Blueprint $table) {
             $table->id()->comment('Chave primária autoincrementável.');
-            $table->string('slug')->comment('Slug.');
-            $table->char('symbol', 1)->comment('Símbolo representativo da permissão.');
+            $table->string('slug')->unique()->comment('Slug identificador da permissão.');
+            $table->char('symbol', 1)->unique()->comment('Símbolo representativo da permissão.');
         });
     }
 

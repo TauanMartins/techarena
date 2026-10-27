@@ -2,22 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class PermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
-    public function run()
+    public function run(): void
     {
         DB::table('permission')->insert([
-            ['symbol' => 'U', 'slug'=> 'user'],
-            ['symbol' => 'A', 'slug'=>'admin'],
-            ['symbol' => 'G', 'slug'=> 'guest']
+            ['id' => 1, 'symbol' => 'U', 'slug' => 'user'],
+            ['id' => 2, 'symbol' => 'A', 'slug' => 'admin'],
+            ['id' => 3, 'symbol' => 'G', 'slug' => 'guest'],
         ]);
     }
 }
