@@ -16,7 +16,7 @@ return new class extends Migration
                 ->constrained('chat')
                 ->cascadeOnDelete()
                 ->comment('Referência ao chat onde a mensagem foi enviada.');
-            $table->foreignId('user_id')
+            $table->foreignUuid('user_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('Referência ao usuário autor da mensagem.');

@@ -9,11 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('friend', function (Blueprint $table) {
-            $table->foreignId('user_1_id')
+            $table->foreignUuid('user_1_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('Usuário que enviou a solicitação.');
-            $table->foreignId('user_2_id')
+            $table->foreignUuid('user_2_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('Usuário que recebeu a solicitação.');

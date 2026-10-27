@@ -19,7 +19,7 @@ return new class extends Migration
                 ->constrained('schedule')
                 ->restrictOnDelete()
                 ->comment('Referência ao horário do agendamento.');
-            $table->foreignId('organizer_id')
+            $table->foreignUuid('organizer_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('Referência ao organizador do agendamento.');

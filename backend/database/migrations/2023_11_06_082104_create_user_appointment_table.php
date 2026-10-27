@@ -13,7 +13,7 @@ return new class extends Migration
                 ->constrained('appointment')
                 ->cascadeOnDelete()
                 ->comment('ID do compromisso.');
-            $table->foreignId('user_id')
+            $table->foreignUuid('user_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('ID do usuário participante.');

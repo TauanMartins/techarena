@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('prefered_sports', function (Blueprint $table) {
-            $table->foreignId('user_id')
+            $table->foreignUuid('user_id')
                 ->constrained('user')
                 ->cascadeOnDelete()
                 ->comment('ID do usuário.');
