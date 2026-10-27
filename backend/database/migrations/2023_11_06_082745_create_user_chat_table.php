@@ -13,11 +13,12 @@ return new class extends Migration
                 ->constrained('chat')
                 ->cascadeOnDelete()
                 ->comment('Referência ao chat.');
-            $table->foreignUuid('user_id')
-                ->constrained('user')
-                ->cascadeOnDelete()
-                ->comment('Referência ao usuário integrante do chat.');
-
+           // Na migration de user_chat e message:
+$table->foreignUuid('user_id')
+    ->constrained('user')
+    ->cascadeOnDelete()
+    ->comment('Referência ao usuário integrante do chat.');
+$table->timestamps();
             // Chave primária composta já aplica índice UNIQUE automaticamente
             $table->primary(['chat_id', 'user_id']);
         });
