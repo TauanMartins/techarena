@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # Se mantiver o backend em Laravel
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: techarena_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=techarena
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=secret
+
+  # Banco de dados local para desenvolvimento (simulando o Supabase)
+  postgres:
+    image: postgres:15-alpine
+    container_name: techarena_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: techarena
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Frontend Web (React + Vite) rodando em modo dev
+  frontend:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile.dev
+    container_name: techarena_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend-web:/app
+      - /app/node_modules
+    environment:
+      - VITE_SUPABASE_URL=sua_url_do_supabase
+      - VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+
+volumes:
+  pgdata:
