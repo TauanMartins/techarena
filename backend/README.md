@@ -16,6 +16,9 @@ docker compose exec backend npm run db:seed
 ```
 
 Configure `SUPABASE_URL` e `CORS_ORIGINS` no `.env` da raiz antes de subir o Compose.
+A URL é obtida no diálogo **Connect** do projeto Supabase. O backend valida tokens
+com as chaves públicas JWKS e não precisa da publishable key; o SDK do frontend
+precisa dela. Veja [onde obter os valores e como a validação funciona](docs/AUTHENTICATION.md).
 Sem configuração Auth, a API inicia e `/health` permanece público; usuários exigem
 um Bearer token válido e o provedor configurado. Não existe login local alternativo.
 A autenticação remota não implica trocar o PostgreSQL local ou instalar Supabase local.
