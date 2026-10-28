@@ -31,7 +31,9 @@
     "db:status": "npm run typeorm -- migration:show -d src/database/data-source.ts",
     "db:rollback": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
     "db:migrate:prod": "node ./node_modules/typeorm/cli.js migration:run -d dist/database/data-source.js",
-    "db:seed:prod": "node dist/database/seeds/seed.js"
+    "db:seed:prod": "node dist/database/seeds/seed.js",
+    "db:check": "node --import tsx src/database/check.ts",
+    "db:check:prod": "node dist/database/check.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

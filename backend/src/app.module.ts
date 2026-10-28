@@ -5,6 +5,7 @@ import {
   ConfigurationModule,
 } from './config/configuration.module.js';
 import { databaseOptions } from './database/database.options.js';
+import { DatabaseReadinessService } from './database/database-readiness.service.js';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
 import { SportsModule } from './modules/sports/sports.module.js';
@@ -34,6 +35,7 @@ import { HealthModule } from './health/health.module.js';
     }),
   ],
   providers: [
+    DatabaseReadinessService,
     { provide: APP_INTERCEPTOR, useClass: ResponseValidationInterceptor },
   ],
 })

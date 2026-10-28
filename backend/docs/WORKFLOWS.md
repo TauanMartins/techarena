@@ -151,3 +151,10 @@ Os testes de integração exigem banco com sufixo `_test` e são executados por 
 sequencialmente, pois compartilham o banco. Testes usam tokens assinados com chaves
 locais de teste e verificam autorização, consentimento, concorrência, rollback de
 transações, geolocalização, horários UTC e presença das rotas no OpenAPI.
+
+A regressão de coluna ausente também é testada contra PostgreSQL real: rollback da
+migration de workflows reproduz `42703`, impede o bootstrap e faz o health reportar
+503. Outro caso renomeia uma coluna com histórico atualizado e verifica a detecção.
+Testes de queries percorrem páginas preenchidas/vazias, filtros geográficos, ambas
+as ordenações temporais/distância e preferência esportiva com joins/subqueries.
+O catálogo de equipes e os vínculos pessoais têm schemas Swagger distintos.

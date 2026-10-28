@@ -1,6 +1,6 @@
 # Banco de dados
 
-O TypeORM gerencia o esquema PostgreSQL da aplicação. As 19 entities em
+O TypeORM gerencia o esquema PostgreSQL da aplicação. As entities em
 `src/database/entities/` descrevem a persistência; migrations em
 `src/database/migrations/` registram sua evolução. `synchronize` e `migrationsRun`
 permanecem desativados: iniciar a API não modifica o esquema.
@@ -12,13 +12,34 @@ Na raiz do projeto:
 ```sh
 docker compose up -d
 docker compose exec backend npm run db:migrate
+docker compose exec backend npm run db:check
 docker compose exec backend npm run db:seed
 ```
 
 Para executar os comandos fora do Docker, entre em `backend/`, copie
 `.env.example` para `.env`, instale as dependências com `npm ci` e use os mesmos
 scripts npm. A URL com `localhost` é para o host; no container o Compose fornece
-uma URL com o hostname `postgres`.
+uma URL com o hostname `postgres` quando não existe override.
+Se o `.env` da raiz define `DATABASE_URL` apontando ao Supabase, o backend e os
+comandos executados por `docker compose exec backend` usam **esse banco remoto**.
+Migrar `localhost:5432/techarena` no host não migra o Supabase. Confira o destino
+antes de executar comandos de escrita; não publique a URL com credenciais.
+
+## Verificar o esquema antes de servir a API
+
+A API verifica migrations pendentes e resolve todas as colunas mapeadas pelas
+entities durante a inicialização, com consultas `SELECT ... LIMIT 0`, sem ler linhas
+ou alterar o esquema. Se houver migration pendente ou coluna/tabela ausente, a API
+recusa iniciar com mensagem de diagnóstico. A aplicação nunca aplica migrations
+automaticamente. Execute o comando acima no banco efetivamente usado pela API e,
+se o watcher já parou a inicialização, reinicie com `docker compose restart backend`.
+
+`npm run db:check` executa a mesma verificação de leitura usando a configuração da
+CLI. `npm run db:check:prod` usa o código compilado. `/health` também responde 503
+se o banco estiver indisponível ou se uma migration ficar pendente após o início.
+A verificação de colunas não substitui a revisão de migrations: tipos, índices e
+constraints podem ser comparados com `npm run typeorm -- schema:log -d src/database/data-source.ts`.
+Esse comando somente descreve diferenças; não use `schema:sync` para corrigir produção.
 
 ## Fluxo de evolução
 
