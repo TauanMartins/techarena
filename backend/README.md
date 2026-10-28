@@ -8,6 +8,8 @@ API NestJS com PostgreSQL/PostGIS e TypeORM. O código Laravel anterior está em
 Na raiz do repositório:
 
 ```sh
+cp .env.example .env
+# Edite .env para configurar SUPABASE_URL e CORS_ORIGINS.
 docker compose up -d
 docker compose exec backend npm run db:migrate
 docker compose exec backend npm run db:seed
