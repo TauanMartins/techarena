@@ -5,6 +5,9 @@ import {
   IsIn,
   IsISO8601,
   IsString,
+  IsUUID,
+  IsInt,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -13,6 +16,23 @@ import { IsBigintId } from '../../../../../../common/http/bigint-id.validator.js
 import { PageResponseDto } from '../../../../shared/http/pagination.dto.js';
 
 export class AppointmentResponseDto {
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, value: unknown) => value !== null)
+  @IsString()
+  description!: string | null;
+  @Expose()
+  @IsUUID()
+  organizerId!: string;
+  @Expose()
+  @IsBoolean()
+  isOrganizer!: boolean;
+  @ApiProperty({ type: Number, nullable: true })
+  @Expose()
+  @ValidateIf((_o, value: unknown) => value !== null)
+  @IsInt()
+  maxPlayers!: number | null;
+
   @Expose()
   @IsBigintId()
   id!: string;

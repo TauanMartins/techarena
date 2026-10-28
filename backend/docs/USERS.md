@@ -39,7 +39,8 @@ para escolher de quem alterar o perfil, as preferências ou os vínculos.
   participações e pertencem ao contexto de agendamentos.
 
 Não foram criados aliases inseguros para as rotas antigas. Listas usam envelopes
-`{ items, total, page, limit }`; favoritos usam `{ items }`. IDs bigint são strings.
+`{ items, total, page, limit, totalPages, hasNextPage, hasPreviousPage }`;
+favoritos usam `{ items, maxFavorites, remainingSlots }`. IDs bigint são strings.
 
 ## Regras
 
@@ -81,3 +82,63 @@ do Compose enquanto Auth está na nuvem, não há sincronização automática de
 Nesse cenário é necessário provisionamento controlado nesse banco ou uma integração
 explícita de sincronização; esta alteração não instala nenhum desses mecanismos.
 Os testes de integração simulam o perfil já criado usando fixtures no banco isolado.
+
+## Filtros e respostas revisados
+
+Os caminhos existentes foram preservados. As opções novas são opcionais e as
+respostas mantêm os campos anteriores, acrescentando informações de navegação e contexto.
+A busca pública continua sem e-mail, nascimento ou permissão.
+
+| Endpoint | Opções de consulta |
+|---|---|
+| `GET /users` | `search` obrigatório (2–100 caracteres), `searchBy=all\|username\|name`, `sortBy=username\|name`, `sortOrder=asc\|desc` |
+| `GET /users/me/teams` | `search` opcional pelo nome da equipe (2–100), `role=captain\|member`, `sortBy=joinedAt\|name`, `sortOrder=asc\|desc` |
+| `GET /users/me/appointments` | `status=scheduled\|in_progress\|finished\|canceled`, `holder=true\|false`, `from`, `to`, `sortOrder=asc\|desc` |
+
+Todos usam `page` (1–10000, padrão 1) e `limit` (1–50, padrão 20). Ordenação padrão:
+username crescente na busca, ingresso crescente em equipes, agendamento decrescente
+nas participações. Empates têm um segundo critério por ID; valores nulos ficam ao
+final. Os campos usados no ORDER BY vêm de uma lista fixa no servidor.
+
+Busca trata `%`, `_` e barra invertida como caracteres literais. O texto é enviado
+como parâmetro SQL; valores de ordenação e campos desconhecidos são rejeitados.
+O filtro de equipes continua limitado aos vínculos do próprio usuário, mesmo quando
+um nome ou papel é informado. Convites/pedidos não são tratados como membros efetivos.
+
+`from` e `to` são limites inclusivos sobre `scheduledAt` e exigem data/hora ISO 8601
+com timezone explícito, por exemplo `2030-01-01T00:00:00Z`. Um intervalo invertido
+retorna 400. `holder=false` realmente seleciona reservas: não usa conversão por
+truthiness. Agendamentos excluídos continuam ocultos em todas as combinações.
+
+Os cards de equipes agora incluem `description`, `image` e `joinedAt` (este pode
+ser nulo nos vínculos antigos). As respostas de agendamentos, tanto na inscrição
+quanto na consulta, incluem `description`, `organizerId`, `isOrganizer` e `maxPlayers`.
+Não é necessário consultar outro perfil para identificar o próprio organizador.
+
+Exemplo de paginação:
+
+```json
+{
+  "items": [],
+  "total": 0,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 0,
+  "hasNextPage": false,
+  "hasPreviousPage": false
+}
+```
+
+Favoritos incluem `maxFavorites: 4` e `remainingSlots`, calculados pela mesma política
+que limita a escrita. Uma lista com dois esportes deixa duas escolhas disponíveis;
+substituir por `[]` remove os favoritos e retorna quatro escolhas disponíveis.
+
+No PATCH de perfil, nome e username têm espaços externos removidos. A validação e a
+seleção dos campos editáveis também acontecem no domínio, além dos DTOs; dados de
+identidade/permissão continuam bloqueados. O backend não cria registros ausentes.
+
+## Organização dos subcontextos
+
+O Swagger agrupa as rotas em `users/profile`, `users/directory`, `users/theme`,
+`users/favorite-sports`, `users/team-memberships` e `users/appointment-memberships`.
+Módulos e detalhes de dependência estão em [ARCHITECTURE.md](ARCHITECTURE.md).

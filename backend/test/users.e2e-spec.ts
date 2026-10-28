@@ -267,7 +267,7 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .put('/users/me/sports')
       .auth(aliceToken, { type: 'bearer' })
       .send({ sportIds: [] })
-      .expect(200, { items: [] });
+      .expect(200, { items: [], maxFavorites: 4, remainingSlots: 4 });
   });
   it('lists only the authenticated user team memberships', async () => {
     await seedProfile();
@@ -283,7 +283,14 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .auth(aliceToken, { type: 'bearer' })
       .expect(200);
     expect(result.body.items).toEqual([
-      { id: first.id, name: first.name, role: 'member' },
+      {
+        id: first.id,
+        name: first.name,
+        role: 'member',
+        description: null,
+        image: null,
+        joinedAt: null,
+      },
     ]);
     await client()
       .post('/users/team')
@@ -356,6 +363,239 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .post('/users/me/appointments/9223372036854775808')
       .auth(aliceToken, { type: 'bearer' })
       .send({})
+      .expect(400);
+  });
+  it('filters and sorts directory cards with useful page metadata and literal search escaping', async () => {
+    await seedProfile();
+    await seedProfile(bobToken);
+    await db
+      .getRepository(User)
+      .update(alice, { name: 'Zebra Alice', username: 'player' });
+    await db
+      .getRepository(User)
+      .update(bob, { name: 'Alpha', username: 'alicefriend' });
+    const first = await client()
+      .get('/users')
+      .query({ search: 'Alice', sortBy: 'name', limit: 1 })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(first.body).toMatchObject({
+      total: 2,
+      totalPages: 2,
+      hasNextPage: true,
+      hasPreviousPage: false,
+    });
+    expect(first.body.items[0].id).toBe(bob);
+    expect(first.body.items[0]).not.toHaveProperty('email');
+    const second = await client()
+      .get('/users')
+      .query({ search: 'Alice', sortBy: 'name', limit: 1, page: 2 })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(second.body).toMatchObject({
+      totalPages: 2,
+      hasNextPage: false,
+      hasPreviousPage: true,
+    });
+    expect(second.body.items[0].id).toBe(alice);
+    const byName = await client()
+      .get('/users')
+      .query({ search: 'Alice', searchBy: 'name' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(byName.body.items.map((item: { id: string }) => item.id)).toEqual([
+      alice,
+    ]);
+    const byUsername = await client()
+      .get('/users')
+      .query({ search: 'Alice', searchBy: 'username' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(
+      byUsername.body.items.map((item: { id: string }) => item.id),
+    ).toEqual([bob]);
+    const literal = await client()
+      .get('/users')
+      .query({ search: '%%' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(literal.body.total).toBe(0);
+    await client()
+      .get('/users')
+      .query({ search: 'Alice', sortBy: 'id; DROP TABLE users' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+    await client()
+      .get('/users')
+      .query({ search: 'Alice', searchBy: 'email' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+  });
+  it('filters team memberships while returning the details needed for team cards', async () => {
+    await seedProfile();
+    await seedProfile(bobToken);
+    const first = await db
+      .getRepository(Team)
+      .save({
+        name: 'Alpha',
+        description: 'Public team description',
+        image: 'https://example.test/team.png',
+      });
+    const second = await db.getRepository(Team).save({ name: 'Beta' });
+    const hidden = await db
+      .getRepository(Team)
+      .save({ name: 'Private Bob team' });
+    const joinedAt = new Date('2026-01-01T12:00:00Z');
+    await db.getRepository(UserTeam).insert([
+      { userId: alice, teamId: first.id, role: 'captain', createdAt: joinedAt },
+      { userId: alice, teamId: second.id, role: 'member' },
+      { userId: bob, teamId: hidden.id, role: 'captain' },
+    ]);
+    const response = await client()
+      .get('/users/me/teams')
+      .query({ role: 'captain', search: 'Alpha' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(response.body).toMatchObject({ total: 1, totalPages: 1 });
+    expect(response.body.items[0]).toEqual({
+      id: first.id,
+      name: 'Alpha',
+      role: 'captain',
+      description: 'Public team description',
+      image: 'https://example.test/team.png',
+      joinedAt: joinedAt.toISOString(),
+    });
+    const sorted = await client()
+      .get('/users/me/teams')
+      .query({ sortBy: 'name', limit: 1 })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(sorted.body.total).toBe(2);
+    expect(sorted.body.items[0].id).toBe(first.id);
+    expect(sorted.body.hasNextPage).toBe(true);
+    await client()
+      .get('/users/me/teams')
+      .query({ role: 'admin' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+    await client()
+      .get('/users/me/teams')
+      .query({ userId: bob })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+  });
+  it('filters appointments by period, status and explicit false holder without exposing deleted records', async () => {
+    await adult();
+    await adult(bobToken);
+    const firstDate = new Date(Date.now() + 86400000);
+    const lastDate = new Date(Date.now() + 172800000);
+    const reserve = await db
+      .getRepository(Appointment)
+      .save({
+        organizerId: alice,
+        title: 'Reserve match',
+        description: 'Bring water',
+        scheduledAt: firstDate,
+        maxPlayers: 4,
+      });
+    const starter = await db
+      .getRepository(Appointment)
+      .save({
+        organizerId: bob,
+        title: 'Starter match',
+        scheduledAt: lastDate,
+        maxPlayers: 6,
+      });
+    const finished = await db
+      .getRepository(Appointment)
+      .save({
+        organizerId: bob,
+        title: 'Finished match',
+        scheduledAt: new Date(Date.now() - 86400000),
+        status: 'finished',
+      });
+    const deleted = await db
+      .getRepository(Appointment)
+      .save({
+        organizerId: bob,
+        title: 'Deleted match',
+        scheduledAt: lastDate,
+        deletedAt: new Date(),
+      });
+    await db.getRepository(UserAppointment).insert([
+      { userId: alice, appointmentId: reserve.id, holder: false },
+      { userId: alice, appointmentId: starter.id, holder: true },
+      { userId: alice, appointmentId: finished.id, holder: true },
+      { userId: alice, appointmentId: deleted.id, holder: true },
+    ]);
+    const response = await client()
+      .get('/users/me/appointments')
+      .query({
+        status: 'scheduled',
+        holder: 'false',
+        from: new Date(firstDate.getTime() - 1000).toISOString(),
+        to: new Date(lastDate.getTime() + 1000).toISOString(),
+      })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0]).toMatchObject({
+      id: reserve.id,
+      holder: false,
+      description: 'Bring water',
+      maxPlayers: 4,
+      organizerId: alice,
+      isOrganizer: true,
+    });
+    const all = await client()
+      .get('/users/me/appointments')
+      .query({ sortOrder: 'asc' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
+    expect(all.body.total).toBe(3);
+    expect(all.body.items.map((item: { id: string }) => item.id)).toEqual([
+      finished.id,
+      reserve.id,
+      starter.id,
+    ]);
+    expect(all.body.items[2].isOrganizer).toBe(false);
+    await client()
+      .get('/users/me/appointments')
+      .query({ holder: 'yes' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+    await client()
+      .get('/users/me/appointments')
+      .query({ from: lastDate.toISOString(), to: firstDate.toISOString() })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+    await client()
+      .get('/users/me/appointments')
+      .query({ from: '2026-01-01' })
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(400);
+  });
+  it('normalizes profile edits and exposes favorite capacity from a single policy', async () => {
+    await seedProfile();
+    const profile = await client()
+      .patch('/users/me')
+      .auth(aliceToken, { type: 'bearer' })
+      .send({ name: ' Alice Smith ', username: ' alice_smith ' })
+      .expect(200);
+    expect(profile.body).toMatchObject({
+      name: 'Alice Smith',
+      username: 'alice_smith',
+    });
+    const sports = await client()
+      .put('/users/me/sports')
+      .auth(aliceToken, { type: 'bearer' })
+      .send({ sportIds: ['1', '2'] })
+      .expect(200);
+    expect(sports.body).toMatchObject({ maxFavorites: 4, remainingSlots: 2 });
+    await client()
+      .patch('/users/me')
+      .auth(aliceToken, { type: 'bearer' })
+      .send({ image: 'http://example.test/a' })
       .expect(400);
   });
   it('serves Bearer security and DTO contracts through OpenAPI and handles browser preflight', async () => {

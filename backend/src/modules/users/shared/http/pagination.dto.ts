@@ -1,5 +1,5 @@
 import { Type, Expose } from 'class-transformer';
-import { IsInt, Min, Max } from 'class-validator';
+import { IsInt, Min, Max, IsBoolean } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 export class PaginationQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1, maximum: 10000 })
@@ -17,6 +17,17 @@ export class PaginationQueryDto {
   limit: number = 20;
 }
 export class PageResponseDto {
+  @Expose()
+  @IsInt()
+  @Min(0)
+  totalPages!: number;
+  @Expose()
+  @IsBoolean()
+  hasNextPage!: boolean;
+  @Expose()
+  @IsBoolean()
+  hasPreviousPage!: boolean;
+
   @Expose()
   @IsInt()
   @Min(0)

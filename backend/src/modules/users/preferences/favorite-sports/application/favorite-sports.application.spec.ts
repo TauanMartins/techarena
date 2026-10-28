@@ -4,10 +4,7 @@ const profiles = {
   ensureExists: vi.fn().mockResolvedValue(undefined),
   ensureAdult: vi.fn(),
 };
-it.each([
-  ['1', '1'],
-  ['1', '2', '3', '4', '5'],
-])(
+it.each([['1', '1'], ['1', '2', '3', '4', '5'], ['9223372036854775808']])(
   'rejects duplicate or excessive favorites before persistence',
   async (...ids) => {
     const repository = { replaceSports: vi.fn() };

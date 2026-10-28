@@ -32,6 +32,8 @@ somente `PROFILE_ACCESS`, uma porta de aplicação com `ensureExists` e `ensureA
 Preferências e vínculos dependem dessa porta para verificar elegibilidade; não podem
 editar perfis nem importar implementações de persistência de outro subcontexto.
 O serviço de perfil é privado ao módulo, assim como os demais serviços de aplicação.
+A verificação de existência usa uma consulta de existência, e a de maioridade lê
+somente o nascimento, sem carregar os campos privados e o relacionamento de permissão.
 
 O fluxo é controller -> caso de uso -> porta -> adaptador. DTOs de entrada e saída
 ficam ao lado do controller correspondente; somente card público e paginação são
@@ -42,7 +44,9 @@ negócio para uma classe base ou criar controllers com herança.
 Regras de idade, limites de favoritos e admissão em agendamentos ficam nos respectivos
 domínios/casos de uso. O adaptador de favoritos bloqueia a linha do usuário durante a
 troca. O adaptador de agendamentos bloqueia o agendamento antes de consultar lotação
-e aplicar a política de admissão. Futuras inscrições devem respeitar o mesmo bloqueio.
+e aplicar a política de admissão. O relógio é avaliado somente após obter o bloqueio,
+para não usar um horário anterior ao tempo de espera da transação. Futuras inscrições
+devem respeitar o mesmo bloqueio.
 As constraints PostgreSQL continuam garantindo integridade e unicidade.
 
 O contexto `auth/` define a identidade verificada e a porta `AccessTokenVerifier`.
@@ -59,3 +63,9 @@ continuam explícitas e não são executadas ao iniciar a API.
 O teste de arquitetura impede imports de frameworks e adaptadores nos diretórios de
 domínio/aplicação. Os testes HTTP com PostgreSQL verificam a composição real dos módulos,
 a autorização, os contratos e a concorrência.
+
+Os filtros de listagem têm tipos e DTOs próprios em cada subcontexto. O domínio
+valida limites, enumerações e intervalo de datas; os repositories vinculam parâmetros
+e usam uma lista fixa de colunas para ordenação. A paginação compartilhada calcula
+os metadados de navegação, enquanto a composição de cards continua no adaptador
+correspondente. Não existe um query DTO genérico que aceite filtros de todos os módulos.

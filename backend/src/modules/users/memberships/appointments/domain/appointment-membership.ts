@@ -1,5 +1,27 @@
+import type {
+  PageRequest,
+  SortOrder,
+} from '../../../shared/domain/pagination.js';
 import { UserError } from '../../../shared/domain/user-error.js';
+export const APPOINTMENT_STATUSES = [
+  'scheduled',
+  'in_progress',
+  'finished',
+  'canceled',
+] as const;
+export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
+export interface AppointmentMembershipQuery extends PageRequest {
+  status?: AppointmentStatus;
+  holder?: boolean;
+  from?: string;
+  to?: string;
+  sortOrder: SortOrder;
+}
 export interface AppointmentSummary {
+  description: string | null;
+  organizerId: string;
+  isOrganizer: boolean;
+  maxPlayers: number | null;
   id: string;
   title: string;
   scheduledAt: Date;

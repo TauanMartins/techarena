@@ -33,6 +33,9 @@ fica exclusivamente em `src/config/environment.ts`.
 
 ## Módulos
 
+Usuários estão organizados em perfil, busca, preferências (tema/favoritos) e vínculos
+(equipes/agendamentos), cada um com suas portas, casos de uso e adaptadores.
+
 Veja [autenticação](docs/AUTHENTICATION.md), [rotas e decisões do contexto user](docs/USERS.md),
 [arquitetura](docs/ARCHITECTURE.md), [contratos HTTP](docs/API-CONVENTIONS.md) e
 [migrations/seeds](database/README.md).

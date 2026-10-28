@@ -23,6 +23,9 @@ export class UpdateProfileDto {
 
   /** Lowercase letters, digits and underscores. */
   @ValidateIf((_object, value: unknown) => value !== undefined)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @Length(3, 45)
   @Matches(/^[a-z0-9_]+$/)

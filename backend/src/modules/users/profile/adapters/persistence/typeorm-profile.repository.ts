@@ -22,6 +22,15 @@ function profile(row: User): UserProfile {
 }
 export class TypeormProfileRepository implements ProfileRepository {
   constructor(private readonly dataSource: DataSource) {}
+  exists(id: string) {
+    return this.dataSource.getRepository(User).existsBy({ id });
+  }
+  async findBirthDate(id: string) {
+    const row = await this.dataSource
+      .getRepository(User)
+      .findOne({ where: { id }, select: { id: true, dtBirth: true } });
+    return row ? { birthDate: row.dtBirth } : null;
+  }
   async findById(id: string) {
     const row = await this.dataSource
       .getRepository(User)

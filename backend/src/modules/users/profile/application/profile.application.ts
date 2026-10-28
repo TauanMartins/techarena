@@ -1,6 +1,10 @@
 import type { ProfileRepository } from '../domain/profile-repository.port.js';
 import { UserError } from '../../shared/domain/user-error.js';
-import { ProfileChanges, validateBirthDate } from '../domain/profile.js';
+import type { ProfileChanges } from '../domain/profile.js';
+import {
+  prepareProfileChanges,
+  validateBirthDate,
+} from '../domain/profile-policy.js';
 
 import type { ProfileAccess } from './profile-access.port.js';
 
@@ -20,29 +24,27 @@ export class ProfileApplication implements ProfileAccess {
     return profile;
   }
   async updateProfile(id: string, changes: ProfileChanges) {
-    await this.profile(id);
-    if (Object.values(changes).every((value) => value === undefined))
-      throw new UserError(
-        'invalid',
-        'EMPTY_UPDATE',
-        'Provide at least one profile field',
-      );
-    if (changes.birthDate !== undefined) {
-      if (changes.birthDate === null)
-        throw new UserError(
-          'invalid',
-          'INVALID_BIRTH_DATE',
-          'Birth date cannot be cleared',
-        );
-      validateBirthDate(changes.birthDate, this.now());
-    }
-    return this.repository.update(id, changes);
+    await this.ensureExists(id);
+    const normalized = prepareProfileChanges(changes, this.now());
+    return this.repository.update(id, normalized);
   }
+
   async ensureExists(id: string): Promise<void> {
-    await this.profile(id);
+    if (!(await this.repository.exists(id)))
+      throw new UserError(
+        'not_found',
+        'PROFILE_NOT_FOUND',
+        'The authenticated user profile is not available',
+      );
   }
   async ensureAdult(id: string): Promise<void> {
-    const profile = await this.profile(id);
+    const profile = await this.repository.findBirthDate(id);
+    if (!profile)
+      throw new UserError(
+        'not_found',
+        'PROFILE_NOT_FOUND',
+        'The authenticated user profile is not available',
+      );
     if (!profile.birthDate)
       throw new UserError(
         'invalid',

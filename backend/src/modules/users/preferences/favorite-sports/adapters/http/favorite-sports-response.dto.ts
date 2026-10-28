@@ -1,5 +1,13 @@
 import { Expose, Type } from 'class-transformer';
-import { IsArray, IsString, ValidateNested } from 'class-validator';
+import { MAX_FAVORITE_SPORTS } from '../../domain/favorite-sports.js';
+import {
+  IsArray,
+  IsString,
+  ValidateNested,
+  IsInt,
+  Equals,
+  Min,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBigintId } from '../../../../../../common/http/bigint-id.validator.js';
 
@@ -12,6 +20,15 @@ export class SportResponseDto {
   name!: string;
 }
 export class FavoriteSportsDto {
+  @Expose()
+  @IsInt()
+  @Equals(MAX_FAVORITE_SPORTS)
+  maxFavorites!: number;
+  @Expose()
+  @IsInt()
+  @Min(0)
+  remainingSlots!: number;
+
   @ApiProperty({ type: [SportResponseDto] })
   @Expose()
   @IsArray()

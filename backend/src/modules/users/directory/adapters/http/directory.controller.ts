@@ -17,6 +17,6 @@ export class DirectoryController {
   })
   @ResponseContract(UserPageDto)
   search(@Query() query: SearchUsersQueryDto) {
-    return this.application.search(query.search, query);
+    return this.application.search(query);
   }
 }

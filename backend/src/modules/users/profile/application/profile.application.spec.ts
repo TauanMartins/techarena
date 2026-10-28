@@ -16,6 +16,15 @@ const profile: UserProfile = {
 function fixture(overrides: Partial<UserProfile> = {}) {
   const repository = {
     findById: vi.fn().mockResolvedValue({ ...profile, ...overrides }),
+    exists: vi.fn().mockResolvedValue(true),
+    findBirthDate: vi
+      .fn()
+      .mockResolvedValue({
+        birthDate:
+          overrides.birthDate !== undefined
+            ? overrides.birthDate
+            : profile.birthDate,
+      }),
     update: vi.fn().mockResolvedValue(profile),
   };
   return {
@@ -64,5 +73,16 @@ it('requires a declared adult birth date before participation', async () => {
   const { application } = fixture({ birthDate: null });
   await expect(application.ensureAdult('user')).rejects.toMatchObject({
     code: 'PROFILE_INCOMPLETE',
+  });
+});
+
+it('checks existence without loading private profile fields', async () => {
+  const { application, repository } = fixture();
+  await application.ensureExists('user');
+  expect(repository.exists).toHaveBeenCalledWith('user');
+  expect(repository.findById).not.toHaveBeenCalled();
+  repository.exists.mockResolvedValue(false);
+  await expect(application.ensureExists('missing')).rejects.toMatchObject({
+    code: 'PROFILE_NOT_FOUND',
   });
 });

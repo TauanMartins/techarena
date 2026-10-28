@@ -8,40 +8,63 @@ import type { AppointmentMembershipsRepository } from '../../domain/appointment-
 import { UserError } from '../../../../shared/domain/user-error.js';
 import { userDatabaseWrite } from '../../../../shared/persistence/database-errors.js';
 import { paginate } from '../../../../shared/domain/pagination.js';
-import type { PageRequest } from '../../../../shared/domain/pagination.js';
+import type { AppointmentMembershipQuery } from '../../domain/appointment-membership.js';
 
 import { assertAppointmentAdmission } from '../../domain/appointment-membership.js';
+function summary(appointment: Appointment, userId: string, holder: boolean) {
+  return {
+    id: appointment.id,
+    title: appointment.title,
+    description: appointment.description,
+    scheduledAt: appointment.scheduledAt,
+    status: appointment.status,
+    holder,
+    organizerId: appointment.organizerId,
+    isOrganizer: appointment.organizerId === userId,
+    maxPlayers: appointment.maxPlayers,
+  };
+}
 export class TypeormAppointmentMembershipsRepository implements AppointmentMembershipsRepository {
   constructor(private readonly dataSource: DataSource) {}
-  async getAppointments(id: string, request: PageRequest) {
-    const [rows, total] = await this.dataSource
+  async getAppointments(id: string, query: AppointmentMembershipQuery) {
+    const builder = this.dataSource
       .getRepository(UserAppointment)
       .createQueryBuilder('membership')
       .innerJoinAndSelect('membership.appointment', 'appointment')
       .where('membership.userId = :id', { id })
-      .andWhere('appointment.deletedAt IS NULL')
-      .orderBy('appointment.scheduledAt', 'DESC')
-      .addOrderBy('appointment.id', 'DESC')
-      .skip((request.page - 1) * request.limit)
-      .take(request.limit)
+      .andWhere('appointment.deletedAt IS NULL');
+    if (query.status)
+      builder.andWhere('appointment.status = :status', {
+        status: query.status,
+      });
+    if (query.holder !== undefined)
+      builder.andWhere('membership.holder = :holder', { holder: query.holder });
+    if (query.from)
+      builder.andWhere('appointment.scheduledAt >= :from', {
+        from: new Date(query.from),
+      });
+    if (query.to)
+      builder.andWhere('appointment.scheduledAt <= :to', {
+        to: new Date(query.to),
+      });
+    const order = query.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    const [rows, total] = await builder
+      .orderBy('appointment.scheduledAt', order)
+      .addOrderBy('appointment.id', order)
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
       .getManyAndCount();
     return paginate(
-      rows.map((row) => ({
-        id: row.appointment.id,
-        title: row.appointment.title,
-        scheduledAt: row.appointment.scheduledAt,
-        status: row.appointment.status,
-        holder: row.holder,
-      })),
+      rows.map((row) => summary(row.appointment, id, row.holder)),
       total,
-      request,
+      query,
     );
   }
   async joinAppointment(
     id: string,
     appointmentId: string,
     holder: boolean,
-    now: Date,
+    clock: () => Date,
   ) {
     return userDatabaseWrite(() =>
       this.dataSource.transaction(async (manager) => {
@@ -72,16 +95,10 @@ export class TypeormAppointmentMembershipsRepository implements AppointmentMembe
             }),
           },
           holder,
-          now,
+          clock(),
         );
         await memberships.insert({ userId: id, appointmentId, holder });
-        return {
-          id: appointment.id,
-          title: appointment.title,
-          scheduledAt: appointment.scheduledAt,
-          status: appointment.status,
-          holder,
-        };
+        return summary(appointment, id, holder);
       }),
     );
   }

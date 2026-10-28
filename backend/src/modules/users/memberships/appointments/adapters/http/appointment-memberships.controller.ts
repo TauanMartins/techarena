@@ -5,8 +5,8 @@ import { CurrentUser } from '../../../../../auth/adapters/http/auth.decorators.j
 import type { AuthenticatedUser } from '../../../../../auth/domain/access-token-verifier.port.js';
 import { AppointmentMembershipsApplication } from '../../application/appointment-memberships.application.js';
 import { UserEndpoint } from '../../../../shared/http/user-endpoint.decorator.js';
-import { PaginationQueryDto } from '../../../../shared/http/pagination.dto.js';
 import {
+  AppointmentMembershipQueryDto,
   AppointmentIdDto,
   JoinAppointmentDto,
 } from './appointment-memberships-request.dto.js';
@@ -24,7 +24,7 @@ export class AppointmentMembershipsController {
   @ResponseContract(AppointmentPageDto)
   async appointments(
     @CurrentUser() identity: AuthenticatedUser,
-    @Query() query: PaginationQueryDto,
+    @Query() query: AppointmentMembershipQueryDto,
   ) {
     const page = await this.application.appointments(identity.id, query);
     return {
