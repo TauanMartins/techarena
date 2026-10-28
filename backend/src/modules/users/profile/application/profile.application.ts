@@ -29,6 +29,15 @@ export class ProfileApplication implements ProfileAccess {
     return this.repository.update(id, normalized);
   }
 
+  async ensureAdmin(id: string): Promise<void> {
+    const profile = await this.profile(id);
+    if (profile.permission !== 'admin')
+      throw new UserError(
+        'forbidden',
+        'ADMIN_REQUIRED',
+        'Administrator access is required',
+      );
+  }
   async ensureExists(id: string): Promise<void> {
     if (!(await this.repository.exists(id)))
       throw new UserError(

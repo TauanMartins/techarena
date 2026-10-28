@@ -2,11 +2,15 @@ import {
   Check,
   Column,
   Entity,
+  ForeignKey,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import type { Arena } from './arena.entity.js';
+import type { Sport } from './sport.entity.js';
+import type { Schedule } from './schedule.entity.js';
 import type { User } from './users.entity.js';
 import type { Point } from 'geojson';
 
@@ -16,7 +20,56 @@ import type { Point } from 'geojson';
   "status IN ('scheduled', 'in_progress', 'finished', 'canceled')",
 )
 @Index('appointment_organizer_id_index', ['organizerId'])
+@ForeignKey('SportArena', ['sportId', 'arenaId'], ['sportId', 'arenaId'], {
+  name: 'appointment_sport_arena_fkey',
+})
+@Index('appointment_active_arena_slot_unique', { synchronize: false })
+@Check(
+  'appointment_booking_fields_check',
+  '(arena_id IS NULL AND sport_id IS NULL AND schedule_id IS NULL) OR (arena_id IS NOT NULL AND sport_id IS NOT NULL AND schedule_id IS NOT NULL)',
+)
 export class Appointment {
+  @Column({
+    name: 'arena_id',
+    type: 'bigint',
+    nullable: true,
+    comment:
+      'Arena reservada; nulo em agendamentos legados sem vínculo conhecido.',
+  })
+  arenaId!: string | null;
+  @Column({
+    name: 'sport_id',
+    type: 'bigint',
+    nullable: true,
+    comment: 'Modalidade vinculada à arena reservada.',
+  })
+  sportId!: string | null;
+  @Column({
+    name: 'schedule_id',
+    type: 'bigint',
+    nullable: true,
+    comment: 'Horário de referência usado para compor scheduled_at em UTC.',
+  })
+  scheduleId!: string | null;
+  @ManyToOne('Arena', { nullable: true, onDelete: 'NO ACTION' })
+  @JoinColumn({
+    name: 'arena_id',
+    foreignKeyConstraintName: 'appointment_arena_id_fkey',
+  })
+  arena!: Arena | null;
+  @ManyToOne('Sport', { nullable: true, onDelete: 'NO ACTION' })
+  @JoinColumn({
+    name: 'sport_id',
+    foreignKeyConstraintName: 'appointment_sport_id_fkey',
+  })
+  sport!: Sport | null;
+  @ManyToOne('Schedule', { nullable: true, onDelete: 'NO ACTION' })
+  @JoinColumn({
+    name: 'schedule_id',
+    foreignKeyConstraintName: 'appointment_schedule_id_fkey',
+  })
+  schedule!: Schedule | null;
+
   @PrimaryGeneratedColumn('identity', {
     name: 'id',
     type: 'bigint',
@@ -53,7 +106,7 @@ export class Appointment {
 
   @Column({
     name: 'scheduled_at',
-    type: 'timestamp',
+    type: 'timestamptz',
     nullable: false,
     comment: 'Data e hora agendadas de appointment.',
   })

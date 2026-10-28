@@ -2,6 +2,7 @@ import { AppointmentMembershipsApplication } from './appointment-memberships.app
 import type { AppointmentMembershipsRepository } from '../domain/appointment-memberships-repository.port.js';
 const profiles = {
   ensureExists: vi.fn().mockResolvedValue(undefined),
+  ensureAdmin: vi.fn(),
   ensureAdult: vi.fn().mockResolvedValue(undefined),
 };
 it('rejects reversed date ranges before hitting the membership repository', async () => {

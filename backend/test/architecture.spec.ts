@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 
 it('keeps application/domain independent of frameworks and persistence adapters', () => {
-  const root = fileURLToPath(new URL('../src/modules/users/', import.meta.url));
+  const root = fileURLToPath(new URL('../src/modules/', import.meta.url));
   const files = readdirSync(root, { recursive: true })
     .map(String)
     .filter(

@@ -17,14 +17,12 @@ function fixture(overrides: Partial<UserProfile> = {}) {
   const repository = {
     findById: vi.fn().mockResolvedValue({ ...profile, ...overrides }),
     exists: vi.fn().mockResolvedValue(true),
-    findBirthDate: vi
-      .fn()
-      .mockResolvedValue({
-        birthDate:
-          overrides.birthDate !== undefined
-            ? overrides.birthDate
-            : profile.birthDate,
-      }),
+    findBirthDate: vi.fn().mockResolvedValue({
+      birthDate:
+        overrides.birthDate !== undefined
+          ? overrides.birthDate
+          : profile.birthDate,
+    }),
     update: vi.fn().mockResolvedValue(profile),
   };
   return {
@@ -85,4 +83,12 @@ it('checks existence without loading private profile fields', async () => {
   await expect(application.ensureExists('missing')).rejects.toMatchObject({
     code: 'PROFILE_NOT_FOUND',
   });
+});
+it('authorizes administration only from the persisted application permission', async () => {
+  const normal = fixture();
+  await expect(normal.application.ensureAdmin('user')).rejects.toMatchObject({
+    kind: 'forbidden',
+  });
+  const admin = fixture({ permission: 'admin' });
+  await expect(admin.application.ensureAdmin('user')).resolves.toBeUndefined();
 });

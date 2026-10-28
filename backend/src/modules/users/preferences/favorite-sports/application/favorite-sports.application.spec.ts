@@ -2,6 +2,7 @@ import { FavoriteSportsApplication } from './favorite-sports.application.js';
 import type { FavoriteSportsRepository } from '../domain/favorite-sports-repository.port.js';
 const profiles = {
   ensureExists: vi.fn().mockResolvedValue(undefined),
+  ensureAdmin: vi.fn(),
   ensureAdult: vi.fn(),
 };
 it.each([['1', '1'], ['1', '2', '3', '4', '5'], ['9223372036854775808']])(
@@ -22,6 +23,7 @@ it('checks profile existence through the public port before reading preferences'
   const repository = { getSports: vi.fn() };
   const missingProfile = {
     ensureExists: vi.fn().mockRejectedValue(new Error('missing')),
+    ensureAdmin: vi.fn(),
     ensureAdult: vi.fn(),
   };
   const app = new FavoriteSportsApplication(

@@ -1,9 +1,2 @@
-export class UserError extends Error {
-  constructor(
-    readonly kind: 'invalid' | 'not_found' | 'conflict',
-    readonly code: string,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+import { DomainError } from '../../../../common/domain/domain-error.js';
+export class UserError extends DomainError {}

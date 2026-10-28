@@ -17,3 +17,4 @@ export { Team } from './team.entity.js';
 export { LeagueTeam } from './league-team.entity.js';
 export { UserTeam } from './user-team.entity.js';
 export { AppointmentResult } from './appointment-result.entity.js';
+export { TeamMembershipRequest } from './team-membership-request.entity.js';

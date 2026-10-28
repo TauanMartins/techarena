@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'team', schema: 'public' })
+@Index('team_name_normalized_unique', { synchronize: false })
 export class Team {
   @PrimaryGeneratedColumn('identity', {
     name: 'id',
