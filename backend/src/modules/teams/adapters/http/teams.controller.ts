@@ -21,7 +21,7 @@ import {
   TeamDto,
   TeamExistsDto,
   TeamNameQueryDto,
-  TeamPageDto,
+  TeamCatalogPageDto,
   TeamQueryDto,
   TeamRequestQueryDto,
   UpdateTeamDto,
@@ -30,7 +30,7 @@ import {
 @Controller('team')
 export class TeamCatalogController {
   constructor(private readonly app: TeamCatalogApplication) {}
-  @Get() @ResponseContract(TeamPageDto) async list(@Query() q: TeamQueryDto) {
+  @Get() @ResponseContract(TeamCatalogPageDto) async list(@Query() q: TeamQueryDto) {
     const p = await this.app.list(q);
     return {
       ...p,

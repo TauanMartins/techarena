@@ -80,7 +80,7 @@ export class TeamDto {
 export class TeamExistsDto {
   @Expose() @IsBoolean() exists!: boolean;
 }
-export class TeamPageDto extends PageResponseDto {
+export class TeamCatalogPageDto extends PageResponseDto {
   @ApiProperty({ type: [TeamDto] })
   @Expose()
   @IsArray()

@@ -46,3 +46,24 @@ describe('migrated-api migration workflows', () => {
     }
   });
 });
+
+it('keeps team catalog and membership response schemas distinct', async () => {
+  const h = await workflowHarness();
+  try {
+    const result = await h.raw().get('/api-json').expect(200);
+    const paths = result.body.paths;
+    const schema = (path: string) =>
+      paths[path].get.responses['200'].content['application/json'].schema.$ref;
+    expect(schema('/team')).toBe('#/components/schemas/TeamCatalogPageDto');
+    expect(schema('/users/me/teams')).toBe('#/components/schemas/TeamPageDto');
+    expect(
+      result.body.components.schemas.TeamPageDto.properties.items.items.$ref,
+    ).toBe('#/components/schemas/TeamResponseDto');
+    expect(
+      result.body.components.schemas.TeamCatalogPageDto.properties.items.items
+        .$ref,
+    ).toBe('#/components/schemas/TeamDto');
+  } finally {
+    await h.app.close();
+  }
+});
