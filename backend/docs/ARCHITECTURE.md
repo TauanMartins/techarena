@@ -1,43 +1,61 @@
 # Arquitetura
 
-Os contextos ficam em `src/modules/`. O núcleo de usuários depende de tipos próprios
-e portas. NestJS, TypeORM, HTTP e Supabase aparecem nos adaptadores e na composição.
+Os contextos ficam em `src/modules/`. O núcleo depende de tipos e portas próprios;
+NestJS, TypeORM e HTTP aparecem nos adaptadores e na composição.
 
 ```text
 users/
-  domain/              modelos, regras e contrato UserRepository
-  application/         casos de uso UserApplication
-  adapters/http/       controllers, DTOs e mapeamento de erros HTTP
-  adapters/persistence/ implementação TypeORM da porta
-  users.module.ts      composição de dependências
-
-auth/
-  domain/              identidade verificada e porta AccessTokenVerifier
-  adapters/http/       Bearer guard, CurrentUser e Public
-  adapters/supabase/   implementação criptográfica por JWKS
-  auth.module.ts       composição e registro do guard global
+  users.module.ts                   composição do contexto, sem regras ou repositories
+  profile/                          perfil privado e regra de idade
+  directory/                        busca de cards públicos
+  preferences/
+    preferences.module.ts           composição das preferências
+    theme/                          tema do usuário
+    favorite-sports/                limite e substituição de favoritos
+  memberships/
+    memberships.module.ts           composição dos vínculos
+    teams/                          consulta de vínculos efetivos de equipes
+    appointments/                   consulta e admissão em agendamentos
+  shared/
+    domain/                         erro do contexto e paginação
+    http/                           DTOs comuns e convenções dos controllers
+    persistence/                    tradução de erros PostgreSQL
 ```
 
-O fluxo é controller -> caso de uso -> porta -> adaptador. O núcleo não importa
-NestJS, TypeORM, class-validator nem Supabase. DTOs HTTP são convertidos em dados
-da aplicação; modelos de persistência nunca são retornados diretamente.
+Cada subcontexto folha tem `domain/`, `application/`, `adapters/http/`,
+`adapters/persistence/` e um módulo próprio. Cada um declara uma porta de repository
+restrita às suas operações. Não há repository ou serviço único reunindo todas as
+funcionalidades de usuários. Os módulos agregadores apenas importam os módulos filhos.
 
-Regras de idade, limites de favoritos e elegibilidade de agendamento ficam no núcleo.
-O adaptador de persistência abre transações, bloqueia a linha do usuário para trocar
-favoritos e bloqueia o agendamento antes de consultar sua lotação e aplicar a política
-de admissão. Todo futuro caminho de inscrição deve respeitar o mesmo bloqueio.
-Constraints e conflitos de unicidade continuam protegendo o estado no PostgreSQL.
+Repositories ficam encapsulados no módulo que os utiliza. `ProfileModule` exporta
+somente `PROFILE_ACCESS`, uma porta de aplicação com `ensureExists` e `ensureAdult`.
+Preferências e vínculos dependem dessa porta para verificar elegibilidade; não podem
+editar perfis nem importar implementações de persistência de outro subcontexto.
+O serviço de perfil é privado ao módulo, assim como os demais serviços de aplicação.
 
-O contexto Auth expõe somente o identificador verificado. A criação de perfil pertence
-ao trigger externo de `auth.users`, que deve inserir em `public.users`. A API consulta
-e altera somente perfis existentes; não há porta ou caso de uso de provisionamento.
-Permissões de negócio são lidas do banco; claims de metadata não elevam privilégios.
+O fluxo é controller -> caso de uso -> porta -> adaptador. DTOs de entrada e saída
+ficam ao lado do controller correspondente; somente card público e paginação são
+compartilhados. Entities nunca são retornadas diretamente. O decorator `UserEndpoint`
+reúne as convenções de autenticação, erros e tags de Swagger sem mover regras de
+negócio para uma classe base ou criar controllers com herança.
 
-`src/config/` centraliza ambiente e fornece configuração por injeção ao Nest. A CLI
-usa o mesmo carregador. `src/bootstrap/configure-http.ts` configura validação, CORS e
-Swagger e é compartilhado com testes HTTP. `src/common/http/` contém somente
-mecanismos transversais de contratos de resposta e IDs de transporte.
+Regras de idade, limites de favoritos e admissão em agendamentos ficam nos respectivos
+domínios/casos de uso. O adaptador de favoritos bloqueia a linha do usuário durante a
+troca. O adaptador de agendamentos bloqueia o agendamento antes de consultar lotação
+e aplicar a política de admissão. Futuras inscrições devem respeitar o mesmo bloqueio.
+As constraints PostgreSQL continuam garantindo integridade e unicidade.
 
-`src/database/entities/` é o mapeamento da persistência existente. Os adaptadores
-escolhem as entities usadas por seus contextos. A composição global do TypeORM não
-habilita sincronização nem executa migrations durante o bootstrap da API.
+O contexto `auth/` define a identidade verificada e a porta `AccessTokenVerifier`.
+Seu adaptador Supabase usa JWKS e o adaptador HTTP implementa o guard global.
+A criação de perfil pertence ao trigger externo em `auth.users`, que insere em
+`public.users`. A API trabalha apenas com perfis existentes, sem provisionamento.
+Permissões de negócio vêm do banco, nunca de metadata editável no token.
+
+`src/config/` centraliza ambiente e configuração tipada. A CLI usa o mesmo carregador.
+`src/bootstrap/configure-http.ts` configura validação, CORS e Swagger e é compartilhado
+com os testes HTTP. `src/database/entities/` representa o esquema existente; migrations
+continuam explícitas e não são executadas ao iniciar a API.
+
+O teste de arquitetura impede imports de frameworks e adaptadores nos diretórios de
+domínio/aplicação. Os testes HTTP com PostgreSQL verificam a composição real dos módulos,
+a autorização, os contratos e a concorrência.
