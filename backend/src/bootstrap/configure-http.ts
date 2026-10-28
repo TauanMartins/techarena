@@ -1,0 +1,27 @@
+import type { INestApplication } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { createValidationPipe } from '../common/validation.js';
+import type { AppConfiguration } from '../config/environment.js';
+
+/** Share the real HTTP pipeline with end-to-end tests. */
+export function configureHttp(
+  app: INestApplication,
+  configuration: AppConfiguration,
+): void {
+  app.useGlobalPipes(createValidationPipe());
+  app.enableCors({
+    origin: configuration.cors.origins,
+    credentials: false,
+    allowedHeaders: ['Authorization', 'Content-Type'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  });
+  const config = new DocumentBuilder()
+    .setTitle('TechArena API')
+    .setDescription('API documentation for the TechArena backend.')
+    .addBearerAuth()
+    .setVersion('1.0.0')
+    .build();
+  SwaggerModule.setup('api', app, () =>
+    SwaggerModule.createDocument(app, config),
+  );
+}

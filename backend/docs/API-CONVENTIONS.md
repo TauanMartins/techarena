@@ -23,7 +23,7 @@ export class CreateTeamDto {
 O plugin `@nestjs/swagger` analisa apenas arquivos `.dto.ts`, reaproveita validações
 e comentários e infere tipos e obrigatoriedade. Para variações, importe `PartialType`,
 `PickType` e `OmitType` de `@nestjs/swagger`. Declare respostas concretas por rota
-com `@ApiOkResponse`/`@ApiCreatedResponse`. Descreva autenticação, erros de negócio,
+com `@ResponseContract(Dto, status)`. Descreva autenticação, erros de negócio,
 paginação e respostas genéricas explicitamente: esses contratos não são inferidos
 integralmente. Validadores nos DTOs de saída verificam o contrato em tempo de execução.
 
