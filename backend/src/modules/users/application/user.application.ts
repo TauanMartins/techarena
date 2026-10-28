@@ -1,11 +1,6 @@
 import type { UserRepository } from '../domain/user-repository.port.js';
 import { UserError, validateBirthDate } from '../domain/user.js';
-import type {
-  PageRequest,
-  ProfileChanges,
-  ProfileIdentity,
-  Theme,
-} from '../domain/user.js';
+import type { PageRequest, ProfileChanges, Theme } from '../domain/user.js';
 
 /** Use cases depend only on domain types and ports, never NestJS or TypeORM. */
 export class UserApplication {
@@ -14,30 +9,13 @@ export class UserApplication {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  provision(identity: ProfileIdentity) {
-    if (
-      identity.email &&
-      (identity.email.length > 150 ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identity.email))
-    ) {
-      throw new UserError(
-        'invalid',
-        'INVALID_IDENTITY_EMAIL',
-        'The identity email cannot be stored in this schema',
-      );
-    }
-    return this.repository.provision({
-      ...identity,
-      displayName: identity.displayName?.trim().slice(0, 150) || null,
-    });
-  }
   async profile(id: string) {
     const profile = await this.repository.findById(id);
     if (!profile)
       throw new UserError(
         'not_found',
         'PROFILE_NOT_FOUND',
-        'Initialize your profile with POST /users/me',
+        'The authenticated user profile is not available',
       );
     return profile;
   }

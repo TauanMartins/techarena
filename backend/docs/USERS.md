@@ -7,7 +7,6 @@ para escolher de quem alterar o perfil, as preferências ou os vínculos.
 | Rota atual | Função |
 |---|---|
 | `GET /users?search=...&page=1&limit=20` | Busca paginada de cards públicos; sem e-mail, nascimento ou permissão |
-| `POST /users/me` | Inicializa perfil, idempotente, retorna 200; corpo vazio `{}` |
 | `GET /users/me` | Perfil privado e permissão de aplicação somente para leitura |
 | `PATCH /users/me` | Atualiza nome, username, nascimento, gênero e imagem |
 | `GET /users/me/theme` | Lê tema; padrão system |
@@ -22,8 +21,8 @@ para escolher de quem alterar o perfil, as preferências ou os vínculos.
 
 - O login de `POST /users` e `POST /users/admin` fica no frontend com Supabase Auth.
   O backend não autentica ID tokens do Google nem concede administração por rota.
-  `POST /users/me` substitui somente a inicialização do perfil. O cliente não fornece
-  ID, e-mail ou permissão. A permissão inicial é user quando o seed existe, nunca admin.
+  O perfil é criado pelo trigger externo de `auth.users` em `public.users`. A API
+  não oferece criação de perfil e não atribui permissão automaticamente.
 - `GET /users` preserva a busca por username e também aceita nome, com mínimo de dois
   caracteres, máximo de 50 itens por página e parâmetros de busca vinculados ao SQL.
 - `GET /users/team` corresponde à lista atual de equipes. O esquema atual `user_team`
@@ -44,7 +43,7 @@ Não foram criados aliases inseguros para as rotas antigas. Listas usam envelope
 
 ## Regras
 
-O perfil inicia sem nascimento ou username inventados. Um PATCH vazio é inválido.
+O backend consulta o perfil existente e não inventa nascimento ou username. Um PATCH vazio é inválido.
 Nome não pode ficar vazio, username usa letras minúsculas/dígitos/underscore (3–45),
 e a imagem aceita URL HTTPS de até 150 caracteres, conforme o banco atual. Dados
 pessoais podem permanecer nulos enquanto o cadastro estiver incompleto. A imagem
@@ -63,3 +62,22 @@ Erros de validação/regra retornam 400, identidade inválida 401, perfil/refer�
 inexistente 404, conflitos 409 e indisponibilidade de autenticação 503. DTOs de saída
 são projetados e validados antes da serialização; falha de contrato é 500 sem dados
 internos. Os limites de tamanho e nulabilidade das tabelas continuam aplicáveis.
+
+## Perfil criado pelo Supabase Auth
+
+Após o login, use diretamente `GET /users/me`. O UUID verificado no token é usado
+para procurar `public.users.id`. Um token válido sem registro correspondente recebe
+404 com código `PROFILE_NOT_FOUND`, sem criação automática ou instrução de POST.
+`POST /users/me` não existe nem aparece no Swagger.
+
+O trigger externo deve inserir em **`public.users`**, nome definido pelas migrations
+e pela entity atual. O SQL antigo com `public.user` aponta para outra tabela. Como o
+trigger apresentado não define `permission_id`, o perfil pode ter permissão nula;
+nenhuma permissão é inferida do token ou atribuída automaticamente pela API.
+
+O trigger só modifica o banco onde está instalado. Para usá-lo como fonte única,
+`DATABASE_URL` precisa apontar para esse mesmo banco. Se a API usa o PostgreSQL local
+do Compose enquanto Auth está na nuvem, não há sincronização automática de perfis.
+Nesse cenário é necessário provisionamento controlado nesse banco ou uma integração
+explícita de sincronização; esta alteração não instala nenhum desses mecanismos.
+Os testes de integração simulam o perfil já criado usando fixtures no banco isolado.

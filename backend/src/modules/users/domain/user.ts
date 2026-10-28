@@ -39,11 +39,6 @@ export interface AppointmentSummary {
   status: string;
   holder: boolean;
 }
-export interface ProfileIdentity {
-  id: string;
-  email: string | null;
-  displayName: string | null;
-}
 export type Theme = 'light' | 'dark' | 'system';
 
 export class UserError extends Error {

@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Get,
-  HttpCode,
   Param,
   Patch,
   Post,
@@ -27,7 +26,6 @@ import { UserApplication } from '../../application/user.application.js';
 import { UserErrorFilter } from './user-error.filter.js';
 import {
   AppointmentIdDto,
-  InitializeProfileDto,
   JoinAppointmentDto,
   PaginationQueryDto,
   ReplaceSportsDto,
@@ -72,20 +70,6 @@ export class UsersController {
   @ResponseContract(UserPageDto)
   search(@Query() query: SearchUsersQueryDto) {
     return this.users.search(query.search, query);
-  }
-
-  @Post('me')
-  @HttpCode(200)
-  @ApiOperation({
-    summary: 'Initialize the authenticated profile idempotently',
-  })
-  @ResponseContract(UserProfileDto)
-  async provision(
-    @CurrentUser() identity: AuthenticatedUser,
-    @Body() _body: InitializeProfileDto,
-  ) {
-    const profile = await this.users.provision(identity);
-    return { ...profile, createdAt: profile.createdAt.toISOString() };
   }
 
   @Get('me')

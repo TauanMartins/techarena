@@ -3,7 +3,6 @@ import type {
   Page,
   PageRequest,
   ProfileChanges,
-  ProfileIdentity,
   SportSummary,
   TeamSummary,
   Theme,
@@ -12,7 +11,6 @@ import type {
 } from './user.js';
 export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 export interface UserRepository {
-  provision(identity: ProfileIdentity): Promise<UserProfile>;
   findById(id: string): Promise<UserProfile | null>;
   search(search: string, pagination: PageRequest): Promise<Page<UserCard>>;
   update(id: string, changes: ProfileChanges): Promise<UserProfile>;

@@ -28,9 +28,9 @@ favoritos e bloqueia o agendamento antes de consultar sua lotação e aplicar a 
 de admissão. Todo futuro caminho de inscrição deve respeitar o mesmo bloqueio.
 Constraints e conflitos de unicidade continuam protegendo o estado no PostgreSQL.
 
-O contexto Auth expõe somente identidade verificada. Não cria perfil implicitamente
-em cada requisição. O caso de uso de inicialização de perfil é idempotente e preserva
-perfis existentes, inclusive aqueles provisionados por uma integração externa.
+O contexto Auth expõe somente o identificador verificado. A criação de perfil pertence
+ao trigger externo de `auth.users`, que deve inserir em `public.users`. A API consulta
+e altera somente perfis existentes; não há porta ou caso de uso de provisionamento.
 Permissões de negócio são lidas do banco; claims de metadata não elevam privilégios.
 
 `src/config/` centraliza ambiente e fornece configuração por injeção ao Nest. A CLI

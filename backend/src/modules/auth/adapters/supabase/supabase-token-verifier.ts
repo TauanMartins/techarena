@@ -45,19 +45,7 @@ export class SupabaseTokenVerifier implements AccessTokenVerifier {
         payload.is_anonymous === true
       )
         throw new InvalidAccessToken();
-      const metadata = payload.user_metadata;
-      const displayName =
-        metadata &&
-        typeof metadata === 'object' &&
-        'full_name' in metadata &&
-        typeof metadata.full_name === 'string'
-          ? metadata.full_name
-          : null;
-      return {
-        id: payload.sub,
-        email: typeof payload.email === 'string' ? payload.email : null,
-        displayName,
-      };
+      return { id: payload.sub };
     } catch (error) {
       if (error instanceof InvalidAccessToken) throw error;
       if (

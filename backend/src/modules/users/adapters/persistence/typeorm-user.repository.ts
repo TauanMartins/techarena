@@ -2,7 +2,6 @@ import { DataSource, In, QueryFailedError } from 'typeorm';
 import type { EntityManager } from 'typeorm';
 import {
   Appointment,
-  Permission,
   Preference,
   Sport,
   User,
@@ -16,7 +15,6 @@ import { assertAppointmentAdmission, UserError } from '../../domain/user.js';
 import type {
   PageRequest,
   ProfileChanges,
-  ProfileIdentity,
   Theme,
   UserProfile,
 } from '../../domain/user.js';
@@ -62,40 +60,6 @@ export class TypeormUserRepository implements UserRepository {
       }
       throw error;
     }
-  }
-  async provision(identity: ProfileIdentity): Promise<UserProfile> {
-    return this.write(() =>
-      this.dataSource.transaction(async (manager) => {
-        const permission = await manager
-          .getRepository(Permission)
-          .findOneBy({ slug: 'user' });
-        await manager
-          .getRepository(User)
-          .createQueryBuilder()
-          .insert()
-          .values({
-            id: identity.id,
-            email: identity.email,
-            name: identity.displayName,
-            permissionId: permission?.id ?? null,
-          })
-          .orIgnore()
-          .execute();
-        const row = await manager
-          .getRepository(User)
-          .findOne({
-            where: { id: identity.id },
-            relations: { permission: true },
-          });
-        if (!row)
-          throw new UserError(
-            'conflict',
-            'PROFILE_CONFLICT',
-            'The identity email is already associated with another profile',
-          );
-        return profile(row);
-      }),
-    );
   }
   async findById(id: string) {
     const row = await this.dataSource

@@ -1,7 +1,5 @@
 export interface AuthenticatedUser {
   readonly id: string;
-  readonly email: string | null;
-  readonly displayName: string | null;
 }
 
 export const ACCESS_TOKEN_VERIFIER = Symbol('ACCESS_TOKEN_VERIFIER');

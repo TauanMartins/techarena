@@ -17,7 +17,6 @@ const profile: UserProfile = {
 function fixture(overrides: Partial<UserProfile> = {}) {
   const repository = {
     findById: vi.fn().mockResolvedValue({ ...profile, ...overrides }),
-    provision: vi.fn().mockResolvedValue(profile),
     update: vi.fn().mockResolvedValue(profile),
     replaceSports: vi.fn().mockResolvedValue([]),
     setTheme: vi.fn().mockResolvedValue(undefined),
@@ -31,18 +30,13 @@ function fixture(overrides: Partial<UserProfile> = {}) {
     ),
   };
 }
-it('never accepts a fabricated age during profile initialization', async () => {
+it('reports a missing externally provisioned profile without creating one', async () => {
   const { application, repository } = fixture();
-  await application.provision({
-    id: 'verified',
-    email: 'valid@example.test',
-    displayName: '  Alice  ',
+  repository.findById.mockResolvedValue(null);
+  await expect(application.profile('user')).rejects.toMatchObject({
+    code: 'PROFILE_NOT_FOUND',
   });
-  expect(repository.provision).toHaveBeenCalledWith({
-    id: 'verified',
-    email: 'valid@example.test',
-    displayName: 'Alice',
-  });
+  expect(repository.update).not.toHaveBeenCalled();
 });
 it('rejects an empty profile patch before persistence', async () => {
   const { application, repository } = fixture();

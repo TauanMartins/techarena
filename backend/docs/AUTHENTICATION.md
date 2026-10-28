@@ -84,3 +84,11 @@ Um guard global protege rotas por padrão; somente handlers com `@Public()` são
 públicos. `/health` é público e verifica PostgreSQL, sem revelar configurações.
 O Swagger permite informar o Bearer em Authorize. Roles de negócio e propriedade
 são avaliadas pelo backend, nunca por `user_metadata` ou um userId enviado no corpo.
+
+## Consultar o perfil após autorizar no Swagger
+
+Cole o access token em **Authorize** (sem o prefixo Bearer) e execute `GET /users/me`.
+O perfil deve ter sido criado pelo trigger de `auth.users` em `public.users` no banco
+usado pela API. Não existe `POST /users/me`. Token inválido retorna 401; token válido
+sem perfil retorna 404 `PROFILE_NOT_FOUND`. Um trigger no Supabase não preenche um
+PostgreSQL local separado: confira o destino de `DATABASE_URL`.

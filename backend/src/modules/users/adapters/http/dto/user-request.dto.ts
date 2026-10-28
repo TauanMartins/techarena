@@ -20,8 +20,6 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBigintId } from '../../../../../common/http/bigint-id.validator.js';
 
-export class InitializeProfileDto {}
-
 export class PaginationQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1, maximum: 10000 })
   @Type(() => Number)

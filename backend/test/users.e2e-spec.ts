@@ -10,7 +10,6 @@ import { ACCESS_TOKEN_VERIFIER } from '../src/modules/auth/domain/access-token-v
 import { SupabaseTokenVerifier } from '../src/modules/auth/adapters/supabase/supabase-token-verifier.js';
 import {
   Appointment,
-  Permission,
   Team,
   User,
   UserAppointment,
@@ -78,15 +77,20 @@ describe('Users HTTP and PostgreSQL integration', () => {
   });
 
   const client = () => request(app.getHttpServer());
-  async function provision(bearer = aliceToken) {
-    return client()
-      .post('/users/me')
-      .auth(bearer, { type: 'bearer' })
-      .send({})
-      .expect(200);
+  // Simulates profiles already created by the external auth.users trigger.
+  async function seedProfile(bearer = aliceToken) {
+    const id = bearer === bobToken ? bob : alice;
+    await db.getRepository(User).upsert(
+      {
+        id,
+        name: id === alice ? 'Alice' : 'Bob',
+        email: `${id}@example.test`,
+      },
+      ['id'],
+    );
   }
   async function adult(bearer = aliceToken) {
-    await provision(bearer);
+    await seedProfile(bearer);
     return client()
       .patch('/users/me')
       .auth(bearer, { type: 'bearer' })
@@ -107,32 +111,34 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .auth(bobToken, { type: 'bearer' })
       .expect(404);
   });
-  it('initializes a profile only from verified identity, idempotently and without admin privileges', async () => {
-    const result = await provision();
+  it('reads externally provisioned profiles and has no creation route', async () => {
+    await seedProfile();
+    const result = await client()
+      .get('/users/me')
+      .auth(aliceToken, { type: 'bearer' })
+      .expect(200);
     expect(result.body).toMatchObject({
       id: alice,
       name: 'Alice',
       birthDate: null,
-      permission: 'user',
+      permission: null,
     });
     expect(result.body).not.toHaveProperty('permissionId');
-    const second = await provision();
-    expect(second.body.id).toBe(alice);
-    expect(await db.getRepository(User).count()).toBe(1);
-    const row = await db.getRepository(User).findOneByOrFail({ id: alice });
-    const permission = await db
-      .getRepository(Permission)
-      .findOneByOrFail({ id: row.permissionId! });
-    expect(permission.slug).toBe('user');
     await client()
       .post('/users/me')
       .auth(aliceToken, { type: 'bearer' })
-      .send({ id: bob, permissionId: '2' })
-      .expect(400);
+      .send({})
+      .expect(404);
+    expect(await db.getRepository(User).count()).toBe(1);
+    await client()
+      .get('/users/me')
+      .auth(bobToken, { type: 'bearer' })
+      .expect(404);
+    expect(await db.getRepository(User).count()).toBe(1);
   });
   it('updates only the caller and prevents mass assignment, underage dates and malformed IDs', async () => {
-    await provision();
-    await provision(bobToken);
+    await seedProfile();
+    await seedProfile(bobToken);
     await client()
       .patch('/users/me')
       .auth(aliceToken, { type: 'bearer' })
@@ -184,7 +190,7 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .expect(400);
   });
   it('persists a theme without accepting another user identity', async () => {
-    await provision();
+    await seedProfile();
     await client()
       .get('/users/me/theme')
       .auth(aliceToken, { type: 'bearer' })
@@ -210,7 +216,7 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .expect(400);
   });
   it('atomically replaces favorites and preserves them after validation failures', async () => {
-    await provision();
+    await seedProfile();
     await client()
       .put('/users/me/sports')
       .auth(aliceToken, { type: 'bearer' })
@@ -264,8 +270,8 @@ describe('Users HTTP and PostgreSQL integration', () => {
       .expect(200, { items: [] });
   });
   it('lists only the authenticated user team memberships', async () => {
-    await provision();
-    await provision(bobToken);
+    await seedProfile();
+    await seedProfile(bobToken);
     const first = await db.getRepository(Team).save({ name: 'Alice team' });
     const second = await db.getRepository(Team).save({ name: 'Bob team' });
     await db.getRepository(UserTeam).insert([
@@ -328,7 +334,7 @@ describe('Users HTTP and PostgreSQL integration', () => {
     );
   });
   it('rejects closed appointments and incomplete profiles', async () => {
-    await provision();
+    await seedProfile();
     const appointment = await db.getRepository(Appointment).save({
       organizerId: alice,
       title: 'Closed',
@@ -354,6 +360,7 @@ describe('Users HTTP and PostgreSQL integration', () => {
   });
   it('serves Bearer security and DTO contracts through OpenAPI and handles browser preflight', async () => {
     const response = await client().get('/api-json').expect(200);
+    expect(response.body.paths['/users/me'].post).toBeUndefined();
     expect(response.body.paths['/users/me'].get.security).toEqual([
       { bearer: [] },
     ]);

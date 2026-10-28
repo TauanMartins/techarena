@@ -20,7 +20,6 @@ async function token(
 ) {
   return new SignJWT({
     role: 'authenticated',
-    email: 'user@example.test',
     ...overrides,
   })
     .setProtectedHeader({ alg: 'ES256', kid: 'test-key' })
@@ -35,7 +34,6 @@ async function token(
 it('verifies signatures and obtains identity from trusted claims', async () => {
   await expect(verifier.verify(await token())).resolves.toMatchObject({
     id: subject,
-    email: 'user@example.test',
   });
 });
 it('rejects forged signatures', async () => {
