@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             // A chave primária agora é o UUID vindo do Supabase
             $table->uuid('id')->primary()->comment('Chave primária vinculada ao auth.users do Supabase.');
             
-            $table->string('name', 150)->comment('Nome do usuário.');
-            $table->string('email', 150)->unique()->comment('E-mail do usuário sincronizado com o Google.');
+            $table->string('name', 150)->nullable()->comment('Nome exibido do perfil; preenchido pelo trigger de auth.users quando disponível.');
+            $table->string('email', 150)->nullable()->unique()->comment('E-mail espelhado de auth.users pelo trigger do Supabase; auth.users é a fonte de identidade.');
             
             // Campos de negócio do seu app (podem ser preenchidos depois do login)
             $table->string('username', 45)->unique()->nullable()->comment('Nome de usuário para acesso.');
@@ -21,11 +21,11 @@ return new class extends Migration
             $table->char('gender', 1)->nullable()->comment('Gênero do usuário.');
             $table->string('image', 150)->nullable()->comment('Foto de perfil (URL do Google ou Storage).');
             
-            $table->foreignId('permission_id')
-                ->default(1) // Permissão de usuário comum por padrão
-                ->constrained('permission');
+            $table->foreignId('permission_id')->nullable()
+                ->constrained('permission')->nullOnDelete()
+                ->comment('Papel de autorização opcional da aplicação; não é preenchido pelo trigger de autenticação.');
 
-            $table->dateTime('created_at')->useCurrent();
+            $table->dateTime('created_at')->useCurrent()->comment('Data e hora de criação de user.');
 
             // Configura a chave estrangeira apontando para o schema interno do Supabase
             $table->foreign('id')
@@ -37,6 +37,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('user');
+        Schema::dropIfExists('users');
     }
 };

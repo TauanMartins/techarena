@@ -14,11 +14,6 @@ return new class extends Migration
             $table->text('description')->nullable()->comment('Descrição da equipe.');
             $table->string('image')->nullable()->comment('URL da imagem da equipe.');
             $table->dateTime('created_at')->useCurrent()->comment('Data e hora de criação do registro.');
-            $table->foreignId('chat_id')
-                ->unique()
-                ->constrained('chat')
-                ->cascadeOnDelete()
-                ->comment('Referência exclusiva ao chat da equipe.');
         });
     }
 

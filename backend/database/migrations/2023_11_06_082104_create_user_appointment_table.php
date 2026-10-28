@@ -14,7 +14,7 @@ return new class extends Migration
                 ->cascadeOnDelete()
                 ->comment('ID do compromisso.');
             $table->foreignUuid('user_id')
-                ->constrained('user')
+                ->constrained('users')
                 ->cascadeOnDelete()
                 ->comment('ID do usuário participante.');
             $table->boolean('holder')->default(true)->comment('Indica se o participante vai jogar como titular (true) ou reserva (false).');

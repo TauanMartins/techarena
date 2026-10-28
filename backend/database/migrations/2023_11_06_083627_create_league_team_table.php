@@ -11,10 +11,10 @@ return new class extends Migration
         Schema::create('league_team', function (Blueprint $table) {
             $table->foreignId('team_id')
                 ->constrained('team')
-                ->cascadeOnDelete();
+                ->cascadeOnDelete()->comment('Referência a identificador do time relacionada à tabela league_team.');
             $table->foreignId('league_id')
                 ->constrained('league')
-                ->cascadeOnDelete();
+                ->cascadeOnDelete()->comment('Referência a league id relacionada à tabela league_team.');
 
             $table->primary(['team_id', 'league_id']);
         });

@@ -20,7 +20,7 @@ class AppointmentRepository implements Base
             $currentDateTime = new DateTime();
             $currentDateTime = $currentDateTime->format('Y-m-d H:i:s');
 
-            $preferedSports = DB::table('prefered_sports', 'ps')
+            $preferredSports = DB::table('user_sport', 'ps')
                 ->select('s.id')
                 ->join('sport as s', 'ps.sport_id', '=', 's.id')
                 ->where('ps.user_id', '=', $userId)
@@ -28,10 +28,10 @@ class AppointmentRepository implements Base
                 ->toArray();
 
             $preferenceScore = "";
-            if (!empty($preferedSports)) {
+            if (!empty($preferredSports)) {
                 $preferenceScore = ", CASE s.id ";
-                foreach ($preferedSports as $index => $sportId) {
-                    $preferenceScore .= "WHEN $sportId THEN " . (count($preferedSports) - $index) . " ";
+                foreach ($preferredSports as $index => $sportId) {
+                    $preferenceScore .= "WHEN $sportId THEN " . (count($preferredSports) - $index) . " ";
                 }
                 $preferenceScore .= "ELSE 0 END AS preferenceScore";
             }
@@ -67,7 +67,7 @@ class AppointmentRepository implements Base
                 ->join('user as u', 'u.id', '=', 'ap.organizer_id')
                 ->whereRaw("CONCAT(ap.date, ' ', sc.horary)::timestamp > ?", [$currentDateTime]);
 
-            if (!empty($preferedSports)) {
+            if (!empty($preferredSports)) {
                 $appointments = $appointments->orderByRaw('preferenceScore DESC');
             }
 
@@ -92,7 +92,7 @@ class AppointmentRepository implements Base
             $currentDateTime = new DateTime();
             $currentDateTime = $currentDateTime->format('Y-m-d H:i:s');
 
-            $preferedSports = DB::table('prefered_sports', 'ps')
+            $preferredSports = DB::table('user_sport', 'ps')
                 ->select('s.id')
                 ->join('sport as s', 'ps.sport_id', '=', 's.id')
                 ->where('ps.user_id', '=', $userId)
@@ -100,10 +100,10 @@ class AppointmentRepository implements Base
                 ->toArray();
 
             $preferenceScore = "";
-            if (!empty($preferedSports)) {
+            if (!empty($preferredSports)) {
                 $preferenceScore = ", CASE s.id ";
-                foreach ($preferedSports as $index => $sportId) {
-                    $preferenceScore .= "WHEN $sportId THEN " . (count($preferedSports) - $index) . " ";
+                foreach ($preferredSports as $index => $sportId) {
+                    $preferenceScore .= "WHEN $sportId THEN " . (count($preferredSports) - $index) . " ";
                 }
                 $preferenceScore .= "ELSE 0 END AS preferenceScore";
             }
@@ -140,7 +140,7 @@ class AppointmentRepository implements Base
                 ->join('user_appointment as ua', 'ua.appointment_id', '=', 'ap.id')
                 ->where('ua.user_id', '=', $userId);
 
-            if (!empty($preferedSports)) {
+            if (!empty($preferredSports)) {
                 $appointments = $appointments->orderByRaw('preferenceScore DESC');
             }
 

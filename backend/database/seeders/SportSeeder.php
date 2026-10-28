@@ -23,5 +23,8 @@ class SportSeeder extends Seeder
             ['id' => 11, 'name' => 'Vôlei de Praia', 'default_value_player_numbers' => 2],
             ['id' => 12, 'name' => 'Futevôlei',      'default_value_player_numbers' => 2],
         ]);
+
+        // Mantém a sequence PostgreSQL alinhada após inserir IDs explícitos.
+        DB::statement("SELECT setval(pg_get_serial_sequence('sport', 'id'), COALESCE((SELECT MAX(id) FROM sport), 1), EXISTS (SELECT 1 FROM sport))");
     }
 }

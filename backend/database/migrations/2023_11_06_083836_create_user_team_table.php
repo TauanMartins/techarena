@@ -9,14 +9,15 @@ return new class extends Migration
     public function up(): void
 {
     Schema::create('user_team', function (Blueprint $table) {
-        $table->id();
-        $table->foreignUuid('user_id')->constrained('user')->cascadeOnDelete();
-        $table->foreignId('team_id')->constrained('team')->cascadeOnDelete(); // Mantenha o ID do team conforme sua estrutura
+        $table->id()->comment('Identificador único do registro da tabela user_team.');
+        $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete()->comment('Referência a identificador do usuário relacionada à tabela user_team.');
+        $table->foreignId('team_id')->constrained('team')->cascadeOnDelete()->comment('Referência a identificador do time relacionada à tabela user_team.'); // Mantenha o ID do team conforme sua estrutura
         
         // Define se é membro comum ou o capitão/admin do time
         $table->string('role', 20)->default('member')->comment('captain, member');
         
-        $table->timestamps();
+        $table->timestamp('created_at')->nullable()->comment('Data e hora de criação do registro.');
+            $table->timestamp('updated_at')->nullable()->comment('Data e hora da última atualização do registro.');
 
         $table->unique(['user_id', 'team_id']);
     });

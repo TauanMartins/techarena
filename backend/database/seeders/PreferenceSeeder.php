@@ -16,5 +16,8 @@ class PreferenceSeeder extends Seeder
                 'default_value' => null,
             ],
         ]);
+
+        // Mantém a sequence PostgreSQL alinhada após inserir IDs explícitos.
+        DB::statement("SELECT setval(pg_get_serial_sequence('preference', 'id'), COALESCE((SELECT MAX(id) FROM preference), 1), EXISTS (SELECT 1 FROM preference))");
     }
 }

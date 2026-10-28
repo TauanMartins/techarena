@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('user_preference', function (Blueprint $table) {
             $table->foreignUuid('user_id')
-                ->constrained('user')
+                ->constrained('users')
                 ->cascadeOnDelete()
                 ->comment('Referência ao ID do usuário.');
             $table->foreignId('preference_id')

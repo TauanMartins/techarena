@@ -299,5 +299,8 @@ class ArenaSeeder extends Seeder
                 'is_league_only' => false,
             ],
         ]);
+
+        // Mantém a sequence PostgreSQL alinhada após inserir IDs explícitos.
+        DB::statement("SELECT setval(pg_get_serial_sequence('arena', 'id'), COALESCE((SELECT MAX(id) FROM arena), 1), EXISTS (SELECT 1 FROM arena))");
     }
 }

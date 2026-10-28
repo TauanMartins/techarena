@@ -14,5 +14,8 @@ class PermissionSeeder extends Seeder
             ['id' => 2, 'symbol' => 'A', 'slug' => 'admin'],
             ['id' => 3, 'symbol' => 'G', 'slug' => 'guest'],
         ]);
+
+        // Mantém a sequence PostgreSQL alinhada após inserir IDs explícitos.
+        DB::statement("SELECT setval(pg_get_serial_sequence('permission', 'id'), COALESCE((SELECT MAX(id) FROM permission), 1), EXISTS (SELECT 1 FROM permission))");
     }
 }

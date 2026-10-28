@@ -46,5 +46,8 @@ class MaterialSeeder extends Seeder
             ['id' => 34, 'description' => 'Postes de futevôlei'],
             ['id' => 35, 'description' => 'Areia para futevôlei'],
         ]);
+
+        // Mantém a sequence PostgreSQL alinhada após inserir IDs explícitos.
+        DB::statement("SELECT setval(pg_get_serial_sequence('material', 'id'), COALESCE((SELECT MAX(id) FROM material), 1), EXISTS (SELECT 1 FROM material))");
     }
 }

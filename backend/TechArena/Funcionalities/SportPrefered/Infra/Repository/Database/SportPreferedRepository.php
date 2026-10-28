@@ -15,13 +15,13 @@ class SportPreferedRepository implements Base
     public function selectAll(User $user): array
     {
         try {
-            $prefered_sports = DB::table('prefered_sports', 'ps')
+            $user_sport = DB::table('user_sport', 'ps')
                 ->select('s.*')
                 ->join('sport as s', 'ps.sport_id', '=', 's.id')
                 ->where('ps.user_id', '=', $user->getId())
                 ->get()
                 ->toArray();
-            return $prefered_sports;
+            return $user_sport;
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
@@ -29,7 +29,7 @@ class SportPreferedRepository implements Base
     public function create(SportPrefered $sportPrefered): void
     {
         try {
-            DB::table('prefered_sports')->insert($sportPrefered->toArray());
+            DB::table('user_sport')->insert($sportPrefered->toArray());
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
@@ -37,7 +37,7 @@ class SportPreferedRepository implements Base
     public function update(SportPrefered $sportPrefered): void
     {
         try {
-            DB::table('prefered_sports')->get()->toArray();
+            DB::table('user_sport')->get()->toArray();
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
@@ -45,7 +45,7 @@ class SportPreferedRepository implements Base
     public function removeAll(User $user): void
     {
         try {
-            DB::table('prefered_sports')->where('user_id', '=', $user->getId())->delete();
+            DB::table('user_sport')->where('user_id', '=', $user->getId())->delete();
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
         }
@@ -53,7 +53,7 @@ class SportPreferedRepository implements Base
     public function allowed(User $user): bool
     {
         try {
-            $result = DB::table('prefered_sports')
+            $result = DB::table('user_sport')
                 ->where('user_id', '=', $user->getId())
                 ->count('*');
 

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('prefered_sports', function (Blueprint $table) {
             $table->foreignUuid('user_id')
-                ->constrained('user')
+                ->constrained('users')
                 ->cascadeOnDelete()
                 ->comment('ID do usuário.');
             $table->foreignId('sport_id')
