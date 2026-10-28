@@ -10,6 +10,7 @@ import { ResponseValidationInterceptor } from './common/http/response-validation
 import { SportsModule } from './modules/sports/sports.module.js';
 import { ArenasModule } from './modules/arenas/arenas.module.js';
 import { AppointmentsModule } from './modules/appointments/appointments.module.js';
+import { TeamsModule } from './modules/teams/teams.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -22,6 +23,7 @@ import { HealthModule } from './health/health.module.js';
     SportsModule,
     ArenasModule,
     AppointmentsModule,
+    TeamsModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
