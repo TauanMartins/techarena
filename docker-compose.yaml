@@ -1,32 +1,15 @@
 services:
   backend:
     build:
-      context: ./backend/
-      dockerfile: .devops/php/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: techarena_backend
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "3000:3000"
     volumes:
       - ./backend:/app
-      - /app/vendor
-    env_file: 
-      - ./backend/.env
-    depends_on:
-      - postgres
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: techarena_postgres
-    restart: unless-stopped
-    ports:
-      - "5432:5432"
+      - /app/node_modules
     environment:
-      POSTGRES_DB: techarena
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  pgdata:
+      NODE_ENV: development
+      PORT: 3000
