@@ -1,0 +1,1123 @@
+{
+  "permission": [
+    {
+      "id": "1",
+      "symbol": "U",
+      "slug": "user"
+    },
+    {
+      "id": "2",
+      "symbol": "A",
+      "slug": "admin"
+    },
+    {
+      "id": "3",
+      "symbol": "G",
+      "slug": "guest"
+    }
+  ],
+  "preference": [
+    {
+      "id": "1",
+      "descPreference": "prefered_theme",
+      "defaultValue": null
+    }
+  ],
+  "sport": [
+    {
+      "id": "1",
+      "name": "Vôlei",
+      "defaultValuePlayerNumbers": 6
+    },
+    {
+      "id": "2",
+      "name": "Futsal",
+      "defaultValuePlayerNumbers": 5
+    },
+    {
+      "id": "3",
+      "name": "Basquete",
+      "defaultValuePlayerNumbers": 5
+    },
+    {
+      "id": "4",
+      "name": "Futebol",
+      "defaultValuePlayerNumbers": 11
+    },
+    {
+      "id": "5",
+      "name": "Skate",
+      "defaultValuePlayerNumbers": 1
+    },
+    {
+      "id": "6",
+      "name": "Handebol",
+      "defaultValuePlayerNumbers": 7
+    },
+    {
+      "id": "7",
+      "name": "Tênis",
+      "defaultValuePlayerNumbers": 1
+    },
+    {
+      "id": "8",
+      "name": "Xadrez",
+      "defaultValuePlayerNumbers": 1
+    },
+    {
+      "id": "9",
+      "name": "Natação",
+      "defaultValuePlayerNumbers": 1
+    },
+    {
+      "id": "10",
+      "name": "Ping-Pong",
+      "defaultValuePlayerNumbers": 1
+    },
+    {
+      "id": "11",
+      "name": "Vôlei de Praia",
+      "defaultValuePlayerNumbers": 2
+    },
+    {
+      "id": "12",
+      "name": "Futevôlei",
+      "defaultValuePlayerNumbers": 2
+    }
+  ],
+  "material": [
+    {
+      "id": "1",
+      "description": "Bola de futebol"
+    },
+    {
+      "id": "2",
+      "description": "Bola de basquete"
+    },
+    {
+      "id": "3",
+      "description": "Skate"
+    },
+    {
+      "id": "4",
+      "description": "Bola de futsal"
+    },
+    {
+      "id": "5",
+      "description": "Bola de handebol"
+    },
+    {
+      "id": "6",
+      "description": "Raquete de tênis"
+    },
+    {
+      "id": "7",
+      "description": "Bola de tênis"
+    },
+    {
+      "id": "8",
+      "description": "Tabuleiro de xadrez"
+    },
+    {
+      "id": "9",
+      "description": "Peças de xadrez"
+    },
+    {
+      "id": "10",
+      "description": "Relógio de xadrez"
+    },
+    {
+      "id": "11",
+      "description": "Óculos de natação"
+    },
+    {
+      "id": "12",
+      "description": "Touca de natação"
+    },
+    {
+      "id": "13",
+      "description": "Raquete de tênis de mesa"
+    },
+    {
+      "id": "14",
+      "description": "Bola de tênis de mesa"
+    },
+    {
+      "id": "15",
+      "description": "Rede de tênis de mesa"
+    },
+    {
+      "id": "16",
+      "description": "Mesa de tênis de mesa"
+    },
+    {
+      "id": "17",
+      "description": "Bola de vôlei"
+    },
+    {
+      "id": "18",
+      "description": "Bola de vôlei de praia"
+    },
+    {
+      "id": "19",
+      "description": "Bola de futevôlei"
+    },
+    {
+      "id": "20",
+      "description": "Traves de gol de futebol"
+    },
+    {
+      "id": "21",
+      "description": "Cesta de basquete (aro, tabela, rede)"
+    },
+    {
+      "id": "22",
+      "description": "Rampas e trilhos para skate"
+    },
+    {
+      "id": "23",
+      "description": "Traves de gol de futsal"
+    },
+    {
+      "id": "24",
+      "description": "Traves de gol de handebol"
+    },
+    {
+      "id": "25",
+      "description": "Rede de tênis"
+    },
+    {
+      "id": "26",
+      "description": "Quadra de tênis"
+    },
+    {
+      "id": "27",
+      "description": "Piscina"
+    },
+    {
+      "id": "28",
+      "description": "Rede de vôlei"
+    },
+    {
+      "id": "29",
+      "description": "Postes de vôlei"
+    },
+    {
+      "id": "30",
+      "description": "Rede de vôlei de praia"
+    },
+    {
+      "id": "31",
+      "description": "Postes de vôlei de praia"
+    },
+    {
+      "id": "32",
+      "description": "Areia para vôlei de praia"
+    },
+    {
+      "id": "33",
+      "description": "Rede de futevôlei"
+    },
+    {
+      "id": "34",
+      "description": "Postes de futevôlei"
+    },
+    {
+      "id": "35",
+      "description": "Areia para futevôlei"
+    }
+  ],
+  "arena": [
+    {
+      "id": "1",
+      "address": "Quadra de Areia SQN 206",
+      "lat": "-15.768232",
+      "longitude": "-47.8797558",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "2",
+      "address": "Quadra de Esportes SQN 408",
+      "lat": "-15.7611754",
+      "longitude": "-47.879193",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "3",
+      "address": "Quadra de Esportes SQN 106/107",
+      "lat": "-15.7677117",
+      "longitude": "-47.8849546",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "4",
+      "address": "Quadra Esportiva SQS 403",
+      "lat": "-15.8095609",
+      "longitude": "-47.8872044",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "5",
+      "address": "Quadra Esportiva SQS 303",
+      "lat": "-15.8030389",
+      "longitude": "-47.8930819",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "6",
+      "address": "Quadra de Esportes SQS 704",
+      "lat": "-15.8020031",
+      "longitude": "-47.8977909",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "7",
+      "address": "Quadra de Esportes SQN 316",
+      "lat": "-15.7378265",
+      "longitude": "-47.8956642",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "8",
+      "address": "Q. 301 Rua C - Águas Claras, Brasília - DF",
+      "lat": "-15.829449",
+      "longitude": "-48.013749",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "9",
+      "address": "Av. das Araucárias - Águas Claras, Brasília - DF",
+      "lat": "-15.838986",
+      "longitude": "-48.018718",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "10",
+      "address": "Quadra de esportes comunitária Guará, Brasília - DF",
+      "lat": "-15.816357",
+      "longitude": "-47.998175",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "11",
+      "address": "Quadra Poliesportiva da Vila Mathia - Taguatinga Sul",
+      "lat": "-15.847699",
+      "longitude": "-48.047406",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "12",
+      "address": "Quadra de Esportes Taguatinga, 72110-600",
+      "lat": "-15.817534",
+      "longitude": "-48.056075",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "13",
+      "address": "Quadra de Basquete do Taguaparque",
+      "lat": "-15.811877",
+      "longitude": "-48.05517",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "14",
+      "address": "Quadra Poliesportiva Qsf15 - Taguatinga",
+      "lat": "-15.861639",
+      "longitude": "-48.039283",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "15",
+      "address": "Quadra da Qsf11 - Taguatinga",
+      "lat": "-15.860569",
+      "longitude": "-48.038106",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "16",
+      "address": "Skate Park Aguas Claras",
+      "lat": "-15.835876",
+      "longitude": "-48.038641",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "17",
+      "address": "Vôlei de Praia - Parque Ecológico Águas Claras",
+      "lat": "-15.82984",
+      "longitude": "-48.021295",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "18",
+      "address": "Quadra de Esporte da Quadra 4",
+      "lat": "-15.65477",
+      "longitude": "-47.7993807",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "19",
+      "address": "Quadra de esportes 210 Asa Sul",
+      "lat": "-15.8246872",
+      "longitude": "-47.9081546",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "20",
+      "address": "Quadra Esportiva SQN 102",
+      "lat": "-15.7816438",
+      "longitude": "-47.8819337",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "21",
+      "address": "Skate Park Sukata",
+      "lat": "-15.8021049",
+      "longitude": "-47.9417339",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "22",
+      "address": "Quadra de Esportes SQN 206",
+      "lat": "-15.7680977",
+      "longitude": "-47.8802996",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "23",
+      "address": "Quadra de futebol EQS 110/111",
+      "lat": "-15.8211639",
+      "longitude": "-47.9106202",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "24",
+      "address": "Quadras Poliesportivas - Parque da Cidade",
+      "lat": "-15.8101154",
+      "longitude": "-47.9219444",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "25",
+      "address": "Rua 6 - Quadra 6 LE 5",
+      "lat": "-15.6528403",
+      "longitude": "-47.7989211",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "26",
+      "address": "Quadra 06 De Sobradinho",
+      "lat": "-15.6486876",
+      "longitude": "-47.7985629",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "27",
+      "address": "Condomínio Fazendinha Q 2 Conjunto A, Distrito Federal",
+      "lat": "-15.7534151",
+      "longitude": "-47.7658537",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "28",
+      "address": "1428 Condomínio Fazendinha Q 2 Conjunto A, Distrito Federal",
+      "lat": "-15.7527877",
+      "longitude": "-47.764526",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "29",
+      "address": "Condomínio Del Lago I Q 4, Distrito Federal",
+      "lat": "-15.7486507",
+      "longitude": "-47.7810874",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "30",
+      "address": "Q. 1 Del Lago, Distrito Federal",
+      "lat": "-15.7508603",
+      "longitude": "-47.7806515",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "31",
+      "address": "Quadra da 9, Paranoá, Brasília DF",
+      "lat": "-15.7763966",
+      "longitude": "-47.7809614",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "32",
+      "address": "Paranoá 7 Praça Central Conjunto 3, Distrito Federal",
+      "lat": "-15.7765671",
+      "longitude": "-47.7809677",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "33",
+      "address": "12 Praça Central, Distrito Federal",
+      "lat": "-15.7772657",
+      "longitude": "-47.7802508",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "34",
+      "address": "Condomínio Mansões Entre Lagos Etapa 2, Distrito Federal",
+      "lat": "-15.7400334",
+      "longitude": "-47.7526228",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "35",
+      "address": "Condomínio Mansões Entre lagos Etapa 2 Distrito Federal",
+      "lat": "-15.7400644",
+      "longitude": "-47.7526121",
+      "image": null,
+      "isLeagueOnly": false
+    },
+    {
+      "id": "36",
+      "address": "Quadra de Esportes SQN 208",
+      "lat": "-15.7621473",
+      "longitude": "-47.8815784",
+      "image": null,
+      "isLeagueOnly": false
+    }
+  ],
+  "sport_material": [
+    {
+      "sportId": "1",
+      "materialId": "17",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "1",
+      "materialId": "28",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "1",
+      "materialId": "29",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "2",
+      "materialId": "4",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "2",
+      "materialId": "23",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "3",
+      "materialId": "2",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "3",
+      "materialId": "21",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "4",
+      "materialId": "1",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "4",
+      "materialId": "20",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "5",
+      "materialId": "3",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "5",
+      "materialId": "22",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "6",
+      "materialId": "5",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "6",
+      "materialId": "24",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "7",
+      "materialId": "6",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "7",
+      "materialId": "7",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "7",
+      "materialId": "25",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "7",
+      "materialId": "26",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "8",
+      "materialId": "8",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "8",
+      "materialId": "9",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "8",
+      "materialId": "10",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "9",
+      "materialId": "11",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "9",
+      "materialId": "12",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "9",
+      "materialId": "27",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "10",
+      "materialId": "13",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "10",
+      "materialId": "14",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "10",
+      "materialId": "15",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "10",
+      "materialId": "16",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "11",
+      "materialId": "18",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "11",
+      "materialId": "30",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "11",
+      "materialId": "31",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "11",
+      "materialId": "32",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "12",
+      "materialId": "19",
+      "relatedToLocal": false
+    },
+    {
+      "sportId": "12",
+      "materialId": "33",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "12",
+      "materialId": "34",
+      "relatedToLocal": true
+    },
+    {
+      "sportId": "12",
+      "materialId": "35",
+      "relatedToLocal": true
+    }
+  ],
+  "sport_arena": [
+    {
+      "sportId": "11",
+      "arenaId": "1"
+    },
+    {
+      "sportId": "12",
+      "arenaId": "1"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "2"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "2"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "2"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "2"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "3"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "3"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "3"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "3"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "4"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "4"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "4"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "4"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "5"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "5"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "5"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "5"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "6"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "6"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "6"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "6"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "7"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "7"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "7"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "7"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "8"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "8"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "8"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "9"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "9"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "9"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "10"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "10"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "10"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "11"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "11"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "11"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "11"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "12"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "12"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "13"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "14"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "14"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "15"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "15"
+    },
+    {
+      "sportId": "5",
+      "arenaId": "16"
+    },
+    {
+      "sportId": "11",
+      "arenaId": "17"
+    },
+    {
+      "sportId": "12",
+      "arenaId": "17"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "18"
+    },
+    {
+      "sportId": "4",
+      "arenaId": "18"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "19"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "19"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "19"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "20"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "20"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "20"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "20"
+    },
+    {
+      "sportId": "5",
+      "arenaId": "21"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "22"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "22"
+    },
+    {
+      "sportId": "4",
+      "arenaId": "23"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "4",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "11",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "12",
+      "arenaId": "24"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "25"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "25"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "25"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "26"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "26"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "27"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "27"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "27"
+    },
+    {
+      "sportId": "7",
+      "arenaId": "27"
+    },
+    {
+      "sportId": "12",
+      "arenaId": "27"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "28"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "28"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "28"
+    },
+    {
+      "sportId": "12",
+      "arenaId": "28"
+    },
+    {
+      "sportId": "5",
+      "arenaId": "29"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "30"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "31"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "31"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "31"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "31"
+    },
+    {
+      "sportId": "4",
+      "arenaId": "32"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "33"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "33"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "33"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "33"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "34"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "34"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "34"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "34"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "35"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "35"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "35"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "35"
+    },
+    {
+      "sportId": "1",
+      "arenaId": "36"
+    },
+    {
+      "sportId": "2",
+      "arenaId": "36"
+    },
+    {
+      "sportId": "3",
+      "arenaId": "36"
+    },
+    {
+      "sportId": "6",
+      "arenaId": "36"
+    }
+  ]
+}
