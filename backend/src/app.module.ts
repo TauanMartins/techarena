@@ -5,11 +5,13 @@ import {
   ConfigurationModule,
 } from './config/configuration.module.js';
 import { databaseOptions } from './database/database.options.js';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
+import { HealthModule } from './health/health.module.js';
 
 @Module({
   imports: [
+    HealthModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
@@ -17,7 +19,8 @@ import { AppService } from './app.service.js';
       useFactory: databaseOptions,
     }),
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: ResponseValidationInterceptor },
+  ],
 })
 export class AppModule {}

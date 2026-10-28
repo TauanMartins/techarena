@@ -16,12 +16,15 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('/health (GET)', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/health')
       .expect(200)
-      .expect({ message: 'Hello World!' });
+      .expect({ status: 'ok', database: 'up' });
   });
+
+  it('removes the scaffold root route', () =>
+    request(app.getHttpServer()).get('/').expect(404));
 
   afterEach(async () => {
     await app.close();
