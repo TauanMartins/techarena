@@ -11,6 +11,7 @@ import { SportsModule } from './modules/sports/sports.module.js';
 import { ArenasModule } from './modules/arenas/arenas.module.js';
 import { AppointmentsModule } from './modules/appointments/appointments.module.js';
 import { TeamsModule } from './modules/teams/teams.module.js';
+import { FriendsModule } from './modules/friends/friends.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -24,6 +25,7 @@ import { HealthModule } from './health/health.module.js';
     ArenasModule,
     AppointmentsModule,
     TeamsModule,
+    FriendsModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
