@@ -14,3 +14,28 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:secret@postgres:5432/techarena}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgis/postgis:15-3.6-alpine
+    container_name: techarena_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: techarena
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d techarena"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
