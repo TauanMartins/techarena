@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: techarena_backend
     restart: unless-stopped
-    command: npm run start:dev
+    command: sh -c "npm install && npm run start:dev"
     ports:
       - "3000:3000"
     volumes:
