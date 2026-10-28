@@ -1,0 +1,61 @@
+import type { GeoFilter } from '../../../common/domain/geo.js';
+import type { Page, PageRequest } from '../../../common/domain/pagination.js';
+export interface AppointmentQuery extends PageRequest, GeoFilter {
+  sportId?: string;
+  arenaId?: string;
+  preferSports: boolean;
+  orderByTime: 'recent' | 'future';
+  distance: 'near' | 'far';
+}
+export interface CreateAppointment {
+  arenaId: string;
+  sportId: string;
+  scheduleId: string;
+  date: string;
+  title?: string;
+  description?: string;
+  holder: boolean;
+  maxPlayers?: number;
+}
+export interface BookingCard {
+  id: string;
+  title: string;
+  description: string | null;
+  scheduledAt: Date;
+  status: string;
+  organizerId: string;
+  arenaId: string | null;
+  sportId: string | null;
+  scheduleId: string | null;
+  arenaAddress: string | null;
+  arenaImage: string | null;
+  sportName: string | null;
+  maxPlayers: number | null;
+  players: number;
+  startingPlayers: number;
+  isInside: boolean;
+  distanceKm: number | null;
+}
+export interface AvailabilityQuery {
+  arenaId: string;
+  sportId: string;
+  date: string;
+}
+export interface ScheduleItem {
+  id: string;
+  horary: string;
+}
+export const APPOINTMENTS_REPOSITORY = Symbol('APPOINTMENTS_REPOSITORY');
+export interface AppointmentsRepository {
+  list(
+    actor: string,
+    query: AppointmentQuery,
+    mine: boolean,
+  ): Promise<Page<BookingCard>>;
+  create(
+    actor: string,
+    input: CreateAppointment,
+    clock: () => Date,
+  ): Promise<BookingCard>;
+  available(query: AvailabilityQuery, now: Date): Promise<ScheduleItem[]>;
+}
