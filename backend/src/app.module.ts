@@ -7,6 +7,8 @@ import {
 import { databaseOptions } from './database/database.options.js';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
+import { SportsModule } from './modules/sports/sports.module.js';
+import { ArenasModule } from './modules/arenas/arenas.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
@@ -16,6 +18,8 @@ import { HealthModule } from './health/health.module.js';
     HealthModule,
     AuthModule,
     UsersModule,
+    SportsModule,
+    ArenasModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
