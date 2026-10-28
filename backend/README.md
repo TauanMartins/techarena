@@ -37,7 +37,7 @@ Usuários estão organizados em perfil, busca, preferências (tema/favoritos) e 
 (equipes/agendamentos), cada um com suas portas, casos de uso e adaptadores.
 
 Veja [autenticação](docs/AUTHENTICATION.md), [rotas e decisões do contexto user](docs/USERS.md),
-[arquitetura](docs/ARCHITECTURE.md), [contratos HTTP](docs/API-CONVENTIONS.md) e
+[arquitetura](docs/ARCHITECTURE.md), [contextos migrados e contratos](docs/WORKFLOWS.md), [contratos HTTP](docs/API-CONVENTIONS.md) e
 [migrations/seeds](database/README.md).
 
 ## Testes

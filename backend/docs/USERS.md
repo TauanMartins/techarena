@@ -25,11 +25,10 @@ para escolher de quem alterar o perfil, as preferências ou os vínculos.
   não oferece criação de perfil e não atribui permissão automaticamente.
 - `GET /users` preserva a busca por username e também aceita nome, com mínimo de dois
   caracteres, máximo de 50 itens por página e parâmetros de busca vinculados ao SQL.
-- `GET /users/team` corresponde à lista atual de equipes. O esquema atual `user_team`
-  tem apenas vínculo/role; não possui estados de convite, pedido ou aceite. Portanto,
-  `POST/PUT /users/team` não foram recriados: permitir ingresso automático nesse ponto
-  aprovaria pedidos indevidamente. Um fluxo de aprovação exige modelagem e regras
-  explícitas no contexto de equipes.
+- A lista de equipes continua em `GET /users/me/teams` e contém somente vínculos
+  efetivos. A etapa de migração de equipes adicionou estados em uma tabela própria
+  e os fluxos explícitos de convite/solicitação, descritos em [WORKFLOWS.md](WORKFLOWS.md).
+  Os caminhos antigos `POST/PUT /users/team` continuam sem alias inseguro.
 - `PUT /users/theme` é substituído pelo caminho de preferências do próprio usuário.
 - `GET/POST/PUT /sports/prefered-sports` são consolidados em GET/PUT dos favoritos
   do usuário. A troca é atômica, exige IDs existentes e no máximo quatro distintos.

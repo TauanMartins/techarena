@@ -69,3 +69,31 @@ valida limites, enumerações e intervalo de datas; os repositories vinculam par
 e usam uma lista fixa de colunas para ordenação. A paginação compartilhada calcula
 os metadados de navegação, enquanto a composição de cards continua no adaptador
 correspondente. Não existe um query DTO genérico que aceite filtros de todos os módulos.
+
+## Contextos migrados de catálogo e participação
+
+- `sports/`: catálogo de modalidades, modalidades de arena e materiais.
+- `arenas/`: aplicações de catálogo e gestão, com escrita administrativa.
+- `appointments/`: descoberta, reserva transacional e disponibilidade de horários.
+- `teams/`: catálogo, gestão por capitão e ciclo de pedidos/convites.
+- `friends/`: solicitações, aceite e bloqueio de relações.
+
+Cada contexto define sua própria porta de persistência e separa aplicação/domínio dos
+adaptadores. As operações que precisam de verificação e escrita atômicas, como reserva
+ou aceite, ficam dentro da transação do adaptador e aplicam as políticas do domínio.
+Não há dependência de AWS ou criação de chat nessas operações.
+
+Paginação, geolocalização, IDs, erros de domínio e convenções HTTP compartilháveis
+ficam em `common/`; usuários mantém reexports para não quebrar seus subcontextos.
+`ProfileModule` também expõe `ensureAdmin`, que verifica a permissão persistida.
+Novos módulos não importam repositories de usuários para autenticar ou conceder roles.
+O teste de arquitetura abrange todos os módulos, e não apenas usuários.
+
+As datas de reserva usam `timestamptz` e slots UTC explícitos. Os vínculos com a arena,
+modalidade e schedule são opcionais apenas para compatibilidade com dados anteriores.
+A integridade dos novos vínculos e a exclusividade de arena/instante são constraints
+PostgreSQL versionadas, além da validação dos casos de uso.
+
+Referências: [módulos NestJS](https://docs.nestjs.com/modules),
+[DTOs e OpenAPI](https://docs.nestjs.com/openapi/types-and-parameters) e
+[migrations TypeORM](https://typeorm.io/docs/advanced-topics/migrations/).

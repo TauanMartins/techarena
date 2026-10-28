@@ -183,7 +183,7 @@ Entity: `src/database/entities/appointment.entity.ts`.
 | `organizer_id` | `uuid` | não | Referência a identificador do usuário organizador relacionada à tabela appointment. |
 | `title` | `varchar(100)` | não | Título de appointment. |
 | `description` | `text` | sim | Descrição de appointment. |
-| `scheduled_at` | `timestamp without time zone` | não | Data e hora agendadas de appointment. |
+| `scheduled_at` | `timestamptz` | não | Data e hora agendadas de appointment. |
 | `status` | `varchar(255)` | não | Estado atual do registro de appointment. |
 | `location` | `geometry(Point)` | sim | Localização geográfica de appointment. |
 | `max_players` | `integer` | sim | Limite de participantes de appointment. |
@@ -260,3 +260,19 @@ Entity: `src/database/entities/appointment-result.entity.ts`.
 | `created_at` | `timestamp without time zone` | sim | Data e hora de criação do registro. |
 | `updated_at` | `timestamp without time zone` | sim | Data e hora da última atualização do registro. |
 | `winner_team_id` | `IS` | sim | Referência a identificador do time vencedor relacionada à tabela appointment_result. |
+
+## Extensão para os fluxos migrados
+
+A migration `1793150000000-support-legacy-workflows.ts` acrescenta em appointment
+`arena_id`, `sport_id` e `schedule_id` (bigint, nulos somente no legado), com chaves
+estrangeiras e verificação de combinação arena/modalidade. `scheduled_at` é um instante
+com fuso e tem índice único parcial por arena/instante para reservas ativas.
+
+`team_membership_request` guarda id bigint, team_id, user_id, created_by, kind
+(invitation/request), status (pending/accepted/declined), created_at e updated_at
+(timestamptz). FKs apontam para team e users. Há somente uma pendência por equipe/usuário.
+O aceite insere a relação efetiva em user_team, cuja estrutura foi mantida.
+
+Team tem índice único por lower(btrim(name)). Esses índices de expressão/condição
+são definidos em SQL explícito e marcados para não serem recriados pelo gerador.
+Veja [os fluxos e seus contratos](../docs/WORKFLOWS.md).
