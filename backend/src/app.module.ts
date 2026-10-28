@@ -7,11 +7,13 @@ import {
 import { databaseOptions } from './database/database.options.js';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
 
 @Module({
   imports: [
     HealthModule,
+    AuthModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],

@@ -2,6 +2,8 @@ import { config } from 'dotenv';
 
 export interface AppConfiguration {
   readonly port: number;
+  readonly auth: { readonly projectUrl: string | null };
+  readonly cors: { readonly origins: string[] };
   readonly database: {
     readonly url: string;
   };
@@ -41,7 +43,42 @@ export function parseEnvironment(
     );
   }
 
-  return { port, database: { url } };
+  const projectUrl =
+    environment.SUPABASE_URL?.trim().replace(/\/$/, '') || null;
+  if (projectUrl) {
+    try {
+      const parsed = new URL(projectUrl);
+      if (
+        parsed.protocol !== 'https:' ||
+        parsed.pathname !== '/' ||
+        parsed.search ||
+        parsed.hash ||
+        parsed.username ||
+        parsed.password
+      )
+        throw new Error();
+    } catch {
+      throw new Error('SUPABASE_URL must be an HTTPS project origin.');
+    }
+  }
+  const origins = (environment.CORS_ORIGINS ?? 'http://localhost:4200')
+    .split(',')
+    .map((value) => value.trim());
+  for (const origin of origins) {
+    try {
+      const parsed = new URL(origin);
+      if (
+        !['http:', 'https:'].includes(parsed.protocol) ||
+        parsed.origin !== origin
+      )
+        throw new Error();
+    } catch {
+      throw new Error(
+        'CORS_ORIGINS must contain explicit HTTP origins separated by commas.',
+      );
+    }
+  }
+  return { port, database: { url }, auth: { projectUrl }, cors: { origins } };
 }
 
 /** The only boundary that reads process.env; shared by Nest and the database CLI. */

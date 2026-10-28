@@ -12,6 +12,7 @@ async function bootstrap() {
   const swaggerConfig = new DocumentBuilder()
     .setTitle('TechArena API')
     .setDescription('API documentation for the TechArena backend.')
+    .addBearerAuth()
     .setVersion('1.0.0')
     .build();
   const swaggerDocument = () =>
@@ -19,6 +20,12 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, swaggerDocument);
 
   const configuration = app.get<AppConfiguration>(APP_CONFIGURATION);
+  app.enableCors({
+    origin: configuration.cors.origins,
+    credentials: false,
+    allowedHeaders: ['Authorization', 'Content-Type'],
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  });
   await app.listen(configuration.port);
 }
 await bootstrap();

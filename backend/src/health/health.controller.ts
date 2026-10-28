@@ -5,6 +5,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
+import { Public } from '../modules/auth/adapters/http/auth.decorators.js';
 import { ResponseContract } from '../common/http/response-contract.js';
 import { HealthResponseDto } from './health-response.dto.js';
 
@@ -13,6 +14,7 @@ import { HealthResponseDto } from './health-response.dto.js';
 export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'Check application and PostgreSQL availability' })
   @ApiServiceUnavailableResponse({ description: 'PostgreSQL is unavailable.' })

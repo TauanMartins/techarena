@@ -14,6 +14,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
+      SUPABASE_URL: "${SUPABASE_URL:-}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:4200}"
       DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:secret@postgres:5432/techarena}"
     depends_on:
       postgres:
