@@ -7,6 +7,7 @@ import type {
   LeagueArena,
   LeagueDetails,
   LeagueSummary,
+  LeagueTeamInvitation,
   MembershipRequest,
   Page,
   Profile,
@@ -361,6 +362,27 @@ export const api = {
       `/leagues/${leagueId}/teams/${teamId}`,
       token,
       { method: "DELETE" },
+    ),
+  inviteLeagueTeam: (token: string, leagueId: string, teamId: string) =>
+    apiRequest<{ success: boolean }>(
+      `/leagues/${leagueId}/team-invitations`,
+      token,
+      { method: "POST", body: JSON.stringify({ teamId }) },
+    ),
+  listLeagueTeamInvitations: (token: string) =>
+    apiRequest<{ items: LeagueTeamInvitation[] }>(
+      "/leagues/team-invitations",
+      token,
+    ),
+  respondToLeagueTeamInvitation: (
+    token: string,
+    invitationId: string,
+    action: "accept" | "decline",
+  ) =>
+    apiRequest<{ success: boolean }>(
+      `/leagues/team-invitations/${invitationId}`,
+      token,
+      { method: "PUT", body: JSON.stringify({ action }) },
     ),
   getLeagueArenas: (token: string, leagueId: string) =>
     apiRequest<{ items: LeagueArena[] }>(`/leagues/${leagueId}/arenas`, token),

@@ -41,6 +41,15 @@ function LeaguePage() {
   const [leagues, setLeagues] = useState<LeagueSummary[]>([]);
   const [sports, setSports] = useState<Sport[]>([]);
   const [myTeams, setMyTeams] = useState<TeamMembership[]>([]);
+  const [teamInvitations, setTeamInvitations] = useState<
+    Awaited<ReturnType<typeof api.listLeagueTeamInvitations>>["items"]
+  >([]);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [teamSearchPerformed, setTeamSearchPerformed] = useState(false);
+  const [teamSearchResults, setTeamSearchResults] = useState<
+    Awaited<ReturnType<typeof api.listTeams>>["items"]
+  >([]);
+  const [inviteTeamId, setInviteTeamId] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [detailReloadVersion, setDetailReloadVersion] = useState(0);
   const [details, setDetails] = useState<LeagueDetails | null>(null);
@@ -63,14 +72,16 @@ function LeaguePage() {
 
   const loadCatalog = useCallback(async () => {
     try {
-      const [leaguePage, sportPage, teamPage] = await Promise.all([
+      const [leaguePage, sportPage, teamPage, invitations] = await Promise.all([
         api.listLeagues(token),
         api.getSports(token),
         api.listMyTeams(token),
+        api.listLeagueTeamInvitations(token),
       ]);
       setLeagues(leaguePage.items);
       setSports(sportPage.items);
       setMyTeams(teamPage.items);
+      setTeamInvitations(invitations.items);
       if (leaguePage.items.length === 0) setDetails(null);
       setSelectedId((current) =>
         leaguePage.items.some((league) => league.id === current)
@@ -158,6 +169,11 @@ function LeaguePage() {
     (team) =>
       team.role === "captain" &&
       !details?.teams.some((registered) => registered.id === team.id),
+  );
+  const invitableTeams = teamSearchResults.filter(
+    (team) =>
+      !details?.teams.some((registered) => registered.id === team.id) &&
+      !details?.invitations.some((invitation) => invitation.teamId === team.id),
   );
 
   async function refreshSelectedLeague() {
@@ -308,6 +324,75 @@ function LeaguePage() {
         cause instanceof Error
           ? cause.message
           : "Não foi possível inscrever a equipe.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function searchTeams(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    try {
+      const result = await api.listTeams(token, teamSearch.trim());
+      setTeamSearchResults(result.items);
+      setTeamSearchPerformed(true);
+      setInviteTeamId("");
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível buscar equipes.",
+      );
+    }
+  }
+
+  async function inviteTeam(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!details || !inviteTeamId) return;
+    setSaving(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await api.inviteLeagueTeam(token, details.league.id, inviteTeamId);
+      setNotice("Convite enviado ao capitão da equipe.");
+      setTeamSearchResults([]);
+      setInviteTeamId("");
+      await refreshSelectedLeague();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível convidar a equipe.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function respondToTeamInvitation(
+    invitationId: string,
+    action: "accept" | "decline",
+  ) {
+    setSaving(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await api.respondToLeagueTeamInvitation(token, invitationId, action);
+      setNotice(
+        action === "accept"
+          ? "Convite aceito. A equipe está inscrita na liga."
+          : "Convite recusado.",
+      );
+      await Promise.all([
+        loadCatalog(),
+        selectedId ? loadDetails(selectedId) : Promise.resolve(),
+      ]);
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Não foi possível responder ao convite.",
       );
     } finally {
       setSaving(false);
@@ -472,6 +557,48 @@ function LeaguePage() {
         <Alert variant="success" dismissible onClose={() => setNotice(null)}>
           {notice}
         </Alert>
+      )}
+
+      {teamInvitations.length > 0 && (
+        <Card className="content-card mb-4">
+          <Card.Body>
+            <h2 className="h4">Convites para suas equipes</h2>
+            <div className="d-grid gap-2">
+              {teamInvitations.map((invitation) => (
+                <div
+                  className="d-flex flex-wrap justify-content-between align-items-center gap-2 border rounded p-3"
+                  key={invitation.id}
+                >
+                  <span>
+                    <strong>{invitation.teamName}</strong> foi convidada para{" "}
+                    <strong>{invitation.leagueName}</strong>.
+                  </span>
+                  <div className="d-flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={saving}
+                      onClick={() =>
+                        void respondToTeamInvitation(invitation.id, "accept")
+                      }
+                    >
+                      Aceitar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      disabled={saving}
+                      onClick={() =>
+                        void respondToTeamInvitation(invitation.id, "decline")
+                      }
+                    >
+                      Recusar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card.Body>
+        </Card>
       )}
 
       {showCreate && (
@@ -849,6 +976,80 @@ function LeaguePage() {
                           </Button>
                         </Form>
                       )}
+                    {details.league.isOwner &&
+                      details.league.status === "open" && (
+                        <div className="border-top pt-3 mt-3">
+                          <h4 className="h5">Convidar outra equipe</h4>
+                          <Form
+                            className="d-flex gap-2 mb-3"
+                            onSubmit={searchTeams}
+                          >
+                            <Form.Control
+                              aria-label="Buscar equipe para convidar"
+                              placeholder="Nome da equipe"
+                              value={teamSearch}
+                              onChange={(event) => {
+                                setTeamSearch(event.target.value);
+                                setTeamSearchPerformed(false);
+                                setTeamSearchResults([]);
+                              }}
+                            />
+                            <Button type="submit" variant="outline-primary">
+                              Buscar
+                            </Button>
+                          </Form>
+                          {invitableTeams.length > 0 && (
+                            <Form
+                              className="d-flex gap-2"
+                              onSubmit={inviteTeam}
+                            >
+                              <Form.Select
+                                aria-label="Equipe para convidar"
+                                value={inviteTeamId}
+                                onChange={(event) =>
+                                  setInviteTeamId(event.target.value)
+                                }
+                                required
+                              >
+                                <option value="">Selecione uma equipe</option>
+                                {invitableTeams.map((team) => (
+                                  <option key={team.id} value={team.id}>
+                                    {team.name}
+                                  </option>
+                                ))}
+                              </Form.Select>
+                              <Button
+                                type="submit"
+                                disabled={saving || !inviteTeamId}
+                              >
+                                Convidar
+                              </Button>
+                            </Form>
+                          )}
+                          {teamSearchPerformed &&
+                            invitableTeams.length === 0 && (
+                              <p className="text-secondary mb-0">
+                                {teamSearchResults.length === 0
+                                  ? "Nenhuma equipe encontrada."
+                                  : "As equipes encontradas já estão inscritas ou têm convite pendente."}
+                              </p>
+                            )}
+                          {details.invitations.length > 0 && (
+                            <div className="mt-3">
+                              <span className="small text-secondary">
+                                Convites pendentes:
+                              </span>
+                              <ul className="small mb-0">
+                                {details.invitations.map((invitation) => (
+                                  <li key={invitation.id}>
+                                    {invitation.teamName}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </Card.Body>
                 </Card>
 
@@ -861,7 +1062,7 @@ function LeaguePage() {
                         <h3 className="h4">Gerar calendário</h3>
                         {leagueArenas.length === 0 ? (
                           <p className="text-secondary mb-0">
-                            Ainda não há arenas de liga disponíveis para esta
+                            Ainda não há arenas disponíveis para esta
                             modalidade.
                           </p>
                         ) : (
@@ -1072,7 +1273,7 @@ function LeaguePage() {
                         <h3 className="h4">Agendar partida</h3>
                         {leagueArenas.length === 0 ? (
                           <p className="text-secondary mb-0">
-                            Ainda não há arenas de liga disponíveis para esta
+                            Ainda não há arenas disponíveis para esta
                             modalidade.
                           </p>
                         ) : (
