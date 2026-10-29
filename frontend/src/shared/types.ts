@@ -66,6 +66,15 @@ export interface Appointment {
   startingPlayers: number;
   isInside: boolean;
   distanceKm: number | null;
+  participants: AppointmentParticipant[];
+}
+
+export interface AppointmentParticipant {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  holder: boolean;
 }
 
 export interface AppointmentMembership {
@@ -95,6 +104,15 @@ export interface TeamMembership {
   image: string | null;
   joinedAt: string | null;
   role: string;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  role: 'captain' | 'member';
+  joinedAt: string | null;
 }
 
 export interface UserCard {

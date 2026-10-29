@@ -10,6 +10,7 @@ import type {
   Schedule,
   Sport,
   Team,
+  TeamMember,
   TeamMembership,
   UserCard,
 } from './types';
@@ -47,8 +48,8 @@ export async function apiRequest<T>(
   } catch {
     throw new ApiError(
       response.ok
-        ? 'A API retornou uma resposta JSON inválida.'
-        : `A API respondeu com erro (${response.status}) e um corpo inválido.`,
+        ? 'Não foi possível processar a resposta.'
+        : 'Não foi possível concluir a solicitação. Tente novamente.',
       response.status,
     );
   }
@@ -59,13 +60,15 @@ export async function apiRequest<T>(
       'message' in body &&
       typeof body.message === 'string'
         ? body.message
-        : `A API respondeu com erro (${response.status}).`;
+        : 'Não foi possível concluir a solicitação. Tente novamente.';
     throw new ApiError(message, response.status);
   }
   return body as T;
 }
 
-function queryString(params: Record<string, string | number | boolean | undefined>) {
+function queryString(
+  params: Record<string, string | number | boolean | undefined>,
+) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '') query.set(key, String(value));
@@ -85,14 +88,22 @@ export const api = {
         body: JSON.stringify({ topic }),
       },
     ),
-  updateProfile: (token: string, payload: Partial<Pick<Profile, 'name' | 'username' | 'birthDate' | 'gender' | 'image'>>) =>
+  updateProfile: (
+    token: string,
+    payload: Partial<
+      Pick<Profile, 'name' | 'username' | 'birthDate' | 'gender' | 'image'>
+    >,
+  ) =>
     apiRequest<Profile>('/users/me', token, {
       method: 'PATCH',
       body: JSON.stringify(payload),
     }),
 
   getSports: (token: string, search?: string) =>
-    apiRequest<Page<Sport>>(`/sports${queryString({ page: 1, limit: 50, search })}`, token),
+    apiRequest<Page<Sport>>(
+      `/sports${queryString({ page: 1, limit: 50, search })}`,
+      token,
+    ),
   getFavoriteSports: (token: string) =>
     apiRequest<FavoriteSports>('/users/me/sports', token),
   replaceFavoriteSports: (token: string, sportIds: string[]) =>
@@ -101,12 +112,19 @@ export const api = {
       body: JSON.stringify({ sportIds }),
     }),
   getTheme: (token: string) =>
-    apiRequest<{ theme: 'light' | 'dark' | 'system' }>('/users/me/theme', token),
+    apiRequest<{ theme: 'light' | 'dark' | 'system' }>(
+      '/users/me/theme',
+      token,
+    ),
   setTheme: (token: string, theme: 'light' | 'dark' | 'system') =>
-    apiRequest<{ theme: 'light' | 'dark' | 'system' }>('/users/me/theme', token, {
-      method: 'PUT',
-      body: JSON.stringify({ theme }),
-    }),
+    apiRequest<{ theme: 'light' | 'dark' | 'system' }>(
+      '/users/me/theme',
+      token,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ theme }),
+      },
+    ),
 
   listAppointments: (
     token: string,
@@ -132,11 +150,20 @@ export const api = {
       token,
     ),
   joinAppointment: (token: string, appointmentId: string) =>
-    apiRequest<AppointmentMembership>(`/users/me/appointments/${appointmentId}`, token, {
-      method: 'POST',
-      body: JSON.stringify({ holder: true }),
-    }),
-  getAvailability: (token: string, arenaId: string, sportId: string, date: string) =>
+    apiRequest<AppointmentMembership>(
+      `/users/me/appointments/${appointmentId}`,
+      token,
+      {
+        method: 'POST',
+        body: JSON.stringify({ holder: true }),
+      },
+    ),
+  getAvailability: (
+    token: string,
+    arenaId: string,
+    sportId: string,
+    date: string,
+  ) =>
     apiRequest<{ items: Schedule[] }>(
       `/horary${queryString({ arenaId, sportId, date })}`,
       token,
@@ -181,7 +208,36 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ teamId }),
     }),
-  respondToTeamInvitation: (token: string, requestId: string, action: 'accept' | 'decline') =>
+  inviteToTeam: (token: string, teamId: string, userId: string) =>
+    apiRequest<MembershipRequest>('/team/user', token, {
+      method: 'POST',
+      body: JSON.stringify({ teamId, userId }),
+    }),
+  decideTeamRequest: (
+    token: string,
+    teamId: string,
+    userId: string,
+    action: 'accept' | 'decline',
+  ) =>
+    apiRequest<MembershipRequest>('/team/user', token, {
+      method: 'PUT',
+      body: JSON.stringify({ teamId, userId, action }),
+    }),
+  listTeamRequests: (token: string, teamId: string) =>
+    apiRequest<Page<MembershipRequest>>(
+      `/team/user${queryString({ teamId, page: 1, limit: 50 })}`,
+      token,
+    ),
+  listTeamMembers: (token: string, teamId: string) =>
+    apiRequest<Page<TeamMember>>(
+      `/team/members${queryString({ teamId, page: 1, limit: 50 })}`,
+      token,
+    ),
+  respondToTeamInvitation: (
+    token: string,
+    requestId: string,
+    action: 'accept' | 'decline',
+  ) =>
     apiRequest<MembershipRequest>(
       `/users/me/team-invitations/${requestId}`,
       token,
@@ -191,11 +247,18 @@ export const api = {
       },
     ),
   listMyTeamRequests: (token: string) =>
-    apiRequest<Page<MembershipRequest>>('/users/me/team-requests?page=1&limit=50', token),
+    apiRequest<Page<MembershipRequest>>(
+      '/users/me/team-requests?page=1&limit=50',
+      token,
+    ),
 
   searchUsers: (token: string, search: string) =>
-    apiRequest<Page<UserCard>>(`/users${queryString({ page: 1, limit: 20, search })}`, token),
-  listFriends: (token: string) => apiRequest<FriendGroups>('/friend?page=1&limit=50', token),
+    apiRequest<Page<UserCard>>(
+      `/users${queryString({ page: 1, limit: 20, search })}`,
+      token,
+    ),
+  listFriends: (token: string) =>
+    apiRequest<FriendGroups>('/friend?page=1&limit=50', token),
   requestFriend: (token: string, userId: string) =>
     apiRequest('/friend', token, {
       method: 'POST',

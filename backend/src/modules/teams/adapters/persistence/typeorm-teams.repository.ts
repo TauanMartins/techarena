@@ -15,6 +15,7 @@ import type {
   MembershipDecision,
   MembershipRequestView,
   TeamInput,
+  TeamMemberView,
   TeamQuery,
   TeamsRepository,
 } from '../../domain/teams.port.js';
@@ -276,6 +277,40 @@ export class TypeormTeamsRepository implements TeamsRepository {
       kind: row.kind,
       status: row.status,
       createdAt: row.createdAt,
+    }));
+    return paginate(items, total, query);
+  }
+
+  async members(teamId: string, query: PageRequest) {
+    if (!(await this.source.getRepository(Team).existsBy({ id: teamId })))
+      throw new DomainError('not_found', 'TEAM_NOT_FOUND', 'Team not found');
+    const [rows, total] = await this.source
+      .getRepository(UserTeam)
+      .createQueryBuilder('membership')
+      .innerJoinAndSelect('membership.user', 'user')
+      .where('membership.teamId = :teamId', { teamId })
+      .select([
+        'membership.id',
+        'membership.role',
+        'membership.createdAt',
+        'user.id',
+        'user.name',
+        'user.username',
+        'user.image',
+      ])
+      .orderBy('membership.role', 'ASC')
+      .addOrderBy('user.name', 'ASC', 'NULLS LAST')
+      .addOrderBy('user.id', 'ASC')
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
+      .getManyAndCount();
+    const items: TeamMemberView[] = rows.map((membership) => ({
+      id: membership.user.id,
+      name: membership.user.name,
+      username: membership.user.username,
+      image: membership.user.image,
+      role: membership.role,
+      joinedAt: membership.createdAt,
     }));
     return paginate(items, total, query);
   }

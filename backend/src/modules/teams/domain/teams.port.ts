@@ -25,6 +25,14 @@ export interface MembershipRequestView {
   status: 'pending' | 'accepted' | 'declined';
   createdAt: Date;
 }
+export interface TeamMemberView {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  role: string;
+  joinedAt: Date | null;
+}
 export type MembershipDecision = 'accept' | 'decline';
 export const TEAMS_REPOSITORY = Symbol('TEAMS_REPOSITORY');
 export interface TeamsRepository {
@@ -54,4 +62,5 @@ export interface TeamsRepository {
     query: PageRequest,
     teamId?: string,
   ): Promise<Page<MembershipRequestView>>;
+  members(teamId: string, query: PageRequest): Promise<Page<TeamMemberView>>;
 }

@@ -54,6 +54,25 @@ export class CreateAppointmentDto extends AvailabilityQueryDto {
   holder: boolean = true;
   @IsOptional() @IsInt() @Min(1) @Max(1000) maxPlayers?: number;
 }
+export class AppointmentParticipantDto {
+  @Expose() @IsUUID() id!: string;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  name!: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  username!: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  image!: string | null;
+  @Expose() @IsBoolean() holder!: boolean;
+}
 export class BookingDto {
   @Expose() @IsBigintId() id!: string;
   @Expose() @IsString() title!: string;
@@ -110,6 +129,12 @@ export class BookingDto {
   @ValidateIf((_o, v: unknown) => v !== null)
   @IsNumber()
   distanceKm!: number | null;
+  @ApiProperty({ type: [AppointmentParticipantDto] })
+  @Expose()
+  @IsArray()
+  @Type(() => AppointmentParticipantDto)
+  @ValidateNested({ each: true })
+  participants!: AppointmentParticipantDto[];
 }
 export class BookingPageDto extends PageResponseDto {
   @ApiProperty({ type: [BookingDto] })
