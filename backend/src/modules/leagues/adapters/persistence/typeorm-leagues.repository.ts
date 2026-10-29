@@ -298,7 +298,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
 
   async arenas(leagueId: string): Promise<LeagueArena[]> {
     const rows = await this.source.query<LeagueArena[]>(
-      `SELECT DISTINCT arena.id::text AS id, arena.address, arena.image
+      `SELECT arena.id::text AS id, arena.address, arena.image
        FROM public.league l
        JOIN public.sport_arena sa ON sa.sport_id=l.sport_id
        JOIN public.arena arena ON arena.id=sa.arena_id
