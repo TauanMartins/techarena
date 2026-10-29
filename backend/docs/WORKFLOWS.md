@@ -1,5 +1,33 @@
 # Migração de horários, agendamentos, esportes, arenas, equipes e amizades
 
+## Ligas e torneios
+
+As rotas `/leagues` exigem autenticação e usam o usuário do access token para
+identificar o organizador. A migration
+`1793152000000-manage-league-tournaments` adiciona formato, estado e dados de fase
+ao esquema de ligas existente; execute `npm run db:migrate` antes de iniciar uma
+versão que dependa desses campos.
+
+| Rota                                                                                     | Operação                                                                                                    |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `GET /leagues` e `GET /leagues/:leagueId`                                                | Lista e detalhes, incluindo partidas, resultados e classificação                                            |
+| `POST /leagues`                                                                          | Cria competição em pontos corridos, mata-mata ou grupos + mata-mata                                         |
+| `PUT /leagues/:leagueId`                                                                 | Edita nome e descrição; formato, modalidade e grupos só antes de agendar partidas                           |
+| `PUT /leagues/:leagueId/status`                                                          | Encerra ou cancela; conclusão exige partidas e final concluídas                                             |
+| `POST /leagues/:leagueId/teams` e `DELETE /leagues/:leagueId/teams/:teamId`              | Inscreve/remove equipes enquanto inscrições estão abertas                                                   |
+| `POST /leagues/:leagueId/fixtures`                                                       | Gera e agenda o calendário inicial numa transação                                                           |
+| `POST /leagues/:leagueId/rounds/next`                                                    | Calcula classificados e agenda a próxima fase após todos os resultados                                      |
+| `POST /leagues/:leagueId/matches`                                                        | Agenda partida manual entre equipes inscritas                                                               |
+| `PUT /leagues/:leagueId/matches/:matchId` e `DELETE /leagues/:leagueId/matches/:matchId` | Reagenda ou cancela partida futura sem resultado; partidas de torneio não podem ser canceladas isoladamente |
+| `PUT /leagues/:leagueId/matches/:matchId/result`                                         | Registra ou corrige resultado após o horário agendado                                                       |
+
+O formato de grupos exige divisão uniforme das equipes; cada grupo tem ao menos duas
+equipes, e o total de classificados deve formar um chaveamento de potência de dois.
+Mata-mata também exige potência de dois participantes. A classificação atribui 3
+pontos por vitória, 1 por empate e 0 por derrota. Empates são aceitos em pontos
+corridos e na fase de grupos, mas não no mata-mata. Uma competição concluída não
+aceita alterações; cancelá-la também cancela partidas futuras.
+
 Todas as rotas exigem Bearer do Supabase. O autor de uma operação vem do token;
 `username`, `username_owner`, `username_user_1` e outros seletores de autor não são
 aceitos. Dados são validados na entrada e projetados/validados por DTOs na saída.
@@ -7,30 +35,30 @@ Os contratos do NestJS usam camelCase e IDs bigint como strings.
 
 ## Rotas migradas
 
-| Rota | Contrato principal |
-|---|---|
-| `GET /horary` | Query `sportId`, `arenaId`, `date` (YYYY-MM-DD); retorna `{items:[{id,horary}]}` |
-| `GET /appointments` | Descoberta de agendamentos futuros scheduled, com paginação |
-| `GET /appointments/user` | Participações do usuário autenticado, incluindo histórico |
-| `POST /appointments` | Reserva e inscrição do organizador em uma transação |
-| `GET /sports` | Catálogo paginado; `search` opcional |
-| `GET /sports/arena` | Modalidades da arena; query `arenaId` |
-| `GET /sports/material` | Materiais e `relatedToLocal`; query `sportId` |
-| `GET /team` | Busca paginada de equipes; `search` opcional |
-| `GET /team/exist` | Query `name`; retorna `{exists:boolean}`, comparação sem diferenciar caixa/espaços externos |
-| `POST /team` | Corpo `name`, `description?`, `image?`; cria vínculo captain para o autor |
-| `PUT /team` | Corpo `teamId`, `name`, `description?`, `image?`; somente capitão |
-| `POST /team/user` | Corpo `teamId`, `userId`; capitão convida o destinatário, sem adicioná-lo ao time |
-| `PUT /team/user` | Corpo `teamId`, `userId`, `action?` accept/decline (padrão accept); capitão decide solicitação de ingresso |
-| `GET /friend` | Grupos paginados `friends`, `requestedFriends`, `receivedFriends` |
-| `POST /friend` | Corpo `userId`; cria solicitação, retorna 200 e a relação criada |
-| `PUT /friend` | Corpo `friendId`, `action?` accept/block (padrão accept) |
-| `GET /arenas` | Catálogo paginado de arenas não exclusivas de liga |
-| `GET /arenas/sports` | Query obrigatória `sportId` |
-| `GET /arenas/users` | Catálogo com localização opcional, distância e raio |
-| `POST /arenas` | Somente administrador; cria arena e modalidades em transação |
-| `PUT /arenas` | Somente administrador; altera arena e sincroniza modalidades em transação |
-| `GET /arenas/admin` | Somente administrador; inclui arenas exclusivas de liga |
+| Rota                     | Contrato principal                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `GET /horary`            | Query `sportId`, `arenaId`, `date` (YYYY-MM-DD); retorna `{items:[{id,horary}]}`                           |
+| `GET /appointments`      | Descoberta de agendamentos futuros scheduled, com paginação                                                |
+| `GET /appointments/user` | Participações do usuário autenticado, incluindo histórico                                                  |
+| `POST /appointments`     | Reserva e inscrição do organizador em uma transação                                                        |
+| `GET /sports`            | Catálogo paginado; `search` opcional                                                                       |
+| `GET /sports/arena`      | Modalidades da arena; query `arenaId`                                                                      |
+| `GET /sports/material`   | Materiais e `relatedToLocal`; query `sportId`                                                              |
+| `GET /team`              | Busca paginada de equipes; `search` opcional                                                               |
+| `GET /team/exist`        | Query `name`; retorna `{exists:boolean}`, comparação sem diferenciar caixa/espaços externos                |
+| `POST /team`             | Corpo `name`, `description?`, `image?`; cria vínculo captain para o autor                                  |
+| `PUT /team`              | Corpo `teamId`, `name`, `description?`, `image?`; somente capitão                                          |
+| `POST /team/user`        | Corpo `teamId`, `userId`; capitão convida o destinatário, sem adicioná-lo ao time                          |
+| `PUT /team/user`         | Corpo `teamId`, `userId`, `action?` accept/decline (padrão accept); capitão decide solicitação de ingresso |
+| `GET /friend`            | Grupos paginados `friends`, `requestedFriends`, `receivedFriends`                                          |
+| `POST /friend`           | Corpo `userId`; cria solicitação, retorna 200 e a relação criada                                           |
+| `PUT /friend`            | Corpo `friendId`, `action?` accept/block (padrão accept)                                                   |
+| `GET /arenas`            | Catálogo paginado de arenas não exclusivas de liga                                                         |
+| `GET /arenas/sports`     | Query obrigatória `sportId`                                                                                |
+| `GET /arenas/users`      | Catálogo com localização opcional, distância e raio                                                        |
+| `POST /arenas`           | Somente administrador; cria arena e modalidades em transação                                               |
+| `PUT /arenas`            | Somente administrador; altera arena e sincroniza modalidades em transação                                  |
+| `GET /arenas/admin`      | Somente administrador; inclui arenas exclusivas de liga                                                    |
 
 Listas usam `{items,total,page,limit,totalPages,hasNextPage,hasPreviousPage}` com
 `page=1` e `limit=20` por padrão; limite máximo 50. Os grupos de amizades usam esse
@@ -153,8 +181,7 @@ locais de teste e verificam autorização, consentimento, concorrência, rollbac
 transações, geolocalização, horários UTC e presença das rotas no OpenAPI.
 
 A regressão de coluna ausente também é testada contra PostgreSQL real: rollback da
-migration de workflows reproduz `42703`, impede o bootstrap e faz o health reportar
-503. Outro caso renomeia uma coluna com histórico atualizado e verifica a detecção.
+migration de workflows reproduz `42703`, impede o bootstrap e faz o health reportar 503. Outro caso renomeia uma coluna com histórico atualizado e verifica a detecção.
 Testes de queries percorrem páginas preenchidas/vazias, filtros geográficos, ambas
 as ordenações temporais/distância e preferência esportiva com joins/subqueries.
 O catálogo de equipes e os vínculos pessoais têm schemas Swagger distintos.
