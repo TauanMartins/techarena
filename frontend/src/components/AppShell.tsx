@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import { ErrorState } from './Feedback';
 import Button from 'react-bootstrap/Button';
 import Image from 'react-bootstrap/Image';

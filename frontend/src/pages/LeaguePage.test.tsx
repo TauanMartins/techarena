@@ -5,12 +5,18 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LeaguePage } from "./LeaguePage";
 import { api } from "../shared/api";
 
-vi.mock("../auth/AuthProvider", () => ({
-  useAuth: () => ({ session: { access_token: "test-token" } }),
+vi.mock("../auth/useAuth", () => ({
+  useAuth: () => ({
+    session: {
+      access_token: "test-token",
+      user: { id: "test-user" },
+    },
+  }),
 }));
 
 vi.mock("../shared/api", () => ({
@@ -51,6 +57,17 @@ const league = {
 
 describe("LeaguePage", () => {
   afterEach(cleanup);
+
+  function renderLeaguePage() {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <LeaguePage />
+      </QueryClientProvider>,
+    );
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -100,7 +117,7 @@ describe("LeaguePage", () => {
   });
 
   it("reloads details when the already selected league is clicked", async () => {
-    render(<LeaguePage />);
+    renderLeaguePage();
 
     await screen.findByRole("button", { name: "Ver liga" });
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(1));
@@ -132,7 +149,7 @@ describe("LeaguePage", () => {
       hasNextPage: false,
       hasPreviousPage: false,
     });
-    render(<LeaguePage />);
+    renderLeaguePage();
 
     await screen.findByRole("heading", { name: "Convidar outra equipe" });
     fireEvent.change(screen.getByLabelText("Buscar equipe para convidar"), {
@@ -188,7 +205,7 @@ describe("LeaguePage", () => {
     vi.mocked(api.getLeagueAvailability).mockResolvedValue({
       items: [{ id: "schedule-1", horary: "20:00:00" }],
     });
-    render(<LeaguePage />);
+    renderLeaguePage();
 
     await screen.findByRole("heading", { name: "Agendar partida" });
     await screen.findAllByRole("option", { name: "20:00" });
@@ -230,7 +247,7 @@ describe("LeaguePage", () => {
         },
       ],
     });
-    render(<LeaguePage />);
+    renderLeaguePage();
 
     fireEvent.click(await screen.findByRole("button", { name: "Aceitar" }));
 

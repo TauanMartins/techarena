@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -8,12 +7,13 @@ import {
   type FormEvent,
 } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Image from 'react-bootstrap/Image';
 import Modal from 'react-bootstrap/Modal';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import {
   EmptyState,
   ErrorState,
@@ -30,6 +30,7 @@ import {
   type ConversationKind,
 } from '../features/chat/realtime';
 import { api } from '../shared/api';
+import { queryKeys } from '../shared/queryClient';
 import { supabase } from '../shared/supabase';
 import type { AppointmentMembership, TeamMembership } from '../shared/types';
 
@@ -56,32 +57,9 @@ export function ChatPage() {
   const userId = session!.user.id;
   const { kind: routeKind, id: routeId } = useParams();
   const navigate = useNavigate();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loadingList, setLoadingList] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [hasOlderMessages, setHasOlderMessages] = useState(false);
-  const [connection, setConnection] = useState<
-    'idle' | 'connecting' | 'connected' | 'error'
-  >('idle');
-  const [listError, setListError] = useState<string | null>(null);
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
-  const [presenceSynced, setPresenceSynced] = useState(false);
-  const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [showDetails, setShowDetails] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messageListRef = useRef<HTMLDivElement>(null);
-  const previousScrollHeightRef = useRef<number | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const conversationGenerationRef = useRef(0);
-
-  const loadConversations = useCallback(async () => {
-    setLoadingList(true);
-    setListError(null);
-    try {
+  const conversationsQuery = useQuery({
+    queryKey: queryKeys.chatConversations(userId),
+    queryFn: async () => {
       const [friends, teams, appointments] = await Promise.all([
         api.listFriends(token),
         api.listMyTeams(token),
@@ -118,21 +96,29 @@ export function ChatPage() {
           detail: new Date(appointment.scheduledAt).toLocaleDateString('pt-BR'),
         }),
       );
-      setConversations([
-        ...direct,
-        ...teamConversations,
-        ...appointmentConversations,
-      ]);
-    } catch {
-      setListError('Não foi possível carregar as conversas. Tente novamente.');
-    } finally {
-      setLoadingList(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    void loadConversations();
-  }, [loadConversations]);
+      return [...direct, ...teamConversations, ...appointmentConversations];
+    },
+  });
+  const conversations = conversationsQuery.data ?? [];
+  const loadingList = conversationsQuery.isPending;
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [connection, setConnection] = useState<
+    'idle' | 'connecting' | 'connected' | 'error'
+  >('idle');
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
+  const [presenceSynced, setPresenceSynced] = useState(false);
+  const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [showDetails, setShowDetails] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageListRef = useRef<HTMLDivElement>(null);
+  const previousScrollHeightRef = useRef<number | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const conversationGenerationRef = useRef(0);
 
   const selected = useMemo(
     () =>
@@ -407,9 +393,15 @@ export function ChatPage() {
         title="Conversas"
         description="Converse com suas amizades, equipes e participantes de agendamentos."
       />
-      {listError && (
+      {conversationsQuery.error && (
         <div className="chat-page-error">
-          <ErrorState message={listError} />
+          <ErrorState
+            message={
+              conversationsQuery.error instanceof Error
+                ? conversationsQuery.error.message
+                : 'Não foi possível carregar as conversas. Tente novamente.'
+            }
+          />
         </div>
       )}
       <div className={`chat-layout${selected ? ' has-selection' : ''}`}>
@@ -427,7 +419,7 @@ export function ChatPage() {
             <Button
               size="sm"
               variant="light"
-              onClick={() => void loadConversations()}
+              onClick={() => void conversationsQuery.refetch()}
               aria-label="Atualizar conversas"
             >
               <i className="bi bi-arrow-clockwise" />

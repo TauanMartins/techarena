@@ -1,12 +1,28 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
-import { useAuth } from '../auth/AuthProvider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../auth/useAuth';
 import { api, ApiError } from '../shared/api';
-import type { Arena, Schedule, Sport } from '../shared/types';
+import { queryKeys } from '../shared/queryClient';
+import {
+  bookingFormSchema,
+  type BookingFormInput,
+  type BookingFormValues,
+} from '../shared/validation';
 import { ErrorState } from './Feedback';
+
+function dateInputToday() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export function BookingForm({
   titlePrefix = 'Partida de',
@@ -17,144 +33,131 @@ export function BookingForm({
 }) {
   const { session } = useAuth();
   const token = session!.access_token;
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [arenas, setArenas] = useState<Arena[]>([]);
-  const [slots, setSlots] = useState<Schedule[]>([]);
-  const [today] = useState(() => new Date().toISOString().slice(0, 10));
-  const [sportId, setSportId] = useState('');
-  const [arenaId, setArenaId] = useState('');
-  const [scheduleId, setScheduleId] = useState('');
-  const [date, setDate] = useState(today);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [maxPlayers, setMaxPlayers] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const userId = session!.user.id;
+  const queryClient = useQueryClient();
+  const today = useMemo(dateInputToday, []);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<BookingFormInput, undefined, BookingFormValues>({
+    resolver: zodResolver(bookingFormSchema),
+    defaultValues: {
+      sportId: '',
+      arenaId: '',
+      scheduleId: '',
+      date: today,
+      title: '',
+      description: '',
+      maxPlayers: '',
+    },
+  });
+  const sportId = watch('sportId');
+  const arenaId = watch('arenaId');
+  const date = watch('date');
+  const scheduleId = watch('scheduleId');
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(null);
-    void Promise.all([api.getSports(token), api.listArenas(token)])
-      .then(([sportPage, arenaPage]) => {
-        if (!active) return;
-        setSports(sportPage.items);
-        setArenas(arenaPage.items.filter((arena) => !arena.isLeagueOnly));
-      })
-      .catch((cause: unknown) => {
-        if (active)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'Falha ao carregar esportes e arenas.',
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [token]);
+  const optionsQuery = useQuery({
+    queryKey: ['bookingOptions', userId],
+    queryFn: async () => {
+      const [sportPage, arenaPage] = await Promise.all([
+        api.getSports(token),
+        api.listArenas(token),
+      ]);
+      return {
+        sports: sportPage.items,
+        arenas: arenaPage.items.filter((arena) => !arena.isLeagueOnly),
+      };
+    },
+  });
+  const sports = optionsQuery.data?.sports ?? [];
+  const arenas = optionsQuery.data?.arenas ?? [];
 
   const availableArenas = arenas.filter(
     (arena) => !sportId || arena.sportIds.includes(sportId),
   );
 
-  useEffect(() => {
-    setArenaId('');
-    setScheduleId('');
-    setSlots([]);
-  }, [sportId]);
+  const availabilityQuery = useQuery({
+    queryKey: queryKeys.availability(userId, arenaId, sportId, date),
+    queryFn: () => api.getAvailability(token, arenaId, sportId, date),
+    enabled: Boolean(sportId && arenaId && date),
+  });
+  const slots = availabilityQuery.data?.items ?? [];
 
-  useEffect(() => {
-    if (!sportId || !arenaId || !date) {
-      setSlots([]);
-      setScheduleId('');
-      return;
-    }
-    let active = true;
-    setLoading(true);
-    setError(null);
-    void api
-      .getAvailability(token, arenaId, sportId, date)
-      .then((result) => {
-        if (active) setSlots(result.items);
-      })
-      .catch((cause: unknown) => {
-        if (active)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : 'Falha ao consultar horários.',
-          );
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [arenaId, date, sportId, token]);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!sportId || !arenaId || !scheduleId) return;
-    setSaving(true);
-    setError(null);
+  function submit(values: BookingFormValues) {
     setSuccess(false);
-    try {
-      await api.createAppointment(token, {
-        arenaId,
-        sportId,
-        date,
-        scheduleId,
-        title:
-          title.trim() ||
-          `${titlePrefix} ${sports.find((sport) => sport.id === sportId)?.name ?? 'esporte'}`,
-        description: description.trim() || undefined,
-        holder: true,
-        maxPlayers: maxPlayers ? Number(maxPlayers) : undefined,
-      });
-      setSuccess(true);
-      setTitle('');
-      setDescription('');
-      setMaxPlayers('');
-      setScheduleId('');
-      onCreated();
-    } catch (cause) {
-      setError(
-        cause instanceof ApiError
-          ? cause.message
-          : cause instanceof Error
-            ? cause.message
-            : 'Não foi possível criar o agendamento.',
-      );
-    } finally {
-      setSaving(false);
-    }
+    createAppointmentMutation.mutate(values);
   }
 
+  const createAppointmentMutation = useMutation({
+    mutationFn: (values: BookingFormValues) =>
+      api.createAppointment(token, {
+        arenaId: values.arenaId,
+        sportId: values.sportId,
+        date: values.date,
+        scheduleId: values.scheduleId,
+        title:
+          values.title ||
+          `${titlePrefix} ${sports.find((sport) => sport.id === values.sportId)?.name ?? 'esporte'}`,
+        description: values.description || undefined,
+        holder: true,
+        maxPlayers: values.maxPlayers,
+      }),
+    onSuccess: async (_appointment, values) => {
+      setSuccess(true);
+      reset({
+        ...values,
+        title: '',
+        description: '',
+        maxPlayers: '',
+        scheduleId: '',
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['appointments', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['myAppointments', userId] }),
+      ]);
+      onCreated();
+    },
+  });
+  const requestError =
+    createAppointmentMutation.error ??
+    availabilityQuery.error ??
+    optionsQuery.error;
+  const errorMessage = requestError
+    ? requestError instanceof ApiError || requestError instanceof Error
+      ? requestError.message
+      : 'Não foi possível concluir a solicitação.'
+    : null;
+
   return (
-    <Form onSubmit={submit} className="booking-form">
-      {error && <ErrorState message={error} />}
+    <Form onSubmit={handleSubmit(submit)} className="booking-form" noValidate>
+      {errorMessage && <ErrorState message={errorMessage} />}
       {success && (
         <Alert variant="success">Agendamento criado com sucesso.</Alert>
       )}
-      {loading && <div className="form-note">Atualizando opções...</div>}
-      {!loading && arenas.length === 0 && (
+      {(optionsQuery.isPending || availabilityQuery.isFetching) && (
+        <div className="form-note">Atualizando opções...</div>
+      )}
+      {!optionsQuery.isPending && arenas.length === 0 && (
         <Alert variant="info">
           Nenhuma arena disponível para este esporte no momento.
         </Alert>
       )}
       <Form.Group className="mb-3">
-        <Form.Label>Esporte</Form.Label>
+        <Form.Label htmlFor="booking-sport">Esporte</Form.Label>
         <Form.Select
-          value={sportId}
-          onChange={(event) => setSportId(event.target.value)}
-          required
+          id="booking-sport"
+          isInvalid={!!errors.sportId}
+          {...register('sportId', {
+            onChange: () => {
+              setValue('arenaId', '');
+              setValue('scheduleId', '');
+            },
+          })}
         >
           <option value="">Selecione uma modalidade</option>
           {sports.map((sport) => (
@@ -163,17 +166,20 @@ export function BookingForm({
             </option>
           ))}
         </Form.Select>
+        <Form.Control.Feedback type="invalid">
+          {errors.sportId?.message}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group className="mb-3">
-        <Form.Label>Arena</Form.Label>
+        <Form.Label htmlFor="booking-arena">Arena</Form.Label>
         <Form.Select
-          value={arenaId}
-          onChange={(event) => {
-            setScheduleId('');
-            setSlots([]);
-            setArenaId(event.target.value);
-          }}
-          required
+          id="booking-arena"
+          isInvalid={!!errors.arenaId}
+          {...register('arenaId', {
+            onChange: () => {
+              setValue('scheduleId', '');
+            },
+          })}
           disabled={!sportId}
         >
           <option value="">Selecione uma arena</option>
@@ -183,28 +189,34 @@ export function BookingForm({
             </option>
           ))}
         </Form.Select>
+        <Form.Control.Feedback type="invalid">
+          {errors.arenaId?.message}
+        </Form.Control.Feedback>
       </Form.Group>
       <div className="row">
         <Form.Group className="col-md-6 mb-3">
-          <Form.Label>Data</Form.Label>
+          <Form.Label htmlFor="booking-date">Data</Form.Label>
           <Form.Control
+            id="booking-date"
             type="date"
             min={today}
-            value={date}
-            onChange={(event) => {
-              setScheduleId('');
-              setSlots([]);
-              setDate(event.target.value);
-            }}
-            required
+            isInvalid={!!errors.date}
+            {...register('date', {
+              onChange: () => {
+                setValue('scheduleId', '');
+              },
+            })}
           />
+          <Form.Control.Feedback type="invalid">
+            {errors.date?.message}
+          </Form.Control.Feedback>
         </Form.Group>
         <Form.Group className="col-md-6 mb-3">
-          <Form.Label>Horário disponível</Form.Label>
+          <Form.Label htmlFor="booking-schedule">Horário disponível</Form.Label>
           <Form.Select
-            value={scheduleId}
-            onChange={(event) => setScheduleId(event.target.value)}
-            required
+            id="booking-schedule"
+            isInvalid={!!errors.scheduleId}
+            {...register('scheduleId')}
             disabled={!slots.length}
           >
             <option value="">
@@ -218,48 +230,68 @@ export function BookingForm({
               </option>
             ))}
           </Form.Select>
+          <Form.Control.Feedback type="invalid">
+            {errors.scheduleId?.message}
+          </Form.Control.Feedback>
         </Form.Group>
       </div>
       <Form.Group className="mb-3">
-        <Form.Label>Nome do evento</Form.Label>
+        <Form.Label htmlFor="booking-title">Nome do evento</Form.Label>
         <Form.Control
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          maxLength={100}
+          id="booking-title"
+          isInvalid={!!errors.title}
+          {...register('title')}
           placeholder={
             titlePrefix.startsWith('Torneio')
               ? 'Ex.: Torneio de vôlei'
               : 'Ex.: Futebol de sábado'
           }
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.title?.message}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group className="mb-3">
-        <Form.Label>Descrição</Form.Label>
+        <Form.Label htmlFor="booking-description">Descrição</Form.Label>
         <Form.Control
+          id="booking-description"
           as="textarea"
           rows={3}
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          maxLength={2000}
+          isInvalid={!!errors.description}
+          {...register('description')}
           placeholder="Detalhes para quem quiser participar"
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.description?.message}
+        </Form.Control.Feedback>
       </Form.Group>
       <Form.Group className="mb-4">
-        <Form.Label>Limite de participantes (opcional)</Form.Label>
+        <Form.Label htmlFor="booking-max-players">
+          Limite de participantes (opcional)
+        </Form.Label>
         <Form.Control
+          id="booking-max-players"
           type="number"
           min={1}
           max={1000}
-          value={maxPlayers}
-          onChange={(event) => setMaxPlayers(event.target.value)}
+          isInvalid={!!errors.maxPlayers}
+          {...register('maxPlayers')}
         />
+        <Form.Control.Feedback type="invalid">
+          {errors.maxPlayers?.message}
+        </Form.Control.Feedback>
       </Form.Group>
       <Button
         type="submit"
         className="w-100"
-        disabled={saving || loading || !scheduleId}
+        disabled={
+          isSubmitting ||
+          optionsQuery.isPending ||
+          availabilityQuery.isFetching ||
+          !scheduleId
+        }
       >
-        {saving
+        {isSubmitting
           ? 'Salvando...'
           : titlePrefix.startsWith('Torneio')
             ? 'Criar evento de liga'

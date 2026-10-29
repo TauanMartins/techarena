@@ -1,39 +1,21 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
+import { AuthContext } from './AuthContext';
 import { api } from '../shared/api';
+import { queryClient, queryKeys } from '../shared/queryClient';
 import { isSupabaseConfigured, supabase } from '../shared/supabase';
-import type { Profile } from '../shared/types';
-
-interface AuthContextValue {
-  session: Session | null;
-  profile: Profile | null;
-  loading: boolean;
-  profileLoading: boolean;
-  authError: string | null;
-  profileError: string | null;
-  configured: boolean;
-  loginWithGoogle: () => Promise<void>;
-  logout: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -47,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(({ data, error }) => {
         if (error) throw error;
         if (active) {
-          setProfileLoading(Boolean(data.session));
           setSession(data.session);
         }
       })
@@ -65,13 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setProfileLoading(Boolean(nextSession));
+      if (!nextSession) queryClient.clear();
       setSession(nextSession);
       setAuthError(null);
-      if (!nextSession) {
-        setProfile(null);
-        setProfileError(null);
-      }
     });
 
     return () => {
@@ -80,28 +57,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const profileQuery = useQuery({
+    queryKey: queryKeys.profile(session?.user.id ?? ''),
+    queryFn: () => api.getProfile(session!.access_token),
+    enabled: Boolean(session),
+  });
   const refreshProfile = useCallback(async () => {
-    if (!session) {
-      setProfile(null);
-      setProfileLoading(false);
-      return;
-    }
-    setProfileLoading(true);
-    try {
-      const currentProfile = await api.getProfile(session.access_token);
-      setProfile(currentProfile);
-      setProfileError(null);
-    } catch {
-      setProfile(null);
-      setProfileError('Não foi possível carregar os dados do seu perfil.');
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    void refreshProfile();
-  }, [refreshProfile]);
+    if (session) await profileQuery.refetch();
+  }, [profileQuery.refetch, session]);
 
   const loginWithGoogle = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) {
@@ -127,11 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       session,
-      profile,
+      profile: profileQuery.data ?? null,
       loading,
-      profileLoading,
+      profileLoading: Boolean(session) && profileQuery.isPending,
       authError,
-      profileError,
+      profileError: profileQuery.error
+        ? 'Não foi possível carregar os dados do seu perfil.'
+        : null,
       configured: isSupabaseConfigured,
       loginWithGoogle,
       logout,
@@ -139,11 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [
       session,
-      profile,
       loading,
-      profileLoading,
+      profileQuery.data,
+      profileQuery.isPending,
       authError,
-      profileError,
+      profileQuery.error,
       loginWithGoogle,
       logout,
       refreshProfile,
@@ -151,11 +116,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context)
-    throw new Error('useAuth deve ser usado dentro de AuthProvider.');
-  return context;
 }

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsPage } from './SettingsPage';
 
@@ -15,7 +16,7 @@ const { apiMock, authMock, themeMock } = vi.hoisted(() => ({
     logout: vi.fn(),
     session: {
       access_token: 'access-token',
-      user: { email: 'athlete@example.com' },
+      user: { id: 'user-id', email: 'athlete@example.com' },
     },
     profile: {
       id: 'user-id',
@@ -37,13 +38,24 @@ const { apiMock, authMock, themeMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('../shared/api', () => ({ api: apiMock }));
-vi.mock('../auth/AuthProvider', () => ({ useAuth: () => authMock }));
-vi.mock('../features/preferences/ThemeProvider', () => ({
+vi.mock('../auth/useAuth', () => ({ useAuth: () => authMock }));
+vi.mock('../features/preferences/useThemePreference', () => ({
   useThemePreference: () => themeMock,
 }));
 
 describe('SettingsPage profile settings', () => {
   afterEach(cleanup);
+
+  function renderSettings() {
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    return render(
+      <QueryClientProvider client={client}>
+        <SettingsPage />
+      </QueryClientProvider>,
+    );
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -62,7 +74,7 @@ describe('SettingsPage profile settings', () => {
   it('updates all editable profile fields, including birth date', async () => {
     const user = userEvent.setup();
     authMock.profile.image = 'https://example.com/avatar.png';
-    render(<SettingsPage />);
+    renderSettings();
 
     expect(screen.getByRole('img', { name: 'Foto de perfil' })).toHaveAttribute(
       'src',
@@ -94,7 +106,7 @@ describe('SettingsPage profile settings', () => {
   it('clears gender when the user chooses not to disclose it', async () => {
     const user = userEvent.setup();
     authMock.profile.gender = 'F';
-    render(<SettingsPage />);
+    renderSettings();
 
     fireEvent.change(screen.getByLabelText('Data de nascimento'), {
       target: { value: '1990-05-12' },
@@ -108,5 +120,21 @@ describe('SettingsPage profile settings', () => {
         expect.objectContaining({ gender: null }),
       );
     });
+  });
+
+  it('shows field validation errors without sending invalid profile data', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.clear(screen.getByLabelText('Nome de usuário'));
+    await user.type(screen.getByLabelText('Nome de usuário'), 'nome inválido');
+    await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+
+    expect(
+      await screen.findByText(
+        'Use apenas letras minúsculas, números e sublinhado.',
+      ),
+    ).toBeInTheDocument();
+    expect(apiMock.updateProfile).not.toHaveBeenCalled();
   });
 });

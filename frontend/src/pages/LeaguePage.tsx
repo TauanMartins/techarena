@@ -1,7 +1,4 @@
 import {
-  useCallback,
-  useEffect,
-  useRef,
   useState,
   type FormEvent,
 } from "react";
@@ -11,22 +8,27 @@ import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Table from "react-bootstrap/Table";
-import { useAuth } from "../auth/AuthProvider";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "../auth/useAuth";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   PageHeading,
 } from "../components/Feedback";
+import { LeagueSettingsFields } from "../features/leagues/LeagueSettingsFields";
 import { api } from "../shared/api";
+import { queryKeys } from "../shared/queryClient";
+import {
+  leagueCreateFormSchema,
+  leagueScoreSchema,
+  leagueUpdateFormSchema,
+} from "../shared/validation";
 import type {
   LeagueArena,
   LeagueDetails,
   LeagueMatch,
-  LeagueSummary,
   Schedule,
-  Sport,
-  TeamMembership,
 } from "../shared/types";
 
 function localDate() {
@@ -35,28 +37,18 @@ function localDate() {
   return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
 }
 
+const EMPTY_ITEMS: never[] = [];
+
 function LeaguePage() {
   const { session } = useAuth();
   const token = session!.access_token;
-  const [leagues, setLeagues] = useState<LeagueSummary[]>([]);
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [myTeams, setMyTeams] = useState<TeamMembership[]>([]);
-  const [teamInvitations, setTeamInvitations] = useState<
-    Awaited<ReturnType<typeof api.listLeagueTeamInvitations>>["items"]
-  >([]);
+  const userId = session!.user.id;
+  const queryClient = useQueryClient();
   const [teamSearch, setTeamSearch] = useState("");
   const [teamSearchPerformed, setTeamSearchPerformed] = useState(false);
-  const [teamSearchResults, setTeamSearchResults] = useState<
-    Awaited<ReturnType<typeof api.listTeams>>["items"]
-  >([]);
+  const [submittedTeamSearch, setSubmittedTeamSearch] = useState("");
   const [inviteTeamId, setInviteTeamId] = useState("");
-  const [selectedId, setSelectedId] = useState("");
-  const [detailReloadVersion, setDetailReloadVersion] = useState(0);
-  const [details, setDetails] = useState<LeagueDetails | null>(null);
-  const [leagueArenas, setLeagueArenas] = useState<LeagueArena[]>([]);
-  const [availability, setAvailability] = useState<Schedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingDetails, setLoadingDetails] = useState(true);
+  const [selectedLeagueId, setSelectedLeagueId] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -68,102 +60,77 @@ function LeaguePage() {
   const [scoreInputs, setScoreInputs] = useState<
     Record<string, { home: string; away: string }>
   >({});
-  const detailsRequest = useRef(0);
-
-  const loadCatalog = useCallback(async () => {
-    try {
-      const [leaguePage, sportPage, teamPage, invitations] = await Promise.all([
-        api.listLeagues(token),
-        api.getSports(token),
-        api.listMyTeams(token),
-        api.listLeagueTeamInvitations(token),
+  const leaguesQuery = useQuery({
+    queryKey: queryKeys.leagues(userId),
+    queryFn: () => api.listLeagues(token),
+  });
+  const sportsQuery = useQuery({
+    queryKey: queryKeys.sports(userId),
+    queryFn: () => api.getSports(token),
+  });
+  const myTeamsQuery = useQuery({
+    queryKey: queryKeys.myTeams(userId),
+    queryFn: () => api.listMyTeams(token),
+  });
+  const invitationsQuery = useQuery({
+    queryKey: queryKeys.leagueInvitations(userId),
+    queryFn: () => api.listLeagueTeamInvitations(token),
+  });
+  const leagues = leaguesQuery.data?.items ?? EMPTY_ITEMS;
+  const sports = sportsQuery.data?.items ?? EMPTY_ITEMS;
+  const myTeams = myTeamsQuery.data?.items ?? EMPTY_ITEMS;
+  const teamInvitations = invitationsQuery.data?.items ?? EMPTY_ITEMS;
+  const selectedId = selectedLeagueId || leagues[0]?.id || "";
+  const detailsQuery = useQuery({
+    queryKey: queryKeys.leagueDetails(userId, selectedId),
+    queryFn: async () => {
+      const [leagueDetails, arenas] = await Promise.all([
+        api.getLeague(token, selectedId),
+        api.getLeagueArenas(token, selectedId),
       ]);
-      setLeagues(leaguePage.items);
-      setSports(sportPage.items);
-      setMyTeams(teamPage.items);
-      setTeamInvitations(invitations.items);
-      if (leaguePage.items.length === 0) setDetails(null);
-      setSelectedId((current) =>
-        leaguePage.items.some((league) => league.id === current)
-          ? current
-          : (leaguePage.items[0]?.id ?? ""),
-      );
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Não foi possível carregar as ligas.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    void loadCatalog();
-  }, [loadCatalog]);
-
-  const loadDetails = useCallback(
-    async (leagueId: string) => {
-      if (!leagueId) return;
-      const requestId = ++detailsRequest.current;
-      try {
-        const [leagueDetails, arenaPage] = await Promise.all([
-          api.getLeague(token, leagueId),
-          api.getLeagueArenas(token, leagueId),
-        ]);
-        if (requestId !== detailsRequest.current) return;
-        setDetails(leagueDetails);
-        setLeagueArenas(arenaPage.items);
-        setArenaId((current) =>
-          arenaPage.items.some((arena) => arena.id === current)
-            ? current
-            : (arenaPage.items[0]?.id ?? ""),
-        );
-        setTeamId("");
-      } catch (cause) {
-        if (requestId === detailsRequest.current)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Não foi possível carregar os detalhes da liga.",
-          );
-      } finally {
-        if (requestId === detailsRequest.current) setLoadingDetails(false);
-      }
+      return { details: leagueDetails, arenas: arenas.items };
     },
-    [token],
-  );
-
-  useEffect(() => {
-    void loadDetails(selectedId);
-    return () => {
-      detailsRequest.current += 1;
-    };
-  }, [detailReloadVersion, loadDetails, selectedId]);
-
-  useEffect(() => {
-    if (!selectedId || !arenaId || !matchDate) {
-      return;
-    }
-    let active = true;
-    void api
-      .getLeagueAvailability(token, selectedId, arenaId, matchDate)
-      .then((response) => {
-        if (active) setAvailability(response.items);
-      })
-      .catch((cause: unknown) => {
-        if (active)
-          setError(
-            cause instanceof Error
-              ? cause.message
-              : "Não foi possível consultar os horários.",
-          );
-      });
-    return () => {
-      active = false;
-    };
-  }, [arenaId, matchDate, selectedId, token]);
+    enabled: Boolean(selectedId),
+  });
+  const details: LeagueDetails | null = detailsQuery.data?.details ?? null;
+  const leagueArenas = detailsQuery.data?.arenas ?? EMPTY_ITEMS;
+  const selectedArenaId = leagueArenas.some((arena) => arena.id === arenaId)
+    ? arenaId
+    : (leagueArenas[0]?.id ?? "");
+  const availabilityQuery = useQuery({
+    queryKey: queryKeys.leagueAvailability(
+      userId,
+      selectedId,
+      selectedArenaId,
+      matchDate,
+    ),
+    queryFn: () =>
+      api.getLeagueAvailability(token, selectedId, selectedArenaId, matchDate),
+    enabled: Boolean(selectedId && selectedArenaId && matchDate),
+  });
+  const teamSearchQuery = useQuery({
+    queryKey: queryKeys.leagueTeams(userId, submittedTeamSearch),
+    queryFn: () => api.listTeams(token, submittedTeamSearch),
+    enabled: teamSearchPerformed,
+  });
+  const teamSearchResults = teamSearchQuery.data?.items ?? EMPTY_ITEMS;
+  const availability: Schedule[] = availabilityQuery.data?.items ?? EMPTY_ITEMS;
+  const loading =
+    leaguesQuery.isPending ||
+    sportsQuery.isPending ||
+    myTeamsQuery.isPending ||
+    invitationsQuery.isPending;
+  const loadingDetails = detailsQuery.isPending;
+  const queryError = [
+    leaguesQuery.error,
+    sportsQuery.error,
+    myTeamsQuery.error,
+    invitationsQuery.error,
+    detailsQuery.error,
+    availabilityQuery.error,
+    teamSearchQuery.error,
+  ].find((cause): cause is Error => cause instanceof Error);
+  const displayError = error ?? queryError?.message;
 
   const eligibleTeams = myTeams.filter(
     (team) =>
@@ -177,37 +144,48 @@ function LeaguePage() {
   );
 
   async function refreshSelectedLeague() {
-    setLoadingDetails(true);
-    await Promise.all([loadCatalog(), loadDetails(selectedId)]);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.leagues(userId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.myTeams(userId) }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.leagueInvitations(userId),
+      }),
+      selectedId
+        ? queryClient.invalidateQueries({
+            queryKey: queryKeys.leagueDetails(userId, selectedId),
+          })
+        : Promise.resolve(),
+    ]);
   }
 
   async function createLeague(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "").trim();
-    const description = String(data.get("description") ?? "").trim();
-    const sportId = String(data.get("sportId") ?? "");
-    const tournamentFormat = String(
-      data.get("tournamentFormat") ?? "round_robin",
-    ) as LeagueSummary["tournamentFormat"];
+    const parsed = leagueCreateFormSchema.safeParse({
+      name: data.get("name"),
+      description: data.get("description") ?? "",
+      sportId: data.get("sportId"),
+      tournamentFormat: data.get("tournamentFormat") ?? "round_robin",
+      groupCount: data.get("groupCount") ?? 2,
+      qualifiersPerGroup: data.get("qualifiersPerGroup") ?? 2,
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Confira os dados da liga.");
+      return;
+    }
     setSaving(true);
     setError(null);
     setNotice(null);
     try {
       const league = await api.createLeague(token, {
-        name,
-        description: description || undefined,
-        sportId,
-        tournamentFormat,
-        groupCount: Number(data.get("groupCount") ?? 2),
-        qualifiersPerGroup: Number(data.get("qualifiersPerGroup") ?? 2),
+        ...parsed.data,
       });
       setShowCreate(false);
-      setLoadingDetails(true);
-      setDetails(null);
-      setSelectedId(league.id);
+      setSelectedLeagueId(league.id);
       setNotice("Liga criada. Inscreva equipes e organize as partidas.");
-      await loadCatalog();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.leagues(userId),
+      });
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -223,20 +201,28 @@ function LeaguePage() {
     event.preventDefault();
     if (!details) return;
     const data = new FormData(event.currentTarget);
+    const parsed = leagueUpdateFormSchema.safeParse({
+      name: data.get("name"),
+      description: data.get("description") ?? "",
+      tournamentFormat:
+        data.get("tournamentFormat") ?? details.league.tournamentFormat,
+      groupCount: data.get("groupCount") ?? details.league.groupCount,
+      qualifiersPerGroup:
+        data.get("qualifiersPerGroup") ?? details.league.qualifiersPerGroup,
+    });
+    if (!parsed.success) {
+      setError(
+        parsed.error.issues[0]?.message ?? "Confira os dados da liga.",
+      );
+      return;
+    }
     setSaving(true);
     setError(null);
     setNotice(null);
     try {
       await api.updateLeague(token, details.league.id, {
-        name: String(data.get("name") ?? "").trim(),
-        description: String(data.get("description") ?? "").trim() || null,
-        tournamentFormat: String(
-          data.get("tournamentFormat") ?? details.league.tournamentFormat,
-        ) as LeagueSummary["tournamentFormat"],
-        groupCount: Number(data.get("groupCount") ?? details.league.groupCount),
-        qualifiersPerGroup: Number(
-          data.get("qualifiersPerGroup") ?? details.league.qualifiersPerGroup,
-        ),
+        ...parsed.data,
+        description: parsed.data.description ?? null,
       });
       setNotice("Configurações da liga atualizadas.");
       await refreshSelectedLeague();
@@ -284,7 +270,7 @@ function LeaguePage() {
     if (!details) return;
     const data = new FormData(event.currentTarget);
     const input = {
-      arenaId,
+      arenaId: selectedArenaId,
       scheduleId: String(data.get("scheduleId") ?? ""),
       date: matchDate,
       daysBetweenMatches: Number(data.get("daysBetweenMatches") ?? 1),
@@ -330,21 +316,12 @@ function LeaguePage() {
     }
   }
 
-  async function searchTeams(event: FormEvent<HTMLFormElement>) {
+  function searchTeams(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    try {
-      const result = await api.listTeams(token, teamSearch.trim());
-      setTeamSearchResults(result.items);
-      setTeamSearchPerformed(true);
-      setInviteTeamId("");
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Não foi possível buscar equipes.",
-      );
-    }
+    setSubmittedTeamSearch(teamSearch.trim());
+    setTeamSearchPerformed(true);
+    setInviteTeamId("");
   }
 
   async function inviteTeam(event: FormEvent<HTMLFormElement>) {
@@ -356,7 +333,8 @@ function LeaguePage() {
     try {
       await api.inviteLeagueTeam(token, details.league.id, inviteTeamId);
       setNotice("Convite enviado ao capitão da equipe.");
-      setTeamSearchResults([]);
+      setTeamSearchPerformed(false);
+      setSubmittedTeamSearch("");
       setInviteTeamId("");
       await refreshSelectedLeague();
     } catch (cause) {
@@ -385,8 +363,15 @@ function LeaguePage() {
           : "Convite recusado.",
       );
       await Promise.all([
-        loadCatalog(),
-        selectedId ? loadDetails(selectedId) : Promise.resolve(),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.leagueInvitations(userId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.myTeams(userId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.leagueDetails(userId, selectedId),
+        }),
       ]);
     } catch (cause) {
       setError(
@@ -430,7 +415,7 @@ function LeaguePage() {
       await api.createLeagueMatch(token, details.league.id, {
         homeTeamId: String(data.get("homeTeamId") ?? ""),
         awayTeamId: String(data.get("awayTeamId") ?? ""),
-        arenaId,
+        arenaId: selectedArenaId,
         scheduleId: String(data.get("scheduleId") ?? ""),
         date: matchDate,
       });
@@ -453,18 +438,14 @@ function LeaguePage() {
       home: match.result ? String(match.result.homeScore) : "",
       away: match.result ? String(match.result.awayScore) : "",
     };
-    const homeScore = Number(scores?.home);
-    const awayScore = Number(scores?.away);
-    if (
-      scores?.home === "" ||
-      scores?.away === "" ||
-      !Number.isInteger(homeScore) ||
-      !Number.isInteger(awayScore) ||
-      homeScore < 0 ||
-      awayScore < 0
-    ) {
+    const parsedScores = leagueScoreSchema.safeParse({
+      homeScore: scores.home,
+      awayScore: scores.away,
+    });
+    if (!parsedScores.success) {
       setError(
-        "Informe placares inteiros e não negativos para registrar o resultado.",
+        parsedScores.error.issues[0]?.message ??
+          "Informe placares inteiros e não negativos.",
       );
       return;
     }
@@ -473,8 +454,7 @@ function LeaguePage() {
     setNotice(null);
     try {
       await api.recordLeagueResult(token, details.league.id, match.id, {
-        homeScore,
-        awayScore,
+        ...parsedScores.data,
       });
       setNotice("Resultado registrado e classificação atualizada.");
       await refreshSelectedLeague();
@@ -521,7 +501,7 @@ function LeaguePage() {
       await api.rescheduleLeagueMatch(token, details.league.id, match.id, {
         homeTeamId: match.homeTeam.id,
         awayTeamId: match.awayTeam.id,
-        arenaId,
+        arenaId: selectedArenaId,
         scheduleId: String(data.get("scheduleId") ?? ""),
         date: matchDate,
       });
@@ -552,7 +532,7 @@ function LeaguePage() {
           </Button>
         }
       />
-      {error && <ErrorState message={error} />}
+      {displayError && <ErrorState message={displayError} />}
       {notice && (
         <Alert variant="success" dismissible onClose={() => setNotice(null)}>
           {notice}
@@ -605,65 +585,8 @@ function LeaguePage() {
         <Card className="content-card mb-4">
           <Card.Body>
             <h2 className="h4">Nova liga</h2>
-            <Form onSubmit={createLeague}>
-              <div className="row g-3">
-                <Form.Group className="col-md-5" controlId="league-name">
-                  <Form.Label>Nome</Form.Label>
-                  <Form.Control name="name" required maxLength={45} />
-                </Form.Group>
-                <Form.Group className="col-md-4" controlId="league-sport">
-                  <Form.Label>Modalidade</Form.Label>
-                  <Form.Select name="sportId" required defaultValue="">
-                    <option value="" disabled>
-                      Selecione o esporte
-                    </option>
-                    {sports.map((sport) => (
-                      <option key={sport.id} value={sport.id}>
-                        {sport.name}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="col-md-3" controlId="league-description">
-                  <Form.Label>Descrição</Form.Label>
-                  <Form.Control
-                    name="description"
-                    maxLength={500}
-                    placeholder="Opcional"
-                  />
-                </Form.Group>
-                <Form.Group className="col-md-4" controlId="league-format">
-                  <Form.Label>Formato</Form.Label>
-                  <Form.Select
-                    name="tournamentFormat"
-                    defaultValue="round_robin"
-                  >
-                    <option value="round_robin">Pontos corridos</option>
-                    <option value="knockout">Eliminação simples</option>
-                    <option value="groups_knockout">Grupos + mata-mata</option>
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="col-md-4" controlId="league-group-count">
-                  <Form.Label>Grupos</Form.Label>
-                  <Form.Control
-                    name="groupCount"
-                    type="number"
-                    min={2}
-                    max={16}
-                    defaultValue={2}
-                  />
-                </Form.Group>
-                <Form.Group className="col-md-4" controlId="league-qualifiers">
-                  <Form.Label>Classificados por grupo</Form.Label>
-                  <Form.Control
-                    name="qualifiersPerGroup"
-                    type="number"
-                    min={1}
-                    max={8}
-                    defaultValue={2}
-                  />
-                </Form.Group>
-              </div>
+            <Form onSubmit={createLeague} noValidate>
+              <LeagueSettingsFields prefix="league" sports={sports} />
               <Button className="mt-3" type="submit" disabled={saving}>
                 {saving ? "Salvando..." : "Criar liga"}
               </Button>
@@ -721,12 +644,13 @@ function LeaguePage() {
                       }
                       size="sm"
                       onClick={() => {
-                        setLoadingDetails(true);
-                        setDetails(null);
                         setError(null);
-                        setAvailability([]);
-                        setSelectedId(league.id);
-                        setDetailReloadVersion((version) => version + 1);
+                        if (selectedId === league.id) {
+                          void queryClient.invalidateQueries({
+                            queryKey: queryKeys.leagueDetails(userId, league.id),
+                          });
+                        }
+                        setSelectedLeagueId(league.id);
                       }}
                     >
                       Ver liga
@@ -797,81 +721,12 @@ function LeaguePage() {
                     <Card className="content-card mb-4">
                       <Card.Body>
                         <h3 className="h4">Gerenciar liga</h3>
-                        <Form onSubmit={updateLeague}>
-                          <div className="row g-3">
-                            <Form.Group
-                              className="col-md-6"
-                              controlId="edit-league-name"
-                            >
-                              <Form.Label>Nome</Form.Label>
-                              <Form.Control
-                                name="name"
-                                required
-                                maxLength={45}
-                                defaultValue={details.league.name}
-                              />
-                            </Form.Group>
-                            <Form.Group
-                              className="col-md-6"
-                              controlId="edit-league-description"
-                            >
-                              <Form.Label>Descrição</Form.Label>
-                              <Form.Control
-                                name="description"
-                                maxLength={500}
-                                defaultValue={details.league.description ?? ""}
-                              />
-                            </Form.Group>
-                            <Form.Group
-                              className="col-md-4"
-                              controlId="edit-league-format"
-                            >
-                              <Form.Label>Formato</Form.Label>
-                              <Form.Select
-                                name="tournamentFormat"
-                                defaultValue={details.league.tournamentFormat}
-                                disabled={details.league.matchCount > 0}
-                              >
-                                <option value="round_robin">
-                                  Pontos corridos
-                                </option>
-                                <option value="knockout">
-                                  Eliminação simples
-                                </option>
-                                <option value="groups_knockout">
-                                  Grupos + mata-mata
-                                </option>
-                              </Form.Select>
-                            </Form.Group>
-                            <Form.Group
-                              className="col-md-4"
-                              controlId="edit-league-groups"
-                            >
-                              <Form.Label>Grupos</Form.Label>
-                              <Form.Control
-                                name="groupCount"
-                                type="number"
-                                min={2}
-                                max={16}
-                                defaultValue={details.league.groupCount}
-                                disabled={details.league.matchCount > 0}
-                              />
-                            </Form.Group>
-                            <Form.Group
-                              className="col-md-4"
-                              controlId="edit-league-qualifiers"
-                            >
-                              <Form.Label>Classificados por grupo</Form.Label>
-                              <Form.Control
-                                name="qualifiersPerGroup"
-                                type="number"
-                                min={1}
-                                max={8}
-                                defaultValue={details.league.qualifiersPerGroup}
-                                disabled={details.league.matchCount > 0}
-                              />
-                            </Form.Group>
-                          </div>
+                        <Form onSubmit={updateLeague} noValidate>
+                          <LeagueSettingsFields
+                            prefix="edit-league"
+                            league={details.league}
+                            lockedFormat={details.league.matchCount > 0}
+                          />
                           <div className="d-flex flex-wrap gap-2 mt-3">
                             <Button type="submit" disabled={saving}>
                               Salvar configurações
@@ -991,7 +846,6 @@ function LeaguePage() {
                               onChange={(event) => {
                                 setTeamSearch(event.target.value);
                                 setTeamSearchPerformed(false);
-                                setTeamSearchResults([]);
                               }}
                             />
                             <Button type="submit" variant="outline-primary">
@@ -1026,7 +880,13 @@ function LeaguePage() {
                               </Button>
                             </Form>
                           )}
+                          {teamSearchQuery.isPending && (
+                            <p className="text-secondary mb-0">
+                              Buscando equipes...
+                            </p>
+                          )}
                           {teamSearchPerformed &&
+                            !teamSearchQuery.isPending &&
                             invitableTeams.length === 0 && (
                               <p className="text-secondary mb-0">
                                 {teamSearchResults.length === 0
@@ -1082,7 +942,6 @@ function LeaguePage() {
                                   min={localDate()}
                                   value={matchDate}
                                   onChange={(event) => {
-                                    setAvailability([]);
                                     setMatchDate(event.target.value);
                                   }}
                                   required
@@ -1094,9 +953,8 @@ function LeaguePage() {
                               >
                                 <Form.Label>Arena</Form.Label>
                                 <Form.Select
-                                  value={arenaId}
+                                  value={selectedArenaId}
                                   onChange={(event) => {
-                                    setAvailability([]);
                                     setArenaId(event.target.value);
                                   }}
                                   required
@@ -1190,7 +1048,6 @@ function LeaguePage() {
                                 min={localDate()}
                                 value={matchDate}
                                 onChange={(event) => {
-                                  setAvailability([]);
                                   setMatchDate(event.target.value);
                                 }}
                                 required
@@ -1202,9 +1059,8 @@ function LeaguePage() {
                             >
                               <Form.Label>Arena</Form.Label>
                               <Form.Select
-                                value={arenaId}
+                                value={selectedArenaId}
                                 onChange={(event) => {
-                                  setAvailability([]);
                                   setArenaId(event.target.value);
                                 }}
                                 required
@@ -1329,7 +1185,6 @@ function LeaguePage() {
                                   min={localDate()}
                                   value={matchDate}
                                   onChange={(event) => {
-                                    setAvailability([]);
                                     setMatchDate(event.target.value);
                                   }}
                                   required
@@ -1341,9 +1196,8 @@ function LeaguePage() {
                               >
                                 <Form.Label>Arena</Form.Label>
                                 <Form.Select
-                                  value={arenaId}
+                                  value={selectedArenaId}
                                   onChange={(event) => {
-                                    setAvailability([]);
                                     setArenaId(event.target.value);
                                   }}
                                   required
@@ -1416,7 +1270,7 @@ function LeaguePage() {
                             isRescheduling={reschedulingId === match.id}
                             date={matchDate}
                             arenas={leagueArenas}
-                            arenaId={arenaId}
+                            arenaId={selectedArenaId}
                             availability={availability}
                             scores={
                               scoreInputs[match.id] ?? {
@@ -1446,11 +1300,9 @@ function LeaguePage() {
                               )
                             }
                             onDateChange={(date) => {
-                              setAvailability([]);
                               setMatchDate(date);
                             }}
                             onArenaChange={(id) => {
-                              setAvailability([]);
                               setArenaId(id);
                             }}
                             onReschedule={(event) =>
