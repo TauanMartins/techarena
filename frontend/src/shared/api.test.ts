@@ -6,6 +6,35 @@ afterEach(() => {
 });
 
 describe("apiRequest", () => {
+  it("supports inviting teams and responding to league invitations", async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      () =>
+        new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await api.inviteLeagueTeam("league-token", "12", "31");
+    await api.respondToLeagueTeamInvitation("league-token", "9", "accept");
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "http://localhost:3000/leagues/12/team-invitations",
+    );
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: "POST",
+      body: JSON.stringify({ teamId: "31" }),
+    });
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "http://localhost:3000/leagues/team-invitations/9",
+    );
+    expect(fetchMock.mock.calls[1]?.[1]).toMatchObject({
+      method: "PUT",
+      body: JSON.stringify({ action: "accept" }),
+    });
+  });
+
   it("creates leagues and records tournament match results through the API", async () => {
     const fetchMock = vi.fn().mockImplementation(
       () =>

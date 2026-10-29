@@ -174,6 +174,15 @@ export interface LeagueTeam {
   groupNumber: number | null;
 }
 
+export interface LeagueTeamInvitation {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  teamId: string;
+  teamName: string;
+  invitedAt: string;
+}
+
 export interface LeagueMatch {
   id: string;
   appointmentId: string;
@@ -211,6 +220,7 @@ export interface LeagueStanding {
 export interface LeagueDetails {
   league: LeagueSummary;
   teams: LeagueTeam[];
+  invitations: LeagueTeamInvitation[];
   matches: LeagueMatch[];
   standings: LeagueStanding[];
   myCaptainTeamIds: string[];
