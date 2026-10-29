@@ -20,6 +20,7 @@ import type {
   LeagueStanding,
   LeagueSummary,
   LeagueTeamView,
+  LeagueTeamInvitationView,
   LeagueUpdateInput,
   FixtureScheduleInput,
   LeaguesRepository,
@@ -61,7 +62,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
       `SELECT arena.address, arena.lat::text AS lat, arena.longitude::text AS longitude
        FROM public.arena arena
        JOIN public.sport_arena sa ON sa.arena_id=arena.id AND sa.sport_id=$2
-       WHERE arena.id=$1 AND arena.is_league_only=true`,
+       WHERE arena.id=$1`,
       [input.arenaId, league.sportId],
     );
     const arena = arenaRows[0];
@@ -327,9 +328,23 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
        WHERE lt.league_id=$1 AND ut.user_id=$2 AND ut.role='captain'`,
       [leagueId, actor],
     );
+    const invitations = league.isOwner
+      ? await this.source.query<LeagueTeamInvitationView[]>(
+          `SELECT invitation.id::text AS id, invitation.league_id::text AS "leagueId",
+             league.name AS "leagueName", invitation.team_id::text AS "teamId",
+             team.name AS "teamName", invitation.invited_at AS "invitedAt"
+           FROM public.league_team_invitation invitation
+           JOIN public.league ON league.id=invitation.league_id
+           JOIN public.team ON team.id=invitation.team_id
+           WHERE invitation.league_id=$1 AND invitation.status='pending'
+           ORDER BY invitation.invited_at, invitation.id`,
+          [leagueId],
+        )
+      : [];
     return {
       league,
       teams,
+      invitations,
       matches,
       standings,
       myCaptainTeamIds: captainRows.map((row) => row.teamId),
@@ -508,6 +523,189 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
           `INSERT INTO public.league_team (team_id, league_id) VALUES ($1, $2)`,
           [teamId, leagueId],
         );
+        await manager.query(
+          `UPDATE public.league_team_invitation
+           SET status='accepted', responded_at=now()
+           WHERE league_id=$1 AND team_id=$2 AND status='pending'`,
+          [leagueId, teamId],
+        );
+      }),
+    );
+  }
+
+  async inviteTeam(actor: string, leagueId: string, teamId: string) {
+    await databaseWrite(() =>
+      this.source.transaction(async (manager) => {
+        const leagues = await manager.query<
+          { ownerId: string | null; status: string }[]
+        >(
+          `SELECT owner_id::text AS "ownerId", status
+           FROM public.league WHERE id=$1 FOR UPDATE`,
+          [leagueId],
+        );
+        const league = leagues[0];
+        if (!league)
+          throw new DomainError(
+            'not_found',
+            'LEAGUE_NOT_FOUND',
+            'League not found',
+          );
+        if (league.ownerId !== actor)
+          throw new DomainError(
+            'forbidden',
+            'LEAGUE_INVITATION_FORBIDDEN',
+            'Only the league organizer can invite teams',
+          );
+        if (league.status !== 'open')
+          throw new DomainError(
+            'conflict',
+            'LEAGUE_REGISTRATION_CLOSED',
+            'Teams can only be invited while registrations are open',
+          );
+        const teamRows = await manager.query<
+          { exists: boolean; hasCaptain: boolean }[]
+        >(
+          `SELECT EXISTS(SELECT 1 FROM public.team WHERE id=$1) AS exists,
+             EXISTS(SELECT 1 FROM public.user_team
+               WHERE team_id=$1 AND role='captain') AS "hasCaptain"`,
+          [teamId],
+        );
+        if (!teamRows[0]?.exists)
+          throw new DomainError(
+            'not_found',
+            'TEAM_NOT_FOUND',
+            'Team not found',
+          );
+        if (!teamRows[0].hasCaptain)
+          throw new DomainError(
+            'conflict',
+            'TEAM_HAS_NO_CAPTAIN',
+            'This team has no captain who can respond to the invitation',
+          );
+        const registered = await manager.query<{ exists: boolean }[]>(
+          `SELECT EXISTS(SELECT 1 FROM public.league_team
+           WHERE league_id=$1 AND team_id=$2) AS exists`,
+          [leagueId, teamId],
+        );
+        if (registered[0].exists)
+          throw new DomainError(
+            'conflict',
+            'TEAM_ALREADY_REGISTERED',
+            'This team is already registered',
+          );
+        const current = await manager.query<{ id: string; status: string }[]>(
+          `SELECT id::text AS id, status
+           FROM public.league_team_invitation
+           WHERE league_id=$1 AND team_id=$2 FOR UPDATE`,
+          [leagueId, teamId],
+        );
+        if (current[0]?.status === 'pending')
+          throw new DomainError(
+            'conflict',
+            'TEAM_INVITATION_PENDING',
+            'An invitation for this team is already pending',
+          );
+        if (current.length) {
+          await manager.query(
+            `UPDATE public.league_team_invitation
+             SET invited_by=$2, status='pending', invited_at=now(),
+                 responded_at=NULL
+             WHERE id=$1`,
+            [current[0].id, actor],
+          );
+        } else {
+          await manager.query(
+            `INSERT INTO public.league_team_invitation
+             (league_id, team_id, invited_by) VALUES ($1, $2, $3)`,
+            [leagueId, teamId, actor],
+          );
+        }
+      }),
+    );
+  }
+
+  async teamInvitations(actor: string): Promise<LeagueTeamInvitationView[]> {
+    return this.source.query<LeagueTeamInvitationView[]>(
+      `SELECT DISTINCT invitation.id::text AS id,
+         invitation.league_id::text AS "leagueId",
+         league.name AS "leagueName", invitation.team_id::text AS "teamId",
+         team.name AS "teamName", invitation.invited_at AS "invitedAt"
+       FROM public.league_team_invitation invitation
+       JOIN public.league ON league.id=invitation.league_id
+       JOIN public.team ON team.id=invitation.team_id
+       JOIN public.user_team membership ON membership.team_id=team.id
+         AND membership.user_id=$1 AND membership.role='captain'
+       WHERE invitation.status='pending' AND league.status='open'
+       ORDER BY invitation.invited_at, invitation.id`,
+      [actor],
+    );
+  }
+
+  async respondToTeamInvitation(
+    actor: string,
+    invitationId: string,
+    action: 'accept' | 'decline',
+  ) {
+    await databaseWrite(() =>
+      this.source.transaction(async (manager) => {
+        const rows = await manager.query<
+          {
+            leagueId: string;
+            leagueStatus: string;
+            teamId: string;
+            captain: boolean;
+            invitationStatus: string;
+          }[]
+        >(
+          `SELECT invitation.league_id::text AS "leagueId",
+             league.status AS "leagueStatus", invitation.team_id::text AS "teamId",
+             invitation.status AS "invitationStatus",
+             EXISTS(SELECT 1 FROM public.user_team membership
+               WHERE membership.team_id=invitation.team_id AND membership.user_id=$2
+                 AND membership.role='captain') AS captain
+           FROM public.league_team_invitation invitation
+           JOIN public.league ON league.id=invitation.league_id
+           WHERE invitation.id=$1
+           FOR UPDATE OF invitation, league`,
+          [invitationId, actor],
+        );
+        const invitation = rows[0];
+        if (!invitation)
+          throw new DomainError(
+            'not_found',
+            'LEAGUE_INVITATION_NOT_FOUND',
+            'League invitation not found',
+          );
+        if (!invitation.captain)
+          throw new DomainError(
+            'forbidden',
+            'LEAGUE_INVITATION_RESPONSE_FORBIDDEN',
+            'Only a team captain can respond to this invitation',
+          );
+        if (invitation.invitationStatus !== 'pending')
+          throw new DomainError(
+            'conflict',
+            'LEAGUE_INVITATION_ALREADY_RESPONDED',
+            'This invitation has already been answered',
+          );
+        if (invitation.leagueStatus !== 'open')
+          throw new DomainError(
+            'conflict',
+            'LEAGUE_REGISTRATION_CLOSED',
+            'This league is no longer accepting teams',
+          );
+        if (action === 'accept') {
+          await manager.query(
+            `INSERT INTO public.league_team (team_id, league_id)
+             VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [invitation.teamId, invitation.leagueId],
+          );
+        }
+        await manager.query(
+          `UPDATE public.league_team_invitation
+           SET status=$2, responded_at=now() WHERE id=$1`,
+          [invitationId, action === 'accept' ? 'accepted' : 'declined'],
+        );
       }),
     );
   }
@@ -580,7 +778,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
        FROM public.league l
        JOIN public.sport_arena sa ON sa.sport_id=l.sport_id
        JOIN public.arena arena ON arena.id=sa.arena_id
-       WHERE l.id=$1 AND arena.is_league_only=true
+       WHERE l.id=$1
        ORDER BY arena.address, arena.id`,
       [leagueId],
     );
@@ -625,7 +823,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
       `SELECT arena.id::text AS id
        FROM public.league l
        JOIN public.sport_arena sa ON sa.sport_id=l.sport_id AND sa.arena_id=$2
-       JOIN public.arena arena ON arena.id=sa.arena_id AND arena.is_league_only=true
+       JOIN public.arena arena ON arena.id=sa.arena_id
        WHERE l.id=$1`,
       [leagueId, query.arenaId],
     );
@@ -718,7 +916,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
           `SELECT arena.address, arena.lat::text AS lat, arena.longitude::text AS longitude
            FROM public.arena arena
            JOIN public.sport_arena sa ON sa.arena_id=arena.id AND sa.sport_id=$2
-           WHERE arena.id=$1 AND arena.is_league_only=true`,
+           WHERE arena.id=$1`,
           [input.arenaId, league.sportId],
         );
         const arena = arenas[0];
@@ -1379,7 +1577,7 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
           `SELECT arena.lat::text AS lat, arena.longitude::text AS longitude
            FROM public.arena arena
            JOIN public.sport_arena sa ON sa.arena_id=arena.id AND sa.sport_id=$2
-           WHERE arena.id=$1 AND arena.is_league_only=true`,
+           WHERE arena.id=$1`,
           [input.arenaId, match.sportId],
         );
         if (!arenaRows.length)

@@ -21,6 +21,7 @@ import {
   LeagueAvailabilityQueryDto,
   LeagueDetailsDto,
   LeagueIdDto,
+  LeagueInvitationParamsDto,
   LeagueListDto,
   LeagueMatchIdDto,
   LeagueMutationResultDto,
@@ -29,6 +30,9 @@ import {
   LeagueTeamParamsDto,
   RecordLeagueResultDto,
   RegisterLeagueTeamDto,
+  InviteLeagueTeamDto,
+  RespondLeagueInvitationDto,
+  LeagueTeamInvitationsDto,
   UpdateLeagueDto,
   FixtureScheduleDto,
 } from './leagues.dto.js';
@@ -111,6 +115,45 @@ export class LeaguesController {
       actor.id,
       params.leagueId,
       input.teamId,
+    );
+    return { success: true };
+  }
+
+  @Post(':leagueId/team-invitations')
+  @ResponseContract(LeagueMutationResultDto, 201)
+  async inviteTeam(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueIdDto,
+    @Body() input: InviteLeagueTeamDto,
+  ) {
+    await this.application.inviteTeam(actor.id, params.leagueId, input.teamId);
+    return { success: true };
+  }
+
+  @Get('team-invitations')
+  @ResponseContract(LeagueTeamInvitationsDto)
+  async teamInvitations(@CurrentUser() actor: AuthenticatedUser) {
+    return {
+      items: (await this.application.teamInvitations(actor.id)).map(
+        (invitation) => ({
+          ...invitation,
+          invitedAt: invitation.invitedAt.toISOString(),
+        }),
+      ),
+    };
+  }
+
+  @Put('team-invitations/:invitationId')
+  @ResponseContract(LeagueMutationResultDto)
+  async respondToTeamInvitation(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueInvitationParamsDto,
+    @Body() input: RespondLeagueInvitationDto,
+  ) {
+    await this.application.respondToTeamInvitation(
+      actor.id,
+      params.invitationId,
+      input.action,
     );
     return { success: true };
   }
@@ -214,6 +257,10 @@ export class LeaguesController {
     return {
       ...details,
       league: serializeSummary(details.league),
+      invitations: details.invitations.map((invitation) => ({
+        ...invitation,
+        invitedAt: invitation.invitedAt.toISOString(),
+      })),
       matches: details.matches.map((match) => ({
         ...match,
         scheduledAt: match.scheduledAt.toISOString(),

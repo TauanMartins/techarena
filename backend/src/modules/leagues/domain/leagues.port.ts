@@ -86,9 +86,19 @@ export interface LeagueStanding {
 export interface LeagueDetails {
   league: LeagueSummary;
   teams: LeagueTeamView[];
+  invitations: LeagueTeamInvitationView[];
   matches: LeagueMatchView[];
   standings: LeagueStanding[];
   myCaptainTeamIds: string[];
+}
+
+export interface LeagueTeamInvitationView {
+  id: string;
+  leagueId: string;
+  leagueName: string;
+  teamId: string;
+  teamName: string;
+  invitedAt: Date;
 }
 
 export interface LeagueArena {
@@ -131,6 +141,13 @@ export interface LeaguesRepository {
     input: LeagueUpdateInput,
   ): Promise<void>;
   registerTeam(actor: string, leagueId: string, teamId: string): Promise<void>;
+  inviteTeam(actor: string, leagueId: string, teamId: string): Promise<void>;
+  teamInvitations(actor: string): Promise<LeagueTeamInvitationView[]>;
+  respondToTeamInvitation(
+    actor: string,
+    invitationId: string,
+    action: 'accept' | 'decline',
+  ): Promise<void>;
   removeTeam(actor: string, leagueId: string, teamId: string): Promise<void>;
   arenas(leagueId: string): Promise<LeagueArena[]>;
   availability(

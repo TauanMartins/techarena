@@ -15,6 +15,8 @@ versão que dependa desses campos.
 | `PUT /leagues/:leagueId`                                                                 | Edita nome e descrição; formato, modalidade e grupos só antes de agendar partidas                           |
 | `PUT /leagues/:leagueId/status`                                                          | Encerra ou cancela; conclusão exige partidas e final concluídas                                             |
 | `POST /leagues/:leagueId/teams` e `DELETE /leagues/:leagueId/teams/:teamId`              | Inscreve/remove equipes enquanto inscrições estão abertas                                                   |
+| `POST /leagues/:leagueId/team-invitations`                                               | Convida uma equipe existente; somente o capitão pode aceitar/recusar                                        |
+| `GET /leagues/team-invitations` e `PUT /leagues/team-invitations/:invitationId`          | Consulta convites das equipes capitaneadas e responde `accept` ou `decline`                                 |
 | `POST /leagues/:leagueId/fixtures`                                                       | Gera e agenda o calendário inicial numa transação                                                           |
 | `POST /leagues/:leagueId/rounds/next`                                                    | Calcula classificados e agenda a próxima fase após todos os resultados                                      |
 | `POST /leagues/:leagueId/matches`                                                        | Agenda partida manual entre equipes inscritas                                                               |
@@ -27,6 +29,9 @@ Mata-mata também exige potência de dois participantes. A classificação atrib
 pontos por vitória, 1 por empate e 0 por derrota. Empates são aceitos em pontos
 corridos e na fase de grupos, mas não no mata-mata. Uma competição concluída não
 aceita alterações; cancelá-la também cancela partidas futuras.
+O agendamento pode usar qualquer arena que ofereça a modalidade da liga, inclusive
+arenas reservadas exclusivamente para competições; horários já ocupados não são
+oferecidos nem podem ser reservados.
 
 Todas as rotas exigem Bearer do Supabase. O autor de uma operação vem do token;
 `username`, `username_owner`, `username_user_1` e outros seletores de autor não são
