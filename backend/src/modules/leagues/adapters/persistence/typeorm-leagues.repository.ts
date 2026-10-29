@@ -126,7 +126,8 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
     }
     const standings = await this.source.query<LeagueStanding[]>(
       `
-        SELECT t.id::text AS "teamId", t.name AS "teamName", t.image,
+        SELECT * FROM (
+          SELECT t.id::text AS "teamId", t.name AS "teamName", t.image,
           count(result.id)::int AS played,
           count(result.id) FILTER (WHERE result.winner_team_id=t.id)::int AS wins,
           count(result.id) FILTER (WHERE result.loser_team_id=t.id)::int AS losses,
@@ -148,7 +149,9 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
         LEFT JOIN public.appointment_result result ON result.appointment_id=lm.appointment_id
         WHERE lt.league_id=$1
         GROUP BY t.id, t.name, t.image
-        ORDER BY points DESC, wins DESC, ("scoreFor" - "scoreAgainst") DESC, lower(t.name), t.id
+        ) standings
+        ORDER BY points DESC, wins DESC, ("scoreFor" - "scoreAgainst") DESC,
+          lower("teamName"), "teamId"
       `,
       [leagueId],
     );
