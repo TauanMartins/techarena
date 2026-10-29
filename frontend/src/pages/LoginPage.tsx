@@ -14,8 +14,8 @@ export function LoginPage() {
     setError(null);
     try {
       await loginWithGoogle();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível iniciar o login com Google.');
+    } catch {
+      setError('Não foi possível iniciar o login. Tente novamente.');
       setLoading(false);
     }
   }
@@ -28,17 +28,30 @@ export function LoginPage() {
           <img src={logo} className="login-logo" alt="TechArena" />
           <p>Seu próximo jogo começa aqui.</p>
         </div>
-        <div className="login-brand-note">Encontre atletas. Marque partidas. Faça parte do jogo.</div>
+        <div className="login-brand-note">
+          Encontre atletas. Marque partidas. Faça parte do jogo.
+        </div>
       </section>
       <section className="login-form-panel">
         <div className="login-form-content">
           <span className="eyebrow">BEM-VINDO À COMUNIDADE</span>
-          <h1>Jogue mais.<br /><span>Jogue junto.</span></h1>
-          <p>Entre para descobrir partidas, conhecer atletas e organizar seus próximos desafios.</p>
-          {(error || authError) && <Alert variant="danger" role="alert">{error ?? authError}</Alert>}
+          <h1>
+            Jogue mais.
+            <br />
+            <span>Jogue junto.</span>
+          </h1>
+          <p>
+            Entre para descobrir partidas, conhecer atletas e organizar seus
+            próximos desafios.
+          </p>
+          {(error || authError) && (
+            <Alert variant="danger" role="alert">
+              {error ?? authError}
+            </Alert>
+          )}
           {!configured && (
             <Alert variant="warning">
-              Login indisponível: configure <code>SUPABASE_URL</code> e <code>SUPABASE_PUBLISHABLE_KEY</code> no arquivo <code>.env</code>.
+              O login está indisponível no momento. Tente novamente mais tarde.
             </Alert>
           )}
           <Button
@@ -51,7 +64,8 @@ export function LoginPage() {
             {loading ? 'Conectando...' : 'Continuar com Google'}
           </Button>
           <small className="login-legal">
-            Ao continuar, você concorda com os termos de uso e a política de privacidade do TechArena.
+            Ao continuar, você concorda com os termos de uso e a política de
+            privacidade do TechArena.
           </small>
         </div>
       </section>

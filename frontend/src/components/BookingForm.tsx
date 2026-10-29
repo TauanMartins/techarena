@@ -37,17 +37,19 @@ export function BookingForm({
     let active = true;
     setLoading(true);
     setError(null);
-    void Promise.all([
-      api.getSports(token),
-      api.listArenas(token),
-    ])
+    void Promise.all([api.getSports(token), api.listArenas(token)])
       .then(([sportPage, arenaPage]) => {
         if (!active) return;
         setSports(sportPage.items);
         setArenas(arenaPage.items.filter((arena) => !arena.isLeagueOnly));
       })
       .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Falha ao carregar esportes e arenas.');
+        if (active)
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : 'Falha ao carregar esportes e arenas.',
+          );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -57,7 +59,9 @@ export function BookingForm({
     };
   }, [token]);
 
-  const availableArenas = arenas.filter((arena) => !sportId || arena.sportIds.includes(sportId));
+  const availableArenas = arenas.filter(
+    (arena) => !sportId || arena.sportIds.includes(sportId),
+  );
 
   useEffect(() => {
     setArenaId('');
@@ -74,12 +78,18 @@ export function BookingForm({
     let active = true;
     setLoading(true);
     setError(null);
-    void api.getAvailability(token, arenaId, sportId, date)
+    void api
+      .getAvailability(token, arenaId, sportId, date)
       .then((result) => {
         if (active) setSlots(result.items);
       })
       .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : 'Falha ao consultar horários.');
+        if (active)
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : 'Falha ao consultar horários.',
+          );
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -101,7 +111,9 @@ export function BookingForm({
         sportId,
         date,
         scheduleId,
-        title: title.trim() || `${titlePrefix} ${sports.find((sport) => sport.id === sportId)?.name ?? 'esporte'}`,
+        title:
+          title.trim() ||
+          `${titlePrefix} ${sports.find((sport) => sport.id === sportId)?.name ?? 'esporte'}`,
         description: description.trim() || undefined,
         holder: true,
         maxPlayers: maxPlayers ? Number(maxPlayers) : undefined,
@@ -113,7 +125,13 @@ export function BookingForm({
       setScheduleId('');
       onCreated();
     } catch (cause) {
-      setError(cause instanceof ApiError ? cause.message : cause instanceof Error ? cause.message : 'Não foi possível criar o agendamento.');
+      setError(
+        cause instanceof ApiError
+          ? cause.message
+          : cause instanceof Error
+            ? cause.message
+            : 'Não foi possível criar o agendamento.',
+      );
     } finally {
       setSaving(false);
     }
@@ -122,54 +140,130 @@ export function BookingForm({
   return (
     <Form onSubmit={submit} className="booking-form">
       {error && <ErrorState message={error} />}
-      {success && <Alert variant="success">Agendamento criado com sucesso.</Alert>}
+      {success && (
+        <Alert variant="success">Agendamento criado com sucesso.</Alert>
+      )}
       {loading && <div className="form-note">Atualizando opções...</div>}
       {!loading && arenas.length === 0 && (
         <Alert variant="info">
-          Nenhuma arena disponível no catálogo atual da API.
+          Nenhuma arena disponível para este esporte no momento.
         </Alert>
       )}
       <Form.Group className="mb-3">
         <Form.Label>Esporte</Form.Label>
-        <Form.Select value={sportId} onChange={(event) => setSportId(event.target.value)} required>
+        <Form.Select
+          value={sportId}
+          onChange={(event) => setSportId(event.target.value)}
+          required
+        >
           <option value="">Selecione uma modalidade</option>
-          {sports.map((sport) => <option key={sport.id} value={sport.id}>{sport.name}</option>)}
+          {sports.map((sport) => (
+            <option key={sport.id} value={sport.id}>
+              {sport.name}
+            </option>
+          ))}
         </Form.Select>
       </Form.Group>
       <Form.Group className="mb-3">
         <Form.Label>Arena</Form.Label>
-        <Form.Select value={arenaId} onChange={(event) => { setScheduleId(''); setSlots([]); setArenaId(event.target.value); }} required disabled={!sportId}>
+        <Form.Select
+          value={arenaId}
+          onChange={(event) => {
+            setScheduleId('');
+            setSlots([]);
+            setArenaId(event.target.value);
+          }}
+          required
+          disabled={!sportId}
+        >
           <option value="">Selecione uma arena</option>
-          {availableArenas.map((arena) => <option key={arena.id} value={arena.id}>{arena.address}</option>)}
+          {availableArenas.map((arena) => (
+            <option key={arena.id} value={arena.id}>
+              {arena.address}
+            </option>
+          ))}
         </Form.Select>
       </Form.Group>
       <div className="row">
         <Form.Group className="col-md-6 mb-3">
           <Form.Label>Data</Form.Label>
-          <Form.Control type="date" min={today} value={date} onChange={(event) => { setScheduleId(''); setSlots([]); setDate(event.target.value); }} required />
+          <Form.Control
+            type="date"
+            min={today}
+            value={date}
+            onChange={(event) => {
+              setScheduleId('');
+              setSlots([]);
+              setDate(event.target.value);
+            }}
+            required
+          />
         </Form.Group>
         <Form.Group className="col-md-6 mb-3">
           <Form.Label>Horário disponível</Form.Label>
-          <Form.Select value={scheduleId} onChange={(event) => setScheduleId(event.target.value)} required disabled={!slots.length}>
-            <option value="">{slots.length ? 'Selecione um horário' : 'Sem horários para a seleção'}</option>
-            {slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.horary}</option>)}
+          <Form.Select
+            value={scheduleId}
+            onChange={(event) => setScheduleId(event.target.value)}
+            required
+            disabled={!slots.length}
+          >
+            <option value="">
+              {slots.length
+                ? 'Selecione um horário'
+                : 'Sem horários para a seleção'}
+            </option>
+            {slots.map((slot) => (
+              <option key={slot.id} value={slot.id}>
+                {slot.horary}
+              </option>
+            ))}
           </Form.Select>
         </Form.Group>
       </div>
       <Form.Group className="mb-3">
         <Form.Label>Nome do evento</Form.Label>
-        <Form.Control value={title} onChange={(event) => setTitle(event.target.value)} maxLength={100} placeholder={titlePrefix.startsWith('Torneio') ? 'Ex.: Torneio de vôlei' : 'Ex.: Futebol de sábado'} />
+        <Form.Control
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          maxLength={100}
+          placeholder={
+            titlePrefix.startsWith('Torneio')
+              ? 'Ex.: Torneio de vôlei'
+              : 'Ex.: Futebol de sábado'
+          }
+        />
       </Form.Group>
       <Form.Group className="mb-3">
         <Form.Label>Descrição</Form.Label>
-        <Form.Control as="textarea" rows={3} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={2000} placeholder="Detalhes para quem quiser participar" />
+        <Form.Control
+          as="textarea"
+          rows={3}
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
+          maxLength={2000}
+          placeholder="Detalhes para quem quiser participar"
+        />
       </Form.Group>
       <Form.Group className="mb-4">
         <Form.Label>Limite de participantes (opcional)</Form.Label>
-        <Form.Control type="number" min={1} max={1000} value={maxPlayers} onChange={(event) => setMaxPlayers(event.target.value)} />
+        <Form.Control
+          type="number"
+          min={1}
+          max={1000}
+          value={maxPlayers}
+          onChange={(event) => setMaxPlayers(event.target.value)}
+        />
       </Form.Group>
-      <Button type="submit" className="w-100" disabled={saving || loading || !scheduleId}>
-        {saving ? 'Salvando...' : titlePrefix.startsWith('Torneio') ? 'Criar evento de liga' : 'Publicar agendamento'}
+      <Button
+        type="submit"
+        className="w-100"
+        disabled={saving || loading || !scheduleId}
+      >
+        {saving
+          ? 'Salvando...'
+          : titlePrefix.startsWith('Torneio')
+            ? 'Criar evento de liga'
+            : 'Publicar agendamento'}
       </Button>
     </Form>
   );
@@ -189,7 +283,14 @@ export function BookingModal({
       <Modal.Header closeButton>
         <Modal.Title>Novo agendamento</Modal.Title>
       </Modal.Header>
-      <Modal.Body><BookingForm onCreated={() => { onCreated(); onHide(); }} /></Modal.Body>
+      <Modal.Body>
+        <BookingForm
+          onCreated={() => {
+            onCreated();
+            onHide();
+          }}
+        />
+      </Modal.Body>
     </Modal>
   );
 }

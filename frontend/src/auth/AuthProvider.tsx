@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { ApiError, api } from '../shared/api';
+import { api } from '../shared/api';
 import { isSupabaseConfigured, supabase } from '../shared/supabase';
 import type { Profile } from '../shared/types';
 
@@ -51,9 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(data.session);
         }
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (active) {
-          setAuthError(error instanceof Error ? error.message : 'Falha ao restaurar a sessão.');
+          setAuthError(
+            'Não foi possível restaurar seu acesso. Tente novamente.',
+          );
         }
       })
       .finally(() => {
@@ -89,15 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const currentProfile = await api.getProfile(session.access_token);
       setProfile(currentProfile);
       setProfileError(null);
-    } catch (error) {
+    } catch {
       setProfile(null);
-      setProfileError(
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-            ? error.message
-            : 'Não foi possível carregar seu perfil na API.',
-      );
+      setProfileError('Não foi possível carregar os dados do seu perfil.');
     } finally {
       setProfileLoading(false);
     }
@@ -109,19 +105,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithGoogle = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) {
-      throw new Error('Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY para habilitar o login.');
+      throw new Error(
+        'O login está indisponível no momento. Tente novamente mais tarde.',
+      );
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
-    if (error) throw error;
+    if (error)
+      throw new Error('Não foi possível iniciar o login. Tente novamente.');
   }, []);
 
   const logout = useCallback(async () => {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error)
+      throw new Error('Não foi possível encerrar sua sessão. Tente novamente.');
   }, []);
 
   const value = useMemo(
@@ -137,7 +137,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       refreshProfile,
     }),
-    [session, profile, loading, profileLoading, authError, profileError, loginWithGoogle, logout, refreshProfile],
+    [
+      session,
+      profile,
+      loading,
+      profileLoading,
+      authError,
+      profileError,
+      loginWithGoogle,
+      logout,
+      refreshProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -145,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth deve ser usado dentro de AuthProvider.');
+  if (!context)
+    throw new Error('useAuth deve ser usado dentro de AuthProvider.');
   return context;
 }
