@@ -6,7 +6,7 @@ describe('environment configuration', () => {
   it('returns typed configuration with a default port', () => {
     expect(parseEnvironment({ DATABASE_URL: url })).toEqual({
       port: 3000,
-      auth: { projectUrl: null },
+      auth: { projectUrl: null, serviceRoleKey: null },
       cors: { origins: ['http://localhost:4200'] },
       database: { url },
     });
@@ -35,6 +35,22 @@ describe('environment configuration', () => {
       'DATABASE_URL',
     );
   });
+});
+
+it('requires a Supabase project URL when a service role key is configured', () => {
+  expect(() =>
+    parseEnvironment({
+      DATABASE_URL: url,
+      SUPABASE_SERVICE_ROLE_KEY: 'secret',
+    }),
+  ).toThrow('SUPABASE_URL');
+  expect(
+    parseEnvironment({
+      DATABASE_URL: url,
+      SUPABASE_URL: 'https://project.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: ' secret ',
+    }).auth.serviceRoleKey,
+  ).toBe('secret');
 });
 
 it.each([

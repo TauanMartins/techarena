@@ -8,8 +8,11 @@ import type { FriendsRepository } from './domain/friends.port.js';
 import { TypeormFriendsRepository } from './adapters/persistence/typeorm-friends.repository.js';
 import { FriendsApplication } from './application/friends.application.js';
 import { FriendsController } from './adapters/http/friends.controller.js';
+import { ChatModule } from '../chat/chat.module.js';
+import { CHAT_ACCESS } from '../chat/application/chat-access.port.js';
+import type { ChatAccessPort } from '../chat/application/chat-access.port.js';
 @Module({
-  imports: [ProfileModule],
+  imports: [ProfileModule, ChatModule],
   controllers: [FriendsController],
   providers: [
     {
@@ -19,9 +22,12 @@ import { FriendsController } from './adapters/http/friends.controller.js';
     },
     {
       provide: FriendsApplication,
-      inject: [FRIENDS_REPOSITORY, PROFILE_ACCESS],
-      useFactory: (r: FriendsRepository, p: ProfileAccess) =>
-        new FriendsApplication(r, p),
+      inject: [FRIENDS_REPOSITORY, PROFILE_ACCESS, CHAT_ACCESS],
+      useFactory: (
+        r: FriendsRepository,
+        p: ProfileAccess,
+        c: ChatAccessPort,
+      ) => new FriendsApplication(r, p, c),
     },
   ],
 })

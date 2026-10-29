@@ -83,6 +83,17 @@ adaptadores. As operações que precisam de verificação e escrita atômicas, c
 ou aceite, ficam dentro da transação do adaptador e aplicam as políticas do domínio.
 Não há dependência de AWS ou criação de chat nessas operações.
 
+## Chat persistente via Supabase
+
+O histórico e a presença do chat são lidos e escritos diretamente pelo frontend no
+Supabase. `chat_messages` é protegido por RLS; as conversas são privadas e o
+Realtime só autoriza participantes registrados em `chat_participants`.
+`POST /chat/access` valida a identidade contra a amizade, equipe ou agendamento
+no PostgreSQL da API e provisiona somente o próprio usuário no Supabase. O backend
+usa `SUPABASE_SERVICE_ROLE_KEY` exclusivamente para essa operação; a chave nunca é
+enviada ao frontend. O SQL de configuração e policies está em
+`database/sql/supabase-chat.sql` e precisa ser aplicado ao projeto Supabase.
+
 Paginação, geolocalização, IDs, erros de domínio e convenções HTTP compartilháveis
 ficam em `common/`; usuários mantém reexports para não quebrar seus subcontextos.
 `ProfileModule` também expõe `ensureAdmin`, que verifica a permissão persistida.

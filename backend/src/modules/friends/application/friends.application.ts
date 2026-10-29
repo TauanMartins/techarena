@@ -3,10 +3,13 @@ import { assertPageRequest } from '../../../common/domain/pagination.js';
 import type { PageRequest } from '../../../common/domain/pagination.js';
 import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
 import type { FriendsRepository } from '../domain/friends.port.js';
+import type { ChatAccessPort } from '../../chat/application/chat-access.port.js';
+import { directChatTopic } from '../../chat/domain/chat-topic.js';
 export class FriendsApplication {
   constructor(
     private readonly repository: FriendsRepository,
     private readonly profiles: ProfileAccess,
+    private readonly chatAccess: ChatAccessPort,
   ) {}
   async list(actor: string, query: PageRequest) {
     await this.profiles.ensureExists(actor);
@@ -25,6 +28,14 @@ export class FriendsApplication {
   }
   async decide(actor: string, id: string, action: 'accept' | 'block') {
     await this.profiles.ensureExists(actor);
-    return this.repository.decide(actor, id, action);
+    const result = await this.repository.decide(actor, id, action);
+    if (action === 'block') {
+      const topic = directChatTopic(actor, result.user.id);
+      await Promise.all([
+        this.chatAccess.revokeParticipant(topic, actor),
+        this.chatAccess.revokeParticipant(topic, result.user.id),
+      ]);
+    }
+    return result;
   }
 }

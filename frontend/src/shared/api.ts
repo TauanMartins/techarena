@@ -16,7 +16,7 @@ import type {
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ??
-  'http://localhost:3000/api';
+  'http://localhost:3000';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -76,6 +76,15 @@ function queryString(params: Record<string, string | number | boolean | undefine
 
 export const api = {
   getProfile: (token: string) => apiRequest<Profile>('/users/me', token),
+  ensureChatAccess: (token: string, topic: string) =>
+    apiRequest<{ topic: string; kind: 'direct' | 'team' | 'appointment' }>(
+      '/chat/access',
+      token,
+      {
+        method: 'POST',
+        body: JSON.stringify({ topic }),
+      },
+    ),
   updateProfile: (token: string, payload: Partial<Pick<Profile, 'name' | 'username' | 'birthDate' | 'gender' | 'image'>>) =>
     apiRequest<Profile>('/users/me', token, {
       method: 'PATCH',
