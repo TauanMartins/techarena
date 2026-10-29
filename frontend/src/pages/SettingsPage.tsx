@@ -3,6 +3,7 @@ import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
+import Image from 'react-bootstrap/Image';
 import { useAuth } from '../auth/AuthProvider';
 import { useThemePreference } from '../features/preferences/ThemeProvider';
 import { ErrorState, LoadingState, PageHeading } from '../components/Feedback';
@@ -29,7 +30,6 @@ export function SettingsPage() {
   const [username, setUsername] = useState(profile?.username ?? '');
   const [birthDate, setBirthDate] = useState(profile?.birthDate ?? '');
   const [gender, setGender] = useState(profile?.gender ?? '');
-  const [image, setImage] = useState(profile?.image ?? '');
   const [profileSaving, setProfileSaving] = useState(false);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,6 @@ export function SettingsPage() {
       username: username.trim().toLowerCase(),
       birthDate,
       gender: gender || null,
-      image: image.trim() || null,
     };
     setProfileSaving(true);
     setError(null);
@@ -127,6 +126,19 @@ export function SettingsPage() {
           <Card.Body>
             <div className="section-title-row"><div><span className="eyebrow">DADOS DA CONTA</span><h2>Meu perfil</h2></div></div>
             <Form onSubmit={(event) => void saveProfile(event)}>
+              <div className="settings-profile-photo mb-4">
+                <div className="settings-profile-avatar">
+                  {profile?.image ? (
+                    <Image src={profile.image} alt="Foto de perfil" roundedCircle />
+                  ) : (
+                    (profile?.name ?? profile?.username ?? 'A').slice(0, 1).toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <strong>Foto de perfil</strong>
+                  <p className="mb-0">A foto vinculada à sua conta é exibida aqui e não pode ser alterada nesta tela.</p>
+                </div>
+              </div>
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="profile-name">Nome</Form.Label>
                 <Form.Control id="profile-name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={150} autoComplete="name" />
@@ -149,11 +161,6 @@ export function SettingsPage() {
                   <option value="F">Feminino</option>
                   <option value="O">Outro</option>
                 </Form.Select>
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label htmlFor="profile-image">URL da imagem de perfil</Form.Label>
-                <Form.Control id="profile-image" type="url" value={image} onChange={(event) => setImage(event.target.value)} maxLength={150} pattern="https://.+" aria-describedby="image-help" />
-                <Form.Text id="image-help">Use uma URL HTTPS de até 150 caracteres. Deixe em branco para remover a imagem.</Form.Text>
               </Form.Group>
               <Form.Group className="mb-4">
                 <Form.Label htmlFor="profile-email">E-mail</Form.Label>
