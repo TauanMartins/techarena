@@ -42,6 +42,7 @@ function LeaguePage() {
   const [sports, setSports] = useState<Sport[]>([]);
   const [myTeams, setMyTeams] = useState<TeamMembership[]>([]);
   const [selectedId, setSelectedId] = useState('');
+  const [detailReloadVersion, setDetailReloadVersion] = useState(0);
   const [details, setDetails] = useState<LeagueDetails | null>(null);
   const [leagueArenas, setLeagueArenas] = useState<LeagueArena[]>([]);
   const [availability, setAvailability] = useState<Schedule[]>([]);
@@ -127,7 +128,7 @@ function LeaguePage() {
     return () => {
       detailsRequest.current += 1;
     };
-  }, [loadDetails, selectedId]);
+  }, [detailReloadVersion, loadDetails, selectedId]);
 
   useEffect(() => {
     if (!selectedId || !arenaId || !matchDate) {
@@ -395,10 +396,12 @@ function LeaguePage() {
                       variant={selectedId === league.id ? 'primary' : 'outline-primary'}
                       size="sm"
                       onClick={() => {
-                        if (selectedId === league.id) return;
                         setLoadingDetails(true);
                         setDetails(null);
+                        setError(null);
+                        setAvailability([]);
                         setSelectedId(league.id);
+                        setDetailReloadVersion((version) => version + 1);
                       }}
                     >
                       Ver liga
