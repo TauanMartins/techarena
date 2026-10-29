@@ -91,8 +91,9 @@ Realtime só autoriza participantes registrados em `chat_participants`.
 `POST /chat/access` valida a identidade contra a amizade, equipe ou agendamento
 no PostgreSQL da API e provisiona somente o próprio usuário no Supabase. O backend
 usa `SUPABASE_SERVICE_ROLE_KEY` exclusivamente para essa operação; a chave nunca é
-enviada ao frontend. O SQL de configuração e policies está em
-`database/sql/supabase-chat.sql` e precisa ser aplicado ao projeto Supabase.
+enviada ao frontend. O schema e as policies são versionados em
+`supabase/migrations/` e aplicados ao projeto com `supabase db push`, separadamente
+das migrations TypeORM do PostgreSQL usado pela API.
 
 Paginação, geolocalização, IDs, erros de domínio e convenções HTTP compartilháveis
 ficam em `common/`; usuários mantém reexports para não quebrar seus subcontextos.

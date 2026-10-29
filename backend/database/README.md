@@ -82,6 +82,10 @@ As migrations gerenciam somente as tabelas da aplicação e seus comentários.
 A migration de documentação local atualiza os comentários de perfil sem alterar dados;
 os SQLs de migrations anteriores são mantidos como histórico imutável.
 
+O esquema do chat é mantido pelo Supabase CLI em `../supabase/migrations/`, separado
+das migrations TypeORM. Aplique-o ao projeto Supabase com `supabase db push`; não
+execute SQL dependente de `auth` e `realtime` no PostgreSQL local da API.
+
 Após compilar com `npm run build`, ambientes que instalam apenas dependências de
 produção podem usar `npm run db:migrate:prod` e `npm run db:seed:prod`. Distribua
 `dist/` e `database/sql/` junto com a aplicação.
