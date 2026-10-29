@@ -9,6 +9,11 @@ it('normalizes editable fields without exposing persistence fields', () => {
     ),
   ).toEqual({ name: 'Alice', username: 'alice', image: null });
 });
+it('allows clearing an optional gender value', () => {
+  expect(prepareProfileChanges({ gender: null }, now)).toEqual({
+    gender: null,
+  });
+});
 it.each([
   { name: '' },
   { username: 'Alice' },

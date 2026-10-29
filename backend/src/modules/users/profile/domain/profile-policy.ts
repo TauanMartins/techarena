@@ -63,7 +63,10 @@ export function prepareProfileChanges(
     result.birthDate = changes.birthDate;
   }
   if (changes.gender !== undefined) {
-    if (!changes.gender || !['M', 'F', 'O'].includes(changes.gender))
+    if (
+      changes.gender !== null &&
+      !['M', 'F', 'O'].includes(changes.gender)
+    )
       invalid('gender');
     result.gender = changes.gender;
   }

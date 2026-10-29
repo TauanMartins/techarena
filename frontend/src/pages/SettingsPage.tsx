@@ -9,6 +9,14 @@ import { ErrorState, LoadingState, PageHeading } from '../components/Feedback';
 import { api } from '../shared/api';
 import type { FavoriteSports, Sport } from '../shared/types';
 
+function dateInputToday() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function SettingsPage() {
   const { session, profile, logout, refreshProfile } = useAuth();
   const { theme, saveTheme, error: themeError } = useThemePreference();
@@ -17,11 +25,17 @@ export function SettingsPage() {
   const [favorites, setFavorites] = useState<FavoriteSports | null>(null);
   const [selectedSportIds, setSelectedSportIds] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [name, setName] = useState(profile?.name ?? '');
+  const [username, setUsername] = useState(profile?.username ?? '');
+  const [birthDate, setBirthDate] = useState(profile?.birthDate ?? '');
+  const [gender, setGender] = useState(profile?.gender ?? '');
+  const [image, setImage] = useState(profile?.image ?? '');
   const [profileSaving, setProfileSaving] = useState(false);
   const [preferencesSaving, setPreferencesSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const today = dateInputToday();
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -46,10 +60,12 @@ export function SettingsPage() {
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
     const payload = {
-      name: String(formData.get('name') ?? '').trim(),
-      username: String(formData.get('username') ?? '').trim().toLowerCase(),
+      name: name.trim(),
+      username: username.trim().toLowerCase(),
+      birthDate,
+      gender: gender || null,
+      image: image.trim() || null,
     };
     setProfileSaving(true);
     setError(null);
@@ -111,9 +127,39 @@ export function SettingsPage() {
           <Card.Body>
             <div className="section-title-row"><div><span className="eyebrow">DADOS DA CONTA</span><h2>Meu perfil</h2></div></div>
             <Form onSubmit={(event) => void saveProfile(event)}>
-              <Form.Group className="mb-3"><Form.Label>Nome</Form.Label><Form.Control name="name" defaultValue={profile?.name ?? ''} required maxLength={150} /></Form.Group>
-              <Form.Group className="mb-3"><Form.Label>Nome de usuário</Form.Label><Form.Control name="username" defaultValue={profile?.username ?? ''} required minLength={3} maxLength={45} pattern="[a-z0-9_]+" aria-describedby="username-help" /><Form.Text id="username-help">Use letras minúsculas, números e sublinhado.</Form.Text></Form.Group>
-              <Form.Group className="mb-4"><Form.Label>E-mail</Form.Label><Form.Control value={profile?.email ?? session?.user.email ?? ''} disabled readOnly /></Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="profile-name">Nome</Form.Label>
+                <Form.Control id="profile-name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={150} autoComplete="name" />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="profile-username">Nome de usuário</Form.Label>
+                <Form.Control id="profile-username" value={username} onChange={(event) => setUsername(event.target.value.toLowerCase())} required minLength={3} maxLength={45} pattern="[a-z0-9_]+" aria-describedby="username-help" autoComplete="username" />
+                <Form.Text id="username-help">Use letras minúsculas, números e sublinhado.</Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="profile-birth-date">Data de nascimento</Form.Label>
+                <Form.Control id="profile-birth-date" type="date" value={birthDate} max={today} onChange={(event) => setBirthDate(event.target.value)} required autoComplete="bday" aria-describedby="birth-date-help" />
+                <Form.Text id="birth-date-help">Informe uma data válida. É necessário ter pelo menos 18 anos para participar de agendamentos.</Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="profile-gender">Gênero</Form.Label>
+                <Form.Select id="profile-gender" value={gender} onChange={(event) => setGender(event.target.value)}>
+                  <option value="">Prefiro não informar</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                  <option value="O">Outro</option>
+                </Form.Select>
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="profile-image">URL da imagem de perfil</Form.Label>
+                <Form.Control id="profile-image" type="url" value={image} onChange={(event) => setImage(event.target.value)} maxLength={150} pattern="https://.+" aria-describedby="image-help" />
+                <Form.Text id="image-help">Use uma URL HTTPS de até 150 caracteres. Deixe em branco para remover a imagem.</Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-4">
+                <Form.Label htmlFor="profile-email">E-mail</Form.Label>
+                <Form.Control id="profile-email" value={profile?.email ?? session?.user.email ?? ''} disabled readOnly />
+                <Form.Text>O e-mail é gerenciado pelo provedor de autenticação.</Form.Text>
+              </Form.Group>
               <Button type="submit" disabled={profileSaving}>{profileSaving ? 'Salvando...' : 'Salvar perfil'}</Button>
             </Form>
           </Card.Body>
