@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Image from 'react-bootstrap/Image';
 import Modal from 'react-bootstrap/Modal';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import {
   EmptyState,
   ErrorState,
@@ -14,10 +17,15 @@ import {
 } from '../components/Feedback';
 import { ProfileAvatar } from '../components/ProfileAvatar';
 import { api } from '../shared/api';
+import { queryKeys } from '../shared/queryClient';
+import {
+  teamFormSchema,
+  type TeamFormInput,
+  type TeamFormValues,
+} from '../shared/validation';
 import type {
   MembershipRequest,
   Team,
-  TeamMember,
   TeamMembership,
   UserCard,
 } from '../shared/types';
@@ -30,52 +38,82 @@ export function TeamsPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const token = session!.access_token;
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [myTeams, setMyTeams] = useState<TeamMembership[]>([]);
-  const [requests, setRequests] = useState<MembershipRequest[]>([]);
+  const userId = session!.user.id;
+  const queryClient = useQueryClient();
+  const {
+    register: registerTeam,
+    handleSubmit: handleTeamSubmit,
+    reset: resetTeamForm,
+    formState: { errors: teamFormErrors, isSubmitting: creating },
+  } = useForm<TeamFormInput, undefined, TeamFormValues>({
+    resolver: zodResolver(teamFormSchema),
+    defaultValues: { name: '', description: '' },
+  });
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamOverview | null>(null);
-  const [teamRequests, setTeamRequests] = useState<MembershipRequest[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [inviteSearch, setInviteSearch] = useState('');
-  const [inviteCandidates, setInviteCandidates] = useState<UserCard[]>([]);
+  const [inviteSubmittedSearch, setInviteSubmittedSearch] = useState('');
   const [invitingUserId, setInvitingUserId] = useState<string | null>(null);
-  const [loadingTeamDetails, setLoadingTeamDetails] = useState(false);
-
-  const loadTeams = useCallback(
-    async (term: string) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [catalog, mine, myRequests] = await Promise.all([
-          api.listTeams(token, term),
-          api.listMyTeams(token),
-          api.listMyTeamRequests(token),
-        ]);
-        setTeams(catalog.items);
-        setMyTeams(mine.items);
-        setRequests(myRequests.items);
-      } catch (cause) {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : 'Não foi possível carregar as equipes.',
-        );
-      } finally {
-        setLoading(false);
-      }
+  const teamsQuery = useQuery({
+    queryKey: queryKeys.teams(userId, catalogSearch),
+    queryFn: () => api.listTeams(token, catalogSearch),
+  });
+  const myTeamsQuery = useQuery({
+    queryKey: queryKeys.myTeams(userId),
+    queryFn: () => api.listMyTeams(token),
+  });
+  const requestsQuery = useQuery({
+    queryKey: queryKeys.teamRequests(userId),
+    queryFn: () => api.listMyTeamRequests(token),
+  });
+  const teamDetailsQuery = useQuery({
+    queryKey: queryKeys.teamDetails(userId, selectedTeam?.id ?? ''),
+    queryFn: async () => {
+      const [members, teamRequests] = await Promise.all([
+        api.listTeamMembers(token, selectedTeam!.id),
+        selectedTeam?.role === 'captain'
+          ? api.listTeamRequests(token, selectedTeam.id)
+          : Promise.resolve(null),
+      ]);
+      return { members: members.items, requests: teamRequests?.items ?? [] };
     },
-    [token],
-  );
-
-  useEffect(() => {
-    void loadTeams('');
-  }, [loadTeams]);
+    enabled: Boolean(selectedTeam),
+  });
+  const inviteCandidatesQuery = useQuery({
+    queryKey: queryKeys.directory(userId, `team:${inviteSubmittedSearch}`),
+    queryFn: () => api.searchUsers(token, inviteSubmittedSearch),
+    enabled: inviteSubmittedSearch.length >= 2 && selectedTeam?.role === 'captain',
+  });
+  const teams = teamsQuery.data?.items ?? [];
+  const myTeams = myTeamsQuery.data?.items ?? [];
+  const requests = requestsQuery.data?.items ?? [];
+  const teamMembers = teamDetailsQuery.data?.members ?? [];
+  const teamRequests = teamDetailsQuery.data?.requests ?? [];
+  const inviteCandidates = inviteCandidatesQuery.data?.items ?? [];
+  const loading =
+    teamsQuery.isPending || myTeamsQuery.isPending || requestsQuery.isPending;
+  const loadingTeamDetails = teamDetailsQuery.isPending;
+  const queryError = [
+    teamsQuery.error,
+    myTeamsQuery.error,
+    requestsQuery.error,
+    teamDetailsQuery.error,
+    inviteCandidatesQuery.error,
+  ].find((cause): cause is Error => cause instanceof Error);
+  const displayError = error ?? queryError?.message;
+  const loadTeams = async (term: string) => {
+    setError(null);
+    setCatalogSearch(term);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['teams', userId] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.myTeams(userId) }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.teamRequests(userId) }),
+    ]);
+  };
 
   async function requestJoin(team: Pick<Team, 'id' | 'name'>) {
     setError(null);
@@ -93,16 +131,12 @@ export function TeamsPage() {
     }
   }
 
-  async function createTeam(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const name = String(formData.get('name') ?? '').trim();
-    const description = String(formData.get('description') ?? '').trim();
-    setCreating(true);
+  async function createTeam(values: TeamFormValues) {
     setError(null);
     try {
-      await api.createTeam(token, name, description || undefined);
+      await api.createTeam(token, values.name, values.description);
       setShowCreate(false);
+      resetTeamForm();
       setNotice('Equipe criada.');
       await loadTeams(search);
     } catch (cause) {
@@ -111,8 +145,6 @@ export function TeamsPage() {
           ? cause.message
           : 'Não foi possível criar a equipe.',
       );
-    } finally {
-      setCreating(false);
     }
   }
 
@@ -141,49 +173,19 @@ export function TeamsPage() {
 
   async function showTeamDetails(team: TeamOverview | TeamMembership) {
     setSelectedTeam(team);
-    setTeamRequests([]);
-    setTeamMembers([]);
-    setInviteCandidates([]);
     setInviteSearch('');
-    setLoadingTeamDetails(true);
+    setInviteSubmittedSearch('');
     setError(null);
-    try {
-      const [members, requestsPage] = await Promise.all([
-        api.listTeamMembers(token, team.id),
-        team.role === 'captain'
-          ? api.listTeamRequests(token, team.id)
-          : Promise.resolve(null),
-      ]);
-      setTeamMembers(members.items);
-      if (requestsPage) setTeamRequests(requestsPage.items);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Não foi possível carregar os detalhes da equipe.',
-      );
-    } finally {
-      setLoadingTeamDetails(false);
-    }
   }
 
-  async function searchInviteCandidates(event: FormEvent<HTMLFormElement>) {
+  function searchInviteCandidates(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inviteSearch.trim().length < 2) {
       setError('Digite pelo menos 2 caracteres para buscar atletas.');
       return;
     }
     setError(null);
-    try {
-      const page = await api.searchUsers(token, inviteSearch.trim());
-      setInviteCandidates(page.items);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : 'Não foi possível buscar atletas.',
-      );
-    }
+    setInviteSubmittedSearch(inviteSearch.trim());
   }
 
   async function inviteUser(user: UserCard) {
@@ -196,8 +198,9 @@ export function TeamsPage() {
       setNotice(
         `Convite enviado para ${user.name ?? user.username ?? 'atleta'}.`,
       );
-      const page = await api.listTeamRequests(token, selectedTeam.id);
-      setTeamRequests(page.items);
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.teamDetails(userId, selectedTeam.id),
+      });
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -228,11 +231,12 @@ export function TeamsPage() {
           ? 'Solicitação aceita. O atleta entrou para a equipe.'
           : 'Solicitação recusada.',
       );
-      const [requestsPage] = await Promise.all([
-        api.listTeamRequests(token, selectedTeam.id),
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.teamDetails(userId, selectedTeam.id),
+        }),
         loadTeams(search),
       ]);
-      setTeamRequests(requestsPage.items);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -254,6 +258,11 @@ export function TeamsPage() {
   );
   const myTeamIds = new Set(myTeams.map((team) => team.id));
 
+  function closeCreateTeamModal() {
+    setShowCreate(false);
+    resetTeamForm();
+  }
+
   return (
     <>
       <PageHeading
@@ -261,7 +270,12 @@ export function TeamsPage() {
         title="Equipes"
         description="Descubra grupos, solicite participação ou crie sua própria equipe."
         action={
-          <Button onClick={() => setShowCreate(true)}>
+          <Button
+            onClick={() => {
+              resetTeamForm();
+              setShowCreate(true);
+            }}
+          >
             <i className="bi bi-plus-lg me-2" />
             Criar equipe
           </Button>
@@ -291,7 +305,7 @@ export function TeamsPage() {
           Buscar
         </Button>
       </Form>
-      {error && <ErrorState message={error} />}
+      {displayError && <ErrorState message={displayError} />}
 
       {invitations.length > 0 && (
         <section className="content-section">
@@ -463,30 +477,46 @@ export function TeamsPage() {
         )}
       </section>
 
-      <Modal show={showCreate} onHide={() => setShowCreate(false)} centered>
+      <Modal show={showCreate} onHide={closeCreateTeamModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>Criar equipe</Modal.Title>
         </Modal.Header>
-        <Form onSubmit={(event) => void createTeam(event)}>
+        <Form
+          onSubmit={handleTeamSubmit(createTeam)}
+          noValidate
+        >
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Nome</Form.Label>
-              <Form.Control name="name" required maxLength={45} />
+              <Form.Label htmlFor="create-team-name">Nome</Form.Label>
+              <Form.Control
+                id="create-team-name"
+                isInvalid={!!teamFormErrors.name}
+                {...registerTeam('name')}
+              />
+              <Form.Control.Feedback type="invalid">
+                {teamFormErrors.name?.message}
+              </Form.Control.Feedback>
             </Form.Group>
             <Form.Group>
-              <Form.Label>Descrição</Form.Label>
+              <Form.Label htmlFor="create-team-description">
+                Descrição
+              </Form.Label>
               <Form.Control
-                name="description"
+                id="create-team-description"
                 as="textarea"
                 rows={3}
-                maxLength={2000}
+                isInvalid={!!teamFormErrors.description}
+                {...registerTeam('description')}
               />
+              <Form.Control.Feedback type="invalid">
+                {teamFormErrors.description?.message}
+              </Form.Control.Feedback>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button
               variant="outline-secondary"
-              onClick={() => setShowCreate(false)}
+              onClick={closeCreateTeamModal}
             >
               Cancelar
             </Button>

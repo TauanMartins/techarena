@@ -1,87 +1,83 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Image from 'react-bootstrap/Image';
 import Modal from 'react-bootstrap/Modal';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
 import { ProfileAvatar } from '../components/ProfileAvatar';
 import { api } from '../shared/api';
-import type { FriendGroups, UserCard } from '../shared/types';
+import { queryKeys } from '../shared/queryClient';
+import type { UserCard } from '../shared/types';
 
 export function CommunityPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const token = session!.access_token;
-  const [groups, setGroups] = useState<FriendGroups | null>(null);
-  const [people, setPeople] = useState<UserCard[]>([]);
+  const userId = session!.user.id;
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [submittedSearch, setSubmittedSearch] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [busyFriendId, setBusyFriendId] = useState<string | null>(null);
   const [selectedPerson, setSelectedPerson] = useState<UserCard | null>(null);
-
-  const loadCommunity = useCallback(async (term: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const friendGroups = await api.listFriends(token);
-      setGroups(friendGroups);
-      if (term.trim().length >= 2) {
-        const directory = await api.searchUsers(token, term.trim());
-        setPeople(directory.items.filter((person) => person.id !== session?.user.id));
-      } else {
-        setPeople([]);
-      }
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar a comunidade.');
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.user.id, token]);
-
-  useEffect(() => { void loadCommunity(''); }, [loadCommunity]);
+  const queryClient = useQueryClient();
+  const groupsQuery = useQuery({
+    queryKey: queryKeys.community(userId),
+    queryFn: () => api.listFriends(token),
+  });
+  const directoryQuery = useQuery({
+    queryKey: queryKeys.directory(userId, submittedSearch),
+    queryFn: async () => {
+      const directory = await api.searchUsers(token, submittedSearch);
+      return directory.items.filter((person) => person.id !== userId);
+    },
+    enabled: submittedSearch.length >= 2,
+  });
+  const groups = groupsQuery.data;
+  const people = directoryQuery.data ?? [];
+  const loading = groupsQuery.isPending || directoryQuery.isFetching;
+  const error = groupsQuery.error ?? directoryQuery.error;
+  const friendMutation = useMutation({
+    mutationFn: ({
+      friendId,
+      action,
+    }: {
+      friendId: string;
+      action: 'accept' | 'block';
+    }) => api.decideFriend(token, friendId, action),
+    onSuccess: async (_result, { action }) => {
+      setNotice(
+        action === 'accept'
+          ? 'Solicitação aceita. Vocês já podem conversar.'
+          : 'Atleta bloqueado.',
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.community(userId) }),
+        queryClient.invalidateQueries({ queryKey: ['chatConversations', userId] }),
+      ]);
+    },
+  });
+  const requestMutation = useMutation({
+    mutationFn: (friendId: string) => api.requestFriend(token, friendId),
+    onSuccess: async () => {
+      setNotice('Solicitação de amizade enviada.');
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.community(userId),
+      });
+    },
+  });
 
   async function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (search.trim().length < 2) {
-      setError('Digite pelo menos 2 caracteres para buscar atletas.');
+      setSearchError('Digite pelo menos 2 caracteres para buscar atletas.');
       return;
     }
-    await loadCommunity(search);
-  }
-
-  async function friendAction(friendId: string, action: 'accept' | 'block') {
-    setBusyFriendId(friendId);
-    setError(null);
-    setNotice(null);
-    try {
-      await api.decideFriend(token, friendId, action);
-      setNotice(action === 'accept' ? 'Solicitação aceita. Vocês já podem conversar.' : 'Atleta bloqueado.');
-      await loadCommunity(search);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar a solicitação.');
-    } finally {
-      setBusyFriendId(null);
-    }
-  }
-
-  async function requestFriend(userId: string) {
-    setBusyFriendId(userId);
-    setError(null);
-    setNotice(null);
-    try {
-      await api.requestFriend(token, userId);
-      setNotice('Solicitação de amizade enviada.');
-      await loadCommunity(search);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível enviar a solicitação.');
-    } finally {
-      setBusyFriendId(null);
-    }
+    setSearchError(null);
+    setSubmittedSearch(search.trim());
   }
 
   const friendIds = new Set(groups?.friends.items.map((friend) => friend.user.id) ?? []);
@@ -92,7 +88,25 @@ export function CommunityPage() {
     <>
       <PageHeading eyebrow="CONEXÕES" title="Comunidade" description="Encontre atletas, construa amizades e combine o próximo jogo." />
       {notice && <div className="inline-notice" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
-      {error && <ErrorState message={error} />}
+      {error && (
+        <ErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : 'Não foi possível carregar a comunidade.'
+          }
+        />
+      )}
+      {searchError && <ErrorState message={searchError} />}
+      {(friendMutation.error || requestMutation.error) && (
+        <ErrorState
+          message={
+            (friendMutation.error ?? requestMutation.error) instanceof Error
+              ? (friendMutation.error ?? requestMutation.error)!.message
+              : 'Não foi possível atualizar a comunidade.'
+          }
+        />
+      )}
       <Card className="content-card mb-4">
         <Card.Body>
           <div className="section-title-row"><div><span className="eyebrow">NOVAS CONEXÕES</span><h2>Encontrar atletas</h2></div></div>
@@ -101,7 +115,7 @@ export function CommunityPage() {
             <Form.Control aria-label="Buscar atletas" placeholder="Buscar por nome ou usuário" value={search} onChange={(event) => setSearch(event.target.value)} />
             <Button type="submit" variant="outline-primary">Buscar</Button>
           </Form>
-          {loading && <LoadingState label="Buscando atletas..." />}
+          {directoryQuery.isFetching && <LoadingState label="Buscando atletas..." />}
           {!loading && !people.length && <EmptyState icon="bi-person-search" title={search.trim().length >= 2 ? 'Nenhum atleta encontrado' : 'Busque atletas da comunidade'} description={search.trim().length >= 2 ? 'Experimente buscar por outro nome ou usuário.' : 'Digite pelo menos 2 caracteres para encontrar pessoas.'} />}
           {!loading && people.length > 0 && (
             <div className="people-list">
@@ -116,7 +130,7 @@ export function CommunityPage() {
                     </button>
                     <div className="d-flex gap-2">
                       <Button size="sm" variant="outline-secondary" onClick={() => setSelectedPerson(person)}>Detalhes</Button>
-                      <Button size="sm" variant={isFriend ? 'outline-success' : 'outline-primary'} disabled={isFriend || requested || busyFriendId === person.id} onClick={() => void requestFriend(person.id)}>
+                      <Button size="sm" variant={isFriend ? 'outline-success' : 'outline-primary'}                       disabled={isFriend || requested || requestMutation.isPending} onClick={() => requestMutation.mutate(person.id)}>
                         {isFriend ? 'Amigos' : requested ? 'Solicitado' : 'Adicionar'}
                       </Button>
                     </div>
@@ -141,8 +155,8 @@ export function CommunityPage() {
                   <strong>{friend.user.name ?? 'Atleta'}</strong><span>{friend.user.username ? `@${friend.user.username}` : 'Solicitação de amizade'}</span>
                 </button>
                 <div className="d-flex gap-2">
-                  <Button size="sm" onClick={() => void friendAction(friend.id, 'accept')} disabled={busyFriendId === friend.id}>Aceitar</Button>
-                  <Button size="sm" variant="outline-secondary" onClick={() => void friendAction(friend.id, 'block')} disabled={busyFriendId === friend.id}>Bloquear</Button>
+                  <Button size="sm" onClick={() => friendMutation.mutate({ friendId: friend.id, action: 'accept' })} disabled={friendMutation.isPending}>Aceitar</Button>
+                  <Button size="sm" variant="outline-secondary" onClick={() => friendMutation.mutate({ friendId: friend.id, action: 'block' })} disabled={friendMutation.isPending}>Bloquear</Button>
                 </div>
               </div>
             ))}

@@ -38,6 +38,14 @@ npm run lint
 npm test
 ```
 
+## Arquitetura e formularios
+
+As paginas do roteador sao carregadas sob demanda com `lazy` e `Suspense`, mantendo o bundle inicial menor. Acesso ao contexto de autenticacao fica no hook `useAuth`, separado do provider; ele usa a API `use` do React 19 para ler o contexto.
+
+Formularios com varios campos usam React Hook Form e schemas Zod compartilhados em `src/shared/validation.ts`. Os schemas normalizam valores e validam limites antes de chamar a API. Entradas simples e interativas, como composicao de mensagens e filtros, permanecem controladas localmente quando nao se beneficiam do estado e ciclo de validacao de um formulario completo.
+
+Dados remotos usam TanStack Query sobre a camada `fetch` central em `src/shared/api.ts`. Chaves incluem a identidade do usuario, e mutacoes invalidam os dados relacionados para manter as telas sincronizadas; o access token nunca faz parte das chaves de cache. O Supabase Realtime continua responsavel pelos eventos ao vivo do chat.
+
 ## Funcionalidades e integracoes
 
 - Login Google pelo Supabase Auth; a sessao renovavel fornece o access token enviado como `Authorization: Bearer <accessToken>` em todas as rotas protegidas do NestJS.

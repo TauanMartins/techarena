@@ -1,42 +1,43 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../components/AppointmentCard';
 import { BookingModal } from '../components/BookingForm';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
 import { api } from '../shared/api';
-import type { Appointment, FavoriteSports } from '../shared/types';
+import { queryKeys } from '../shared/queryClient';
 import { SportIcon } from '../components/SportIcon';
 
 export function HomePage() {
   const { session, profile } = useAuth();
   const token = session!.access_token;
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [favorites, setFavorites] = useState<FavoriteSports | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const userId = session!.user.id;
   const [showBooking, setShowBooking] = useState(false);
-
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [appointmentPage, favoriteSports] = await Promise.all([
-        api.listAppointments(token, { page: 1, limit: 6, orderByTime: 'future', preferSports: true }),
+  const dashboardQuery = useQuery({
+    queryKey: queryKeys.appointments(userId, {
+      page: 1,
+      limit: 6,
+      orderByTime: 'future',
+      preferSports: true,
+    }),
+    queryFn: async () => {
+      const [appointmentPage, favorites] = await Promise.all([
+        api.listAppointments(token, {
+          page: 1,
+          limit: 6,
+          orderByTime: 'future',
+          preferSports: true,
+        }),
         api.getFavoriteSports(token),
       ]);
-      setAppointments(appointmentPage.items);
-      setFavorites(favoriteSports);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar sua página inicial.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => { void loadDashboard(); }, [loadDashboard]);
+      return { appointments: appointmentPage.items, favorites };
+    },
+  });
+  const appointments = dashboardQuery.data?.appointments ?? [];
+  const favorites = dashboardQuery.data?.favorites;
 
   return (
     <>
@@ -89,12 +90,20 @@ export function HomePage() {
           <div><span className="eyebrow">VAMOS JOGAR?</span><h2>Próximos agendamentos</h2></div>
           <Link to="/agendamentos" className="text-link">Ver todos <i className="bi bi-arrow-right" /></Link>
         </div>
-        {loading && <LoadingState label="Buscando partidas..." />}
-        {error && <ErrorState message={error} />}
-        {!loading && !error && appointments.length === 0 && (
+        {dashboardQuery.isPending && <LoadingState label="Buscando partidas..." />}
+        {dashboardQuery.error && (
+          <ErrorState
+            message={
+              dashboardQuery.error instanceof Error
+                ? dashboardQuery.error.message
+                : 'Não foi possível carregar sua página inicial.'
+            }
+          />
+        )}
+        {!dashboardQuery.isPending && !dashboardQuery.error && appointments.length === 0 && (
           <EmptyState icon="bi-calendar2-x" title="Ainda não há partidas por aqui" description="Crie um agendamento ou volte em breve para encontrar novos jogos." />
         )}
-        {!loading && appointments.length > 0 && (
+        {!dashboardQuery.isPending && appointments.length > 0 && (
           <div className="row g-3">
             {appointments.slice(0, 3).map((appointment) => (
               <div className="col-md-6 col-xl-4" key={appointment.id}>
@@ -104,7 +113,7 @@ export function HomePage() {
           </div>
         )}
       </section>
-      <BookingModal show={showBooking} onHide={() => setShowBooking(false)} onCreated={() => void loadDashboard()} />
+      <BookingModal show={showBooking} onHide={() => setShowBooking(false)} onCreated={() => void dashboardQuery.refetch()} />
     </>
   );
 }

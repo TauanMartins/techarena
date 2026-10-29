@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import logo from '../assets/brand/logo-light.png';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 
 export function LoginPage() {
   const { configured, loginWithGoogle, authError } = useAuth();

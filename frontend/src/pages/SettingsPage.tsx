@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 import Image from 'react-bootstrap/Image';
-import { useAuth } from '../auth/AuthProvider';
-import { useThemePreference } from '../features/preferences/ThemeProvider';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../auth/useAuth';
+import { useThemePreference } from '../features/preferences/useThemePreference';
 import { ErrorState, LoadingState, PageHeading } from '../components/Feedback';
 import { api } from '../shared/api';
-import type { FavoriteSports, Sport } from '../shared/types';
+import {
+  profileFormSchema,
+  type ProfileFormInput,
+  type ProfileFormValues,
+} from '../shared/validation';
 
 function dateInputToday() {
   const date = new Date();
@@ -22,88 +29,111 @@ export function SettingsPage() {
   const { session, profile, logout, refreshProfile } = useAuth();
   const { theme, saveTheme, error: themeError } = useThemePreference();
   const token = session!.access_token;
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [favorites, setFavorites] = useState<FavoriteSports | null>(null);
+  const userId = session!.user.id;
+  const queryClient = useQueryClient();
   const [selectedSportIds, setSelectedSportIds] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState(theme);
-  const [name, setName] = useState(profile?.name ?? '');
-  const [username, setUsername] = useState(profile?.username ?? '');
-  const [birthDate, setBirthDate] = useState(profile?.birthDate ?? '');
-  const [gender, setGender] = useState(profile?.gender ?? '');
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [preferencesSaving, setPreferencesSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    reset: resetProfile,
+    formState: { errors: profileErrors, isSubmitting: profileSaving },
+  } = useForm<ProfileFormInput, undefined, ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      name: profile?.name ?? '',
+      username: profile?.username ?? '',
+      birthDate: profile?.birthDate ?? '',
+      gender:
+        profile?.gender === 'M' ||
+        profile?.gender === 'F' ||
+        profile?.gender === 'O'
+          ? profile.gender
+          : '',
+    },
+  });
   const [notice, setNotice] = useState<string | null>(null);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const today = dateInputToday();
-
-  const loadSettings = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const settingsQuery = useQuery({
+    queryKey: ['settings', userId],
+    queryFn: async () => {
       const [sportPage, favoriteSports] = await Promise.all([
         api.getSports(token),
         api.getFavoriteSports(token),
       ]);
-      setSports(sportPage.items);
-      setFavorites(favoriteSports);
-      setSelectedSportIds(favoriteSports.items.map((sport) => sport.id));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar as configurações.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => { void loadSettings(); }, [loadSettings]);
-  useEffect(() => { setSelectedTheme(theme); }, [theme]);
-
-  async function saveProfile(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const payload = {
-      name: name.trim(),
-      username: username.trim().toLowerCase(),
-      birthDate,
-      gender: gender || null,
-    };
-    setProfileSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
-      await api.updateProfile(token, payload);
+      return { sports: sportPage.items, favorites: favoriteSports };
+    },
+  });
+  const sports = settingsQuery.data?.sports ?? [];
+  const favorites = settingsQuery.data?.favorites ?? null;
+  const loading = settingsQuery.isPending;
+  const error = settingsQuery.error;
+  const profileMutation = useMutation({
+    mutationFn: (payload: {
+      name: string;
+      username: string;
+      birthDate: string;
+      gender: string | null;
+    }) =>
+      api.updateProfile(token, payload),
+    onSuccess: async () => {
       await refreshProfile();
       setNotice('Perfil atualizado.');
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível atualizar o perfil.');
-    } finally {
-      setProfileSaving(false);
-    }
-  }
-
-  async function savePreferences() {
-    setPreferencesSaving(true);
-    setError(null);
-    setNotice(null);
-    try {
+    },
+  });
+  const preferencesMutation = useMutation({
+    mutationFn: async () => {
       await Promise.all([
         api.replaceFavoriteSports(token, selectedSportIds),
         saveTheme(selectedTheme),
       ]);
+    },
+    onSuccess: async () => {
       setNotice('Preferências salvas.');
-      await loadSettings();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível salvar as preferências.');
-    } finally {
-      setPreferencesSaving(false);
-    }
+      await queryClient.invalidateQueries({ queryKey: ['settings', userId] });
+      await settingsQuery.refetch();
+    },
+  });
+  useEffect(() => { setSelectedTheme(theme); }, [theme]);
+  useEffect(() => {
+    if (favorites)
+      setSelectedSportIds(favorites.items.map((sport) => sport.id));
+  }, [favorites]);
+  useEffect(() => {
+    resetProfile({
+      name: profile?.name ?? '',
+      username: profile?.username ?? '',
+      birthDate: profile?.birthDate ?? '',
+      gender:
+        profile?.gender === 'M' ||
+        profile?.gender === 'F' ||
+        profile?.gender === 'O'
+          ? profile.gender
+          : '',
+    });
+  }, [profile, resetProfile]);
+
+  async function saveProfile(values: ProfileFormValues) {
+    const payload = {
+      ...values,
+      gender: values.gender || null,
+    };
+    setNotice(null);
+    profileMutation.mutate(payload);
+  }
+
+  function savePreferences() {
+    setNotice(null);
+    preferencesMutation.mutate();
   }
 
   async function signOut() {
-    setError(null);
+    setLogoutError(null);
     try {
       await logout();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível encerrar a sessão.');
+      setLogoutError(cause instanceof Error ? cause.message : 'Não foi possível encerrar a sessão.');
     }
   }
 
@@ -119,13 +149,28 @@ export function SettingsPage() {
     <>
       <PageHeading eyebrow="SUA CONTA" title="Configurações" description="Atualize seus dados e personalize sua experiência no TechArena." />
       {notice && <Alert variant="success"><i className="bi bi-check-circle me-2" />{notice}</Alert>}
-      {(error || themeError) && <ErrorState message={error ?? themeError!} />}
+      {(error || themeError || profileMutation.error || preferencesMutation.error || logoutError) && (
+        <ErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : profileMutation.error instanceof Error
+                ? profileMutation.error.message
+                : preferencesMutation.error instanceof Error
+                  ? preferencesMutation.error.message
+                  : logoutError ?? themeError ?? 'Não foi possível concluir a operação.'
+          }
+        />
+      )}
       {loading && <LoadingState label="Carregando preferências..." />}
       <div className="settings-grid">
         <Card className="content-card">
           <Card.Body>
             <div className="section-title-row"><div><span className="eyebrow">DADOS DA CONTA</span><h2>Meu perfil</h2></div></div>
-            <Form onSubmit={(event) => void saveProfile(event)}>
+            <Form
+              onSubmit={handleProfileSubmit(saveProfile)}
+              noValidate
+            >
               <div className="settings-profile-photo mb-4">
                 <div className="settings-profile-avatar">
                   {profile?.image ? (
@@ -141,21 +186,53 @@ export function SettingsPage() {
               </div>
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="profile-name">Nome</Form.Label>
-                <Form.Control id="profile-name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={150} autoComplete="name" />
+                <Form.Control
+                  id="profile-name"
+                  autoComplete="name"
+                  isInvalid={!!profileErrors.name}
+                  {...registerProfile('name')}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {profileErrors.name?.message}
+                </Form.Control.Feedback>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="profile-username">Nome de usuário</Form.Label>
-                <Form.Control id="profile-username" value={username} onChange={(event) => setUsername(event.target.value.toLowerCase())} required minLength={3} maxLength={45} pattern="[a-z0-9_]+" aria-describedby="username-help" autoComplete="username" />
+                <Form.Control
+                  id="profile-username"
+                  aria-describedby="username-help"
+                  autoComplete="username"
+                  isInvalid={!!profileErrors.username}
+                  {...registerProfile('username')}
+                />
                 <Form.Text id="username-help">Use letras minúsculas, números e sublinhado.</Form.Text>
+                <Form.Control.Feedback type="invalid">
+                  {profileErrors.username?.message}
+                </Form.Control.Feedback>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="profile-birth-date">Data de nascimento</Form.Label>
-                <Form.Control id="profile-birth-date" type="date" value={birthDate} max={today} onChange={(event) => setBirthDate(event.target.value)} required autoComplete="bday" aria-describedby="birth-date-help" />
+                <Form.Control
+                  id="profile-birth-date"
+                  type="date"
+                  max={today}
+                  autoComplete="bday"
+                  aria-describedby="birth-date-help"
+                  isInvalid={!!profileErrors.birthDate}
+                  {...registerProfile('birthDate')}
+                />
                 <Form.Text id="birth-date-help">Informe uma data válida. É necessário ter pelo menos 18 anos para participar de agendamentos.</Form.Text>
+                <Form.Control.Feedback type="invalid">
+                  {profileErrors.birthDate?.message}
+                </Form.Control.Feedback>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="profile-gender">Gênero</Form.Label>
-                <Form.Select id="profile-gender" value={gender} onChange={(event) => setGender(event.target.value)}>
+                <Form.Select
+                  id="profile-gender"
+                  isInvalid={!!profileErrors.gender}
+                  {...registerProfile('gender')}
+                >
                   <option value="">Prefiro não informar</option>
                   <option value="M">Masculino</option>
                   <option value="F">Feminino</option>
@@ -199,8 +276,8 @@ export function SettingsPage() {
                 />
               ))}
             </div>
-            <Button className="mt-4" onClick={() => void savePreferences()} disabled={preferencesSaving || loading}>
-              {preferencesSaving ? 'Salvando...' : 'Salvar preferências'}
+            <Button className="mt-4" onClick={savePreferences} disabled={preferencesMutation.isPending || loading}>
+              {preferencesMutation.isPending ? 'Salvando...' : 'Salvar preferências'}
             </Button>
           </Card.Body>
         </Card>

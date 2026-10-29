@@ -1,57 +1,48 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../components/AppointmentCard';
 import { BookingModal } from '../components/BookingForm';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
 import { api } from '../shared/api';
-import type { Appointment } from '../shared/types';
+import { queryKeys } from '../shared/queryClient';
 
 export function AppointmentsPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const token = session!.access_token;
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [joining, setJoining] = useState<string | null>(null);
+  const userId = session!.user.id;
+  const queryClient = useQueryClient();
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
-
-  const loadAppointments = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await api.listAppointments(token, {
+  const appointmentsQuery = useQuery({
+    queryKey: queryKeys.appointments(userId, {
+      page: 1,
+      limit: 30,
+      orderByTime: 'future',
+      preferSports: false,
+    }),
+    queryFn: () =>
+      api.listAppointments(token, {
         page: 1,
         limit: 30,
         orderByTime: 'future',
         preferSports: false,
-      });
-      setAppointments(result.items);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar os agendamentos.');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => { void loadAppointments(); }, [loadAppointments]);
-
-  async function join(appointment: Appointment) {
-    setJoining(appointment.id);
-    setNotice(null);
-    try {
-      await api.joinAppointment(token, appointment.id);
+      }),
+  });
+  const appointments = appointmentsQuery.data?.items ?? [];
+  const joinMutation = useMutation({
+    mutationFn: (appointmentId: string) =>
+      api.joinAppointment(token, appointmentId),
+    onSuccess: async () => {
       setNotice('Você entrou no agendamento.');
-      await loadAppointments();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível entrar no agendamento.');
-    } finally {
-      setJoining(null);
-    }
-  }
+      await queryClient.invalidateQueries({
+        queryKey: ['appointments', userId],
+      });
+    },
+  });
 
   return (
     <>
@@ -62,12 +53,29 @@ export function AppointmentsPage() {
         action={<Button onClick={() => setShowBooking(true)}><i className="bi bi-plus-lg me-2" />Criar agendamento</Button>}
       />
       {notice && <div className="inline-notice" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
-      {loading && <LoadingState label="Carregando agendamentos..." />}
-      {error && <ErrorState message={error} />}
-      {!loading && !error && appointments.length === 0 && (
+      {appointmentsQuery.isPending && <LoadingState label="Carregando agendamentos..." />}
+      {appointmentsQuery.error && (
+        <ErrorState
+          message={
+            appointmentsQuery.error instanceof Error
+              ? appointmentsQuery.error.message
+              : 'Não foi possível carregar os agendamentos.'
+          }
+        />
+      )}
+      {joinMutation.error && (
+        <ErrorState
+          message={
+            joinMutation.error instanceof Error
+              ? joinMutation.error.message
+              : 'Não foi possível entrar no agendamento.'
+          }
+        />
+      )}
+      {!appointmentsQuery.isPending && !appointmentsQuery.error && appointments.length === 0 && (
         <EmptyState icon="bi-calendar2-x" title="Nenhum agendamento encontrado" description="Seja a primeira pessoa a organizar uma partida." />
       )}
-      {!loading && appointments.length > 0 && (
+      {!appointmentsQuery.isPending && appointments.length > 0 && (
         <div className="row g-3">
           {appointments.map((appointment) => {
             const isOrganizer = appointment.organizerId === session?.user.id;
@@ -77,18 +85,18 @@ export function AppointmentsPage() {
                   appointment={appointment}
                   action={isOrganizer || appointment.isInside
                     ? () => navigate(`/chat/appointment/${appointment.id}`)
-                    : () => void join(appointment)}
+                    : () => joinMutation.mutate(appointment.id)}
                   actionLabel={isOrganizer || appointment.isInside
                     ? 'Ir para conversa'
-                    : joining === appointment.id ? 'Entrando...' : 'Participar'}
-                  disabled={!isOrganizer && !appointment.isInside && joining === appointment.id}
+                    : joinMutation.isPending && joinMutation.variables === appointment.id ? 'Entrando...' : 'Participar'}
+                  disabled={!isOrganizer && !appointment.isInside && joinMutation.isPending && joinMutation.variables === appointment.id}
                 />
               </div>
             );
           })}
         </div>
       )}
-      <BookingModal show={showBooking} onHide={() => setShowBooking(false)} onCreated={() => void loadAppointments()} />
+      <BookingModal show={showBooking} onHide={() => setShowBooking(false)} onCreated={() => void appointmentsQuery.refetch()} />
     </>
   );
 }
