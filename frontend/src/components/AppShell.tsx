@@ -11,16 +11,31 @@ const navigation = [
   { to: '/', label: 'Início', icon: 'bi-grid-1x2-fill', end: true },
   { to: '/agendamentos', label: 'Agendamentos', icon: 'bi-calendar2-event' },
   { to: '/ligas', label: 'Ligas', icon: 'bi-trophy' },
-  { to: '/equipes', label: 'Equipes', icon: 'bi-people' },
-  { to: '/social', label: 'Comunidade', icon: 'bi-person-hearts' },
-  { to: '/chat', label: 'Conversas', icon: 'bi-chat-dots' },
   { to: '/configuracoes', label: 'Configurações', icon: 'bi-gear' },
+];
+
+const communityNavigation = [
+  { to: '/social', label: 'Comunidade', icon: 'bi-person-hearts', end: true },
+  { to: '/equipes', label: 'Equipes', icon: 'bi-people', end: true },
+  { to: '/chat', label: 'Conversas', icon: 'bi-chat-dots' },
 ];
 
 export function AppShell() {
   const { profile, logout, session, profileError, refreshProfile } = useAuth();
   const location = useLocation();
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [communitiesOpen, setCommunitiesOpen] = useState(() =>
+    communityNavigation.some((item) =>
+      item.to === '/chat'
+        ? location.pathname.startsWith(item.to)
+        : location.pathname === item.to,
+    ),
+  );
+  const isCommunityRoute = communityNavigation.some((item) =>
+    item.to === '/chat'
+      ? location.pathname.startsWith(item.to)
+      : location.pathname === item.to,
+  );
 
   async function handleLogout() {
     setLogoutError(null);
@@ -74,7 +89,7 @@ export function AppShell() {
         </NavLink>
         <div className="sidebar-caption">MENU PRINCIPAL</div>
         <nav className="sidebar-nav" aria-label="Navegação principal">
-          {navigation.map((item) => (
+          {navigation.slice(0, 3).map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -85,14 +100,62 @@ export function AppShell() {
             >
               <i className={`bi ${item.icon}`} aria-hidden="true" />
               {item.label}
-              {item.to === '/chat' && (
-                <span
-                  className="sidebar-link-hint"
-                  aria-label="Mensagens em tempo real"
+            </NavLink>
+          ))}
+          <div className={`sidebar-community${communitiesOpen ? ' open' : ''}`}>
+            <button
+              type="button"
+              className={`sidebar-link sidebar-community-toggle${isCommunityRoute ? ' active' : ''}`}
+              aria-expanded={communitiesOpen}
+              aria-controls="sidebar-community-links"
+              onClick={() => setCommunitiesOpen((open) => !open)}
+            >
+              <i className="bi bi-people-fill" aria-hidden="true" />
+              Comunidades
+              <i
+                className="bi bi-chevron-down sidebar-community-chevron"
+                aria-hidden="true"
+              />
+            </button>
+            <div
+              className="sidebar-community-links"
+              id="sidebar-community-links"
+              hidden={!communitiesOpen}
+            >
+              {communityNavigation.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `sidebar-link sidebar-community-link${isActive ? ' active' : ''}`
+                  }
                 >
-                  <i className="bi bi-lightning-charge-fill" />
-                </span>
-              )}
+                  <i className={`bi ${item.icon}`} aria-hidden="true" />
+                  {item.label}
+                  {item.to === '/chat' && (
+                    <span
+                      className="sidebar-link-hint"
+                      aria-label="Mensagens em tempo real"
+                    >
+                      <i className="bi bi-lightning-charge-fill" />
+                    </span>
+                  )}
+                </NavLink>
+              ))}
+            </div>
+          </div>
+          {navigation.slice(3).map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={'end' in item ? item.end : false}
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? ' active' : ''}`
+              }
+            >
+              <i className={`bi ${item.icon}`} aria-hidden="true" />
+              {item.label}
             </NavLink>
           ))}
         </nav>
@@ -106,6 +169,11 @@ export function AppShell() {
           </div>
           <div className="topbar-current">
             {navigation.find((item) => item.to === location.pathname)?.label ??
+              communityNavigation.find((item) =>
+                item.to === '/chat'
+                  ? location.pathname.startsWith(item.to)
+                  : item.to === location.pathname,
+              )?.label ??
               'TechArena'}
           </div>
           <div className="topbar-user">
