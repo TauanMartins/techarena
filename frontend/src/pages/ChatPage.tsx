@@ -1,55 +1,21 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
-import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
-import Image from 'react-bootstrap/Image';
-import Modal from 'react-bootstrap/Modal';
-import { useAuth } from '../auth/useAuth';
+import { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
+import Image from "react-bootstrap/Image";
+import Modal from "react-bootstrap/Modal";
+import { useAuth } from "../auth/useAuth";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
   PageHeading,
-} from '../components/Feedback';
-import { ProfileAvatar } from '../components/ProfileAvatar';
-import {
-  chatMessageFromRow,
-  conversationTopic,
-  mergeChatMessages,
-  otherOnlineParticipantIds,
-  type ChatMessage,
-  type ConversationKind,
-} from '../features/chat/realtime';
-import { api } from '../shared/api';
-import { queryKeys } from '../shared/queryClient';
-import { supabase } from '../shared/supabase';
-import type { AppointmentMembership, TeamMembership } from '../shared/types';
-
-const HISTORY_PAGE_SIZE = 50;
-const MESSAGE_COLUMNS = 'id, sender_id, sender_name, body, created_at';
-
-interface Conversation {
-  id: string;
-  kind: ConversationKind;
-  label: string;
-  otherUserId?: string;
-  username?: string | null;
-  image?: string | null;
-  detail?: string;
-  description?: string | null;
-  scheduledAt?: string;
-  status?: string;
-  role?: string;
-}
+} from "../components/Feedback";
+import { ProfileAvatar } from "../components/ProfileAvatar";
+import { type Conversation } from "../features/chat/conversations";
+import { useChatConversations } from "../features/chat/useChatConversations";
+import { useChatThread } from "../features/chat/useChatThread";
+const EMPTY_CONVERSATIONS: Conversation[] = [];
 
 export function ChatPage() {
   const { session, profile } = useAuth();
@@ -57,68 +23,10 @@ export function ChatPage() {
   const userId = session!.user.id;
   const { kind: routeKind, id: routeId } = useParams();
   const navigate = useNavigate();
-  const conversationsQuery = useQuery({
-    queryKey: queryKeys.chatConversations(userId),
-    queryFn: async () => {
-      const [friends, teams, appointments] = await Promise.all([
-        api.listFriends(token),
-        api.listMyTeams(token),
-        api.listMyAppointments(token),
-      ]);
-      const direct: Conversation[] = friends.friends.items.map((friend) => ({
-        id: friend.user.id,
-        kind: 'direct',
-        label: friend.user.name ?? friend.user.username ?? 'Atleta',
-        otherUserId: friend.user.id,
-        username: friend.user.username,
-        image: friend.user.image,
-        detail: 'Amizade',
-      }));
-      const teamConversations: Conversation[] = teams.items.map(
-        (team: TeamMembership) => ({
-          id: team.id,
-          kind: 'team',
-          label: team.name,
-          image: team.image,
-          description: team.description,
-          role: team.role,
-          detail: 'Equipe',
-        }),
-      );
-      const appointmentConversations: Conversation[] = appointments.items.map(
-        (appointment: AppointmentMembership) => ({
-          id: appointment.id,
-          kind: 'appointment',
-          label: appointment.title,
-          description: appointment.description,
-          scheduledAt: appointment.scheduledAt,
-          status: appointment.status,
-          detail: new Date(appointment.scheduledAt).toLocaleDateString('pt-BR'),
-        }),
-      );
-      return [...direct, ...teamConversations, ...appointmentConversations];
-    },
-  });
-  const conversations = conversationsQuery.data ?? [];
+  const conversationsQuery = useChatConversations(token, userId);
+  const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
   const loadingList = conversationsQuery.isPending;
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [hasOlderMessages, setHasOlderMessages] = useState(false);
-  const [connection, setConnection] = useState<
-    'idle' | 'connecting' | 'connected' | 'error'
-  >('idle');
-  const [chatError, setChatError] = useState<string | null>(null);
-  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
-  const [presenceSynced, setPresenceSynced] = useState(false);
-  const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
   const [showDetails, setShowDetails] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messageListRef = useRef<HTMLDivElement>(null);
-  const previousScrollHeightRef = useRef<number | null>(null);
-  const channelRef = useRef<RealtimeChannel | null>(null);
-  const conversationGenerationRef = useRef(0);
 
   const selected = useMemo(
     () =>
@@ -128,252 +36,29 @@ export function ChatPage() {
       ),
     [conversations, routeId, routeKind],
   );
-  const selectedTopic = useMemo(
-    () =>
-      selected
-        ? conversationTopic(
-            selected.kind,
-            selected.kind === 'direct' ? userId : selected.id,
-            selected.otherUserId,
-          )
-        : null,
-    [selected, userId],
-  );
-
-  useEffect(() => {
-    const generation = ++conversationGenerationRef.current;
-    const client = supabase;
-    if (!selected || !selectedTopic || !client) {
-      setMessages([]);
-      setOnlineUserIds([]);
-      setPresenceSynced(false);
-      setConnection('idle');
-      setChatError(null);
-      setHasOlderMessages(false);
-      setLoadingHistory(false);
-      setSending(false);
-      setText('');
-      return;
-    }
-
-    let active = true;
-    let cancelPendingSubscribe: (() => void) | null = null;
-    const channelTopic = `chat:${selectedTopic}`;
-    setMessages([]);
-    setOnlineUserIds([]);
-    setPresenceSynced(false);
-    setHasOlderMessages(false);
-    setConnection('connecting');
-    setChatError(null);
-    setLoadingHistory(false);
-    setSending(false);
-    setText('');
-
-    const channel = client.channel(channelTopic, {
-      config: {
-        private: true,
-        presence: { key: userId },
-      },
-    });
-    channelRef.current = channel;
-
-    channel
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `topic=eq.${selectedTopic}`,
-        },
-        ({ new: row }) => {
-          const message = chatMessageFromRow(row);
-          if (active && message) {
-            setMessages((current) => mergeChatMessages(current, [message]));
-          }
-        },
-      )
-      .on('presence', { event: 'sync' }, () => {
-        if (active) {
-          setOnlineUserIds(
-            otherOnlineParticipantIds(channel.presenceState(), userId),
-          );
-          setPresenceSynced(true);
-        }
-      });
-
-    void (async () => {
-      try {
-        await api.ensureChatAccess(token, selectedTopic);
-        await client.realtime.setAuth(token);
-        if (!active) return;
-
-        await new Promise<void>((resolve, reject) => {
-          cancelPendingSubscribe = () => {
-            reject(new Error('A conexão da conversa foi cancelada.'));
-          };
-          channel.subscribe((status, error) => {
-            if (!active) return;
-            if (status === 'SUBSCRIBED') {
-              cancelPendingSubscribe = null;
-              setConnection('connected');
-              resolve();
-            } else if (
-              status === 'CHANNEL_ERROR' ||
-              status === 'TIMED_OUT' ||
-              status === 'CLOSED'
-            ) {
-              cancelPendingSubscribe = null;
-              setConnection('error');
-              reject(
-                error ??
-                  new Error('Não foi possível conectar a esta conversa.'),
-              );
-            }
-          });
-        });
-        if (!active) return;
-
-        const presenceStatus = await channel.track({
-          userId,
-          name: profile?.name ?? profile?.username ?? 'Atleta',
-          onlineAt: new Date().toISOString(),
-        });
-        if (presenceStatus !== 'ok') {
-          setChatError('Não foi possível atualizar o status de presença.');
-        }
-
-        const { data, error } = await client
-          .from('chat_messages')
-          .select(MESSAGE_COLUMNS)
-          .eq('topic', selectedTopic)
-          .order('created_at', { ascending: false })
-          .order('id', { ascending: false })
-          .limit(HISTORY_PAGE_SIZE);
-        if (error) throw error;
-        if (!active) return;
-
-        const history = (data ?? [])
-          .map(chatMessageFromRow)
-          .filter((message): message is ChatMessage => message !== null)
-          .reverse();
-        setMessages((current) => mergeChatMessages(current, history));
-        setHasOlderMessages((data?.length ?? 0) === HISTORY_PAGE_SIZE);
-      } catch {
-        if (!active) return;
-        setConnection('error');
-        setChatError('Não foi possível abrir esta conversa. Tente novamente.');
-      }
-    })();
-
-    return () => {
-      active = false;
-      cancelPendingSubscribe?.();
-      if (channelRef.current === channel) channelRef.current = null;
-      if (conversationGenerationRef.current === generation) {
-        conversationGenerationRef.current += 1;
-      }
-      void client.removeChannel(channel);
-    };
-  }, [
-    profile?.name,
-    profile?.username,
-    retryCount,
-    selected,
-    selectedTopic,
+  const thread = useChatThread({
+    conversation: selected,
     token,
     userId,
-  ]);
-
-  useLayoutEffect(() => {
-    const messageList = messageListRef.current;
-    if (!messageList) return;
-    const previousHeight = previousScrollHeightRef.current;
-    if (previousHeight !== null) {
-      messageList.scrollTop += messageList.scrollHeight - previousHeight;
-      previousScrollHeightRef.current = null;
-      return;
-    }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  async function loadOlderMessages() {
-    if (!supabase || !selectedTopic || loadingHistory || !messages.length)
-      return;
-    const generation = conversationGenerationRef.current;
-    const oldest = messages[0];
-    setLoadingHistory(true);
-    setChatError(null);
-    try {
-      const cursor = `created_at.lt.${oldest.createdAt},and(created_at.eq.${oldest.createdAt},id.lt.${oldest.id})`;
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .select(MESSAGE_COLUMNS)
-        .eq('topic', selectedTopic)
-        .or(cursor)
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(HISTORY_PAGE_SIZE);
-      if (error) throw error;
-      if (generation !== conversationGenerationRef.current) return;
-      const older = (data ?? [])
-        .map(chatMessageFromRow)
-        .filter((message): message is ChatMessage => message !== null)
-        .reverse();
-      if (older.length) {
-        if (messageListRef.current) {
-          previousScrollHeightRef.current = messageListRef.current.scrollHeight;
-        }
-        setMessages((current) => mergeChatMessages(current, older));
-      }
-      setHasOlderMessages((data?.length ?? 0) === HISTORY_PAGE_SIZE);
-    } catch {
-      if (generation !== conversationGenerationRef.current) return;
-      setChatError(
-        'Não foi possível carregar as mensagens anteriores. Tente novamente.',
-      );
-    } finally {
-      if (generation === conversationGenerationRef.current)
-        setLoadingHistory(false);
-    }
-  }
-
-  async function sendMessage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const messageText = text.trim();
-    if (
-      !selectedTopic ||
-      !supabase ||
-      !messageText ||
-      connection !== 'connected'
-    )
-      return;
-    const generation = conversationGenerationRef.current;
-    setSending(true);
-    setChatError(null);
-    try {
-      const { data, error } = await supabase
-        .from('chat_messages')
-        .insert({
-          topic: selectedTopic,
-          sender_id: userId,
-          body: messageText,
-        })
-        .select(MESSAGE_COLUMNS)
-        .single();
-      if (error) throw error;
-      if (generation !== conversationGenerationRef.current) return;
-      const message = chatMessageFromRow(data);
-      if (!message) throw new Error('A mensagem não pôde ser carregada.');
-      setMessages((current) => mergeChatMessages(current, [message]));
-      setText('');
-    } catch {
-      if (generation !== conversationGenerationRef.current) return;
-      setChatError('Não foi possível enviar a mensagem. Tente novamente.');
-    } finally {
-      if (generation === conversationGenerationRef.current) setSending(false);
-    }
-  }
+    displayName: profile?.name ?? profile?.username ?? "Atleta",
+  });
+  const {
+    messages,
+    loadingHistory,
+    hasOlderMessages,
+    connection,
+    chatError,
+    onlineUserIds,
+    presenceSynced,
+    text,
+    setText,
+    sending,
+    retry,
+    loadOlderMessages,
+    sendMessage,
+    messagesEndRef,
+    messageListRef,
+  } = thread;
 
   const openConversation = (conversation: Conversation) => {
     navigate(`/chat/${conversation.kind}/${conversation.id}`);
@@ -385,9 +70,7 @@ export function ChatPage() {
   );
 
   return (
-    <div
-      className={`chat-page${selected ? ' is-thread' : ' is-inbox'}`}
-    >
+    <div className={`chat-page${selected ? " is-thread" : " is-inbox"}`}>
       <PageHeading
         eyebrow="CONEXÃO EM TEMPO REAL"
         title="Conversas"
@@ -399,20 +82,20 @@ export function ChatPage() {
             message={
               conversationsQuery.error instanceof Error
                 ? conversationsQuery.error.message
-                : 'Não foi possível carregar as conversas. Tente novamente.'
+                : "Não foi possível carregar as conversas. Tente novamente."
             }
           />
         </div>
       )}
-      <div className={`chat-layout${selected ? ' has-selection' : ''}`}>
+      <div className={`chat-layout${selected ? " has-selection" : ""}`}>
         <aside className="chat-list-panel">
           <div className="chat-list-heading">
             <div>
               <strong>Conversas</strong>
               {!loadingList && (
                 <small>
-                  {conversations.length}{' '}
-                  {conversations.length === 1 ? 'conversa' : 'conversas'}
+                  {conversations.length}{" "}
+                  {conversations.length === 1 ? "conversa" : "conversas"}
                 </small>
               )}
             </div>
@@ -436,10 +119,10 @@ export function ChatPage() {
             <button
               type="button"
               key={`${conversation.kind}-${conversation.id}`}
-              className={`chat-list-item${selected?.kind === conversation.kind && selected.id === conversation.id ? ' active' : ''}`}
+              className={`chat-list-item${selected?.kind === conversation.kind && selected.id === conversation.id ? " active" : ""}`}
               onClick={() => openConversation(conversation)}
             >
-              {conversation.kind === 'direct' ? (
+              {conversation.kind === "direct" ? (
                 <ProfileAvatar
                   name={conversation.label}
                   image={conversation.image ?? null}
@@ -455,7 +138,7 @@ export function ChatPage() {
               ) : (
                 <span className="chat-avatar">
                   <i
-                    className={`bi ${conversation.kind === 'team' ? 'bi-people-fill' : 'bi-calendar2-event'}`}
+                    className={`bi ${conversation.kind === "team" ? "bi-people-fill" : "bi-calendar2-event"}`}
                   />
                 </span>
               )}
@@ -482,12 +165,12 @@ export function ChatPage() {
                   size="sm"
                   variant="light"
                   className="chat-back-button"
-                  onClick={() => navigate('/chat')}
+                  onClick={() => navigate("/chat")}
                   aria-label="Voltar para conversas"
                 >
                   <i className="bi bi-arrow-left" aria-hidden="true" />
                 </Button>
-                {selected.kind === 'direct' ? (
+                {selected.kind === "direct" ? (
                   <ProfileAvatar
                     name={selected.label}
                     image={selected.image ?? null}
@@ -503,33 +186,33 @@ export function ChatPage() {
                 ) : (
                   <span className="chat-avatar">
                     <i
-                      className={`bi ${selected.kind === 'team' ? 'bi-people-fill' : 'bi-calendar2-event'}`}
+                      className={`bi ${selected.kind === "team" ? "bi-people-fill" : "bi-calendar2-event"}`}
                     />
                   </span>
                 )}
                 <div>
                   <strong>{selected.label}</strong>
                   <small>
-                    {selected.kind === 'direct'
+                    {selected.kind === "direct"
                       ? !presenceSynced
-                        ? 'Verificando presença...'
+                        ? "Verificando presença..."
                         : otherParticipantOnline
-                          ? 'Pessoa online agora'
-                          : 'Pessoa offline'
+                          ? "Pessoa online agora"
+                          : "Pessoa offline"
                       : !presenceSynced
-                        ? 'Verificando presença...'
+                        ? "Verificando presença..."
                         : `${Math.max(0, onlineUserIds.filter((id) => id !== userId).length)} outras pessoas online`}
                   </small>
                 </div>
                 <span className={`realtime-status ${connection}`}>
                   <i className="bi bi-circle-fill" />
-                  {connection === 'connected'
-                    ? 'Sua conexão: conectada'
-                    : connection === 'connecting'
-                      ? 'Sua conexão: conectando...'
-                      : connection === 'error'
-                        ? 'Sua conexão: indisponível'
-                        : 'Sua conexão: desconectada'}
+                  {connection === "connected"
+                    ? "Sua conexão: conectada"
+                    : connection === "connecting"
+                      ? "Sua conexão: conectando..."
+                      : connection === "error"
+                        ? "Sua conexão: indisponível"
+                        : "Sua conexão: desconectada"}
                 </span>
                 <Button
                   size="sm"
@@ -540,11 +223,11 @@ export function ChatPage() {
                   <i className="bi bi-info-circle" aria-hidden="true" />
                   <span className="chat-details-label">Detalhes</span>
                 </Button>
-                {connection === 'error' && (
+                {connection === "error" && (
                   <Button
                     size="sm"
                     variant="light"
-                    onClick={() => setRetryCount((count) => count + 1)}
+                    onClick={retry}
                     aria-label="Reconectar conversa"
                   >
                     <i className="bi bi-arrow-clockwise" />
@@ -565,19 +248,19 @@ export function ChatPage() {
                     onClick={() => void loadOlderMessages()}
                   >
                     {loadingHistory
-                      ? 'Carregando...'
-                      : 'Carregar mensagens anteriores'}
+                      ? "Carregando..."
+                      : "Carregar mensagens anteriores"}
                   </Button>
                 )}
-                {connection === 'connecting' && messages.length === 0 && (
+                {connection === "connecting" && messages.length === 0 && (
                   <LoadingState label="Conectando e carregando o histórico..." />
                 )}
-                {connection === 'error' && messages.length === 0 && (
+                {connection === "error" && messages.length === 0 && (
                   <div className="message-empty">
                     Não foi possível abrir esta conversa.
                   </div>
                 )}
-                {connection === 'connected' && messages.length === 0 && (
+                {connection === "connected" && messages.length === 0 && (
                   <div className="message-empty">
                     Nenhuma mensagem ainda. Envie a primeira para iniciar a
                     conversa.
@@ -587,7 +270,7 @@ export function ChatPage() {
                   const own = message.userId === userId;
                   return (
                     <div
-                      className={`message-row${own ? ' own' : ''}`}
+                      className={`message-row${own ? " own" : ""}`}
                       key={message.id}
                     >
                       {!own && (
@@ -597,8 +280,8 @@ export function ChatPage() {
                         <span>{message.text}</span>
                         <time>
                           {new Date(message.createdAt).toLocaleTimeString(
-                            'pt-BR',
-                            { hour: '2-digit', minute: '2-digit' },
+                            "pt-BR",
+                            { hour: "2-digit", minute: "2-digit" },
                           )}
                         </time>
                       </div>
@@ -622,12 +305,12 @@ export function ChatPage() {
                   value={text}
                   onChange={(event) => setText(event.target.value)}
                   maxLength={1000}
-                  disabled={connection !== 'connected'}
+                  disabled={connection !== "connected"}
                 />
                 <Button
                   type="submit"
                   disabled={
-                    !text.trim() || sending || connection !== 'connected'
+                    !text.trim() || sending || connection !== "connected"
                   }
                   aria-label="Enviar mensagem"
                   title="Enviar mensagem"
@@ -651,13 +334,13 @@ export function ChatPage() {
           {selected && (
             <div className="conversation-details">
               <span className="eyebrow">
-                {selected.kind === 'direct'
-                  ? 'CONVERSA PRIVADA'
-                  : selected.kind === 'team'
-                    ? 'CONVERSA DE EQUIPE'
-                    : 'CONVERSA DO AGENDAMENTO'}
+                {selected.kind === "direct"
+                  ? "CONVERSA PRIVADA"
+                  : selected.kind === "team"
+                    ? "CONVERSA DE EQUIPE"
+                    : "CONVERSA DO AGENDAMENTO"}
               </span>
-              {selected.image && selected.kind !== 'direct' && (
+              {selected.image && selected.kind !== "direct" && (
                 <Image
                   className="conversation-detail-image"
                   src={selected.image}
@@ -665,7 +348,7 @@ export function ChatPage() {
                   rounded
                 />
               )}
-              {selected.kind === 'direct' && (
+              {selected.kind === "direct" && (
                 <ProfileAvatar
                   name={selected.label}
                   image={selected.image ?? null}
@@ -673,47 +356,47 @@ export function ChatPage() {
                 />
               )}
               <h3>{selected.label}</h3>
-              {selected.kind === 'direct' && (
+              {selected.kind === "direct" && (
                 <p>
                   {selected.username
                     ? `@${selected.username}`
-                    : 'Atleta da sua rede'}
+                    : "Atleta da sua rede"}
                 </p>
               )}
-              {selected.kind === 'team' && (
+              {selected.kind === "team" && (
                 <>
                   <p>
                     {selected.description ||
-                      'Esta equipe ainda não tem uma descrição.'}
+                      "Esta equipe ainda não tem uma descrição."}
                   </p>
                   {selected.role && <p>Seu papel: {selected.role}</p>}
                 </>
               )}
-              {selected.kind === 'appointment' && (
+              {selected.kind === "appointment" && (
                 <>
                   <p>
                     {selected.description ||
-                      'Sem descrição adicional para este agendamento.'}
+                      "Sem descrição adicional para este agendamento."}
                   </p>
                   {selected.scheduledAt && (
                     <p>
-                      <strong>Data:</strong>{' '}
-                      {new Date(selected.scheduledAt).toLocaleString('pt-BR', {
-                        dateStyle: 'long',
-                        timeStyle: 'short',
+                      <strong>Data:</strong>{" "}
+                      {new Date(selected.scheduledAt).toLocaleString("pt-BR", {
+                        dateStyle: "long",
+                        timeStyle: "short",
                       })}
                     </p>
                   )}
                   {selected.status && (
                     <p>
-                      <strong>Situação:</strong>{' '}
-                      {selected.status === 'scheduled'
-                        ? 'Confirmado'
-                        : selected.status === 'in_progress'
-                          ? 'Em andamento'
-                          : selected.status === 'finished'
-                            ? 'Finalizado'
-                            : 'Cancelado'}
+                      <strong>Situação:</strong>{" "}
+                      {selected.status === "scheduled"
+                        ? "Confirmado"
+                        : selected.status === "in_progress"
+                          ? "Em andamento"
+                          : selected.status === "finished"
+                            ? "Finalizado"
+                            : "Cancelado"}
                     </p>
                   )}
                 </>

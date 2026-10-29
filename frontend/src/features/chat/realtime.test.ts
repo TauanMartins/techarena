@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  chatMessageFromRow,
   conversationTopic,
-  mergeChatMessages,
   otherOnlineParticipantIds,
 } from './realtime';
+import { chatMessageFromRow, mergeChatMessages } from './message-mapper';
 
 describe('conversationTopic', () => {
   it('uses the backend policy topic for one-to-one chats independent of argument order', () => {
