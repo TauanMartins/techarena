@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { conversationTopic, isChatMessage } from './realtime';
+import {
+  chatMessageFromRow,
+  conversationTopic,
+  mergeChatMessages,
+} from './realtime';
 
 describe('conversationTopic', () => {
   it('uses the backend policy topic for one-to-one chats independent of argument order', () => {
@@ -17,15 +21,35 @@ describe('conversationTopic', () => {
   });
 });
 
-describe('isChatMessage', () => {
-  it('accepts a complete message payload and rejects malformed payloads', () => {
-    expect(isChatMessage({
-      id: 'message-id',
+describe('persisted chat messages', () => {
+  it('maps Supabase rows and merges duplicates in chronological order', () => {
+    const first = {
+      id: 'first',
+      sender_id: 'user-id',
+      sender_name: 'Atleta',
+      body: 'Olá',
+      created_at: '2026-10-29T00:00:00.000Z',
+    };
+    const second = {
+      ...first,
+      id: 'second',
+      body: 'Tudo bem?',
+      created_at: '2026-10-29T00:01:00.000Z',
+    };
+    const mappedFirst = chatMessageFromRow(first);
+    const mappedSecond = chatMessageFromRow(second);
+    if (!mappedFirst || !mappedSecond) throw new Error('Expected valid message rows.');
+    expect(chatMessageFromRow({ id: 'invalid' })).toBeNull();
+    expect(mappedFirst).toEqual({
+      id: 'first',
       userId: 'user-id',
       name: 'Atleta',
-      text: 'Vamos jogar?',
-      createdAt: '2026-10-29T00:00:00.000Z',
-    })).toBe(true);
-    expect(isChatMessage({ text: 'malformed' })).toBe(false);
+      text: 'Olá',
+      createdAt: first.created_at,
+    });
+    expect(mergeChatMessages([mappedFirst], [mappedFirst, mappedSecond])).toEqual([
+      mappedFirst,
+      mappedSecond,
+    ]);
   });
 });

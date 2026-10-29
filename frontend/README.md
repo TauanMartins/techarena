@@ -4,13 +4,13 @@ Aplicacao web em React e TypeScript, com roteamento por modulo, React-Bootstrap 
 
 ## Executar com Docker Compose
 
-Configure o arquivo `.env` na raiz com `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` e `DATABASE_URL`, depois execute:
+Configure o arquivo `.env` na raiz com `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` e `DATABASE_URL`, depois execute:
 
 ```bash
 docker compose up --build
 ```
 
-A aplicacao fica disponivel em <http://localhost:4200>, a API em <http://localhost:3000/api> e o PostgreSQL local na porta `5432`. `VITE_API_BASE_URL` pode ser ajustada para o endereco da API visivel pelo navegador.
+A aplicacao fica disponivel em <http://localhost:4200>, a API em <http://localhost:3000> (Swagger em <http://localhost:3000/api>) e o PostgreSQL local na porta `5432`. `VITE_API_BASE_URL` aponta para a raiz da API visivel pelo navegador.
 
 ## Executar localmente
 
@@ -19,7 +19,9 @@ npm ci
 npm run dev
 ```
 
-Para executar diretamente no host, crie `frontend/.env.local` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_API_BASE_URL`. Configure Google como provedor em **Supabase > Authentication > Providers** e permita a URL local como redirect URL. Apenas a URL do projeto e a publishable key podem estar no frontend; nao exponha service role keys.
+Para executar diretamente no host, crie `frontend/.env.local` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_API_BASE_URL=http://localhost:3000`. Configure Google como provedor em **Supabase > Authentication > Providers** e permita a URL local como redirect URL. Apenas a URL do projeto e a publishable key podem estar no frontend; `SUPABASE_SERVICE_ROLE_KEY` e exclusiva do backend e nunca deve ser exposta ao navegador.
+
+Antes de usar o chat, execute [`../backend/database/sql/supabase-chat.sql`](../backend/database/sql/supabase-chat.sql) no SQL Editor do projeto Supabase. O backend valida a participacao atual no PostgreSQL da API e provisiona somente o participante autenticado nas tabelas do Supabase. A migration SQL cria as tabelas persistentes, habilita RLS e adiciona `chat_messages` a publication do Realtime.
 
 Para validar o projeto:
 
@@ -35,8 +37,8 @@ npm test
 - Perfil, preferencias de tema e esportes favoritos usam `/users/me`, `/users/me/theme` e `/users/me/sports`.
 - Agendamentos, horarios, arenas, equipes, amizades e busca de atletas consomem os endpoints atuais descritos no Swagger do backend.
 - A tela de ligas segue o fluxo legado de criacao de eventos usando os endpoints atuais de esporte, arena, disponibilidade e agendamento. O backend atual nao expoe endpoints de CRUD para `league` ou `league_team`, portanto a interface nao inventa nem persiste dados dessas entidades.
-- Chat direto, de equipe e de agendamento usa canais privados Broadcast do Supabase Realtime com os topicos previstos pelas policies da migracao. O banco atual nao persiste mensagens: o historico e efemero durante a conexao. Confirme no projeto Supabase que o acesso publico do Realtime esta desligado e que as policies de `realtime.messages` da migracao de chat estao aplicadas.
+- Chat direto, de equipe e de agendamento carrega mensagens persistentes de `chat_messages` e recebe novas mensagens via Supabase Realtime. A tela carrega o historico recente e permite paginar para mensagens anteriores; mensagens do sistema legado nao sao importadas automaticamente. Presenca mostra quem esta conectado ao canal da conversa no momento; nao representa um status global do usuario. RLS limita leitura/envio aos participantes provisionados pelo backend, e bloquear uma amizade revoga os dois participantes da conversa direta.
 
 ## Testes
 
-Os testes cobrem a inclusao do access token e a propagacao de erros da API, a validacao de topicos Realtime e o formato de mensagens Broadcast.
+Os testes cobrem a inclusao do access token e a propagacao de erros da API, a validacao de topicos de conversa e a conversao/ordenacao de mensagens persistidas.

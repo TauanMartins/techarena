@@ -2,7 +2,10 @@ import { config } from 'dotenv';
 
 export interface AppConfiguration {
   readonly port: number;
-  readonly auth: { readonly projectUrl: string | null };
+  readonly auth: {
+    readonly projectUrl: string | null;
+    readonly serviceRoleKey: string | null;
+  };
   readonly cors: { readonly origins: string[] };
   readonly database: {
     readonly url: string;
@@ -78,7 +81,19 @@ export function parseEnvironment(
       );
     }
   }
-  return { port, database: { url }, auth: { projectUrl }, cors: { origins } };
+  const serviceRoleKey =
+    environment.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
+  if (serviceRoleKey && !projectUrl) {
+    throw new Error(
+      'SUPABASE_URL is required when SUPABASE_SERVICE_ROLE_KEY is configured.',
+    );
+  }
+  return {
+    port,
+    database: { url },
+    auth: { projectUrl, serviceRoleKey },
+    cors: { origins },
+  };
 }
 
 /** The only boundary that reads process.env; shared by Nest and the database CLI. */
