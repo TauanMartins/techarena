@@ -2,6 +2,23 @@ export interface LeagueInput {
   name: string;
   description?: string | null;
   sportId: string;
+  tournamentFormat: TournamentFormat;
+  groupCount?: number;
+  qualifiersPerGroup?: number;
+}
+
+export type TournamentFormat = 'round_robin' | 'knockout' | 'groups_knockout';
+
+export type TournamentStatus = 'open' | 'active' | 'completed' | 'canceled';
+
+export interface LeagueUpdateInput {
+  name?: string;
+  description?: string | null;
+  sportId?: string;
+  tournamentFormat?: TournamentFormat;
+  groupCount?: number;
+  qualifiersPerGroup?: number;
+  status?: 'completed' | 'canceled';
 }
 
 export interface LeagueSummary {
@@ -13,6 +30,10 @@ export interface LeagueSummary {
   ownerName: string | null;
   sportId: string | null;
   sportName: string | null;
+  tournamentFormat: TournamentFormat;
+  status: TournamentStatus;
+  groupCount: number;
+  qualifiersPerGroup: number;
   createdAt: Date;
   teamCount: number;
   matchCount: number;
@@ -25,6 +46,7 @@ export interface LeagueTeamView {
   name: string;
   image: string | null;
   captainName: string | null;
+  groupNumber: number | null;
 }
 
 export interface LeagueMatchView {
@@ -34,6 +56,9 @@ export interface LeagueMatchView {
   scheduledAt: Date;
   status: string;
   resultAllowed: boolean;
+  phase: 'manual' | 'group' | 'knockout';
+  roundNumber: number;
+  groupNumber: number | null;
   arenaAddress: string | null;
   homeTeam: LeagueTeamView;
   awayTeam: LeagueTeamView;
@@ -48,6 +73,7 @@ export interface LeagueStanding {
   teamId: string;
   teamName: string;
   image: string | null;
+  groupNumber: number | null;
   played: number;
   wins: number;
   losses: number;
@@ -82,6 +108,13 @@ export interface LeagueMatchInput extends LeagueAvailabilityQuery {
   scheduleId: string;
 }
 
+export interface FixtureScheduleInput {
+  arenaId: string;
+  scheduleId: string;
+  date: string;
+  daysBetweenMatches: number;
+}
+
 export interface LeagueResultInput {
   homeScore: number;
   awayScore: number;
@@ -92,6 +125,11 @@ export interface LeaguesRepository {
   list(actor: string): Promise<LeagueSummary[]>;
   details(actor: string, leagueId: string): Promise<LeagueDetails>;
   create(actor: string, input: LeagueInput): Promise<LeagueSummary>;
+  update(
+    actor: string,
+    leagueId: string,
+    input: LeagueUpdateInput,
+  ): Promise<void>;
   registerTeam(actor: string, leagueId: string, teamId: string): Promise<void>;
   removeTeam(actor: string, leagueId: string, teamId: string): Promise<void>;
   arenas(leagueId: string): Promise<LeagueArena[]>;
@@ -111,5 +149,35 @@ export interface LeaguesRepository {
     leagueId: string,
     matchId: string,
     input: LeagueResultInput,
+  ): Promise<void>;
+  generateFixtures(
+    actor: string,
+    leagueId: string,
+    input: FixtureScheduleInput,
+    now: Date,
+  ): Promise<void>;
+  generateNextRound(
+    actor: string,
+    leagueId: string,
+    input: FixtureScheduleInput,
+    now: Date,
+  ): Promise<void>;
+  rescheduleMatch(
+    actor: string,
+    leagueId: string,
+    matchId: string,
+    input: LeagueMatchInput,
+    now: Date,
+  ): Promise<void>;
+  cancelMatch(
+    actor: string,
+    leagueId: string,
+    matchId: string,
+    now: Date,
+  ): Promise<void>;
+  finish(
+    actor: string,
+    leagueId: string,
+    status: 'completed' | 'canceled',
   ): Promise<void>;
 }

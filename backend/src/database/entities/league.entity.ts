@@ -72,6 +72,40 @@ export class League {
   createdAt!: Date;
 
   @Column({
+    name: 'tournament_format',
+    type: 'varchar',
+    length: 24,
+    nullable: false,
+    default: 'round_robin',
+  })
+  tournamentFormat!: 'round_robin' | 'knockout' | 'groups_knockout';
+
+  @Column({
+    name: 'status',
+    type: 'varchar',
+    length: 16,
+    nullable: false,
+    default: 'open',
+  })
+  status!: 'open' | 'active' | 'completed' | 'canceled';
+
+  @Column({
+    name: 'group_count',
+    type: 'integer',
+    nullable: false,
+    default: 2,
+  })
+  groupCount!: number;
+
+  @Column({
+    name: 'qualifiers_per_group',
+    type: 'integer',
+    nullable: false,
+    default: 2,
+  })
+  qualifiersPerGroup!: number;
+
+  @Column({
     name: 'image',
     type: 'varchar',
     length: 150,

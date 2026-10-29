@@ -24,10 +24,13 @@ import {
   LeagueListDto,
   LeagueMatchIdDto,
   LeagueMutationResultDto,
+  LeagueStatusDto,
   LeagueSummaryDto,
   LeagueTeamParamsDto,
   RecordLeagueResultDto,
   RegisterLeagueTeamDto,
+  UpdateLeagueDto,
+  FixtureScheduleDto,
 } from './leagues.dto.js';
 
 function serializeSummary<T extends { createdAt: Date }>(league: T) {
@@ -54,6 +57,28 @@ export class LeaguesController {
     @Body() input: CreateLeagueDto,
   ) {
     return serializeSummary(await this.application.create(actor.id, input));
+  }
+
+  @Put(':leagueId')
+  @ResponseContract(LeagueMutationResultDto)
+  async update(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueIdDto,
+    @Body() input: UpdateLeagueDto,
+  ) {
+    await this.application.update(actor.id, params.leagueId, input);
+    return { success: true };
+  }
+
+  @Put(':leagueId/status')
+  @ResponseContract(LeagueMutationResultDto)
+  async finish(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueIdDto,
+    @Body() input: LeagueStatusDto,
+  ) {
+    await this.application.finish(actor.id, params.leagueId, input.status);
+    return { success: true };
   }
 
   @Get(':leagueId/arenas')
@@ -108,6 +133,58 @@ export class LeaguesController {
     @Body() input: CreateLeagueMatchDto,
   ) {
     await this.application.createMatch(actor.id, params.leagueId, input);
+    return { success: true };
+  }
+
+  @Post(':leagueId/fixtures')
+  @ResponseContract(LeagueMutationResultDto, 201)
+  async generateFixtures(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueIdDto,
+    @Body() input: FixtureScheduleDto,
+  ) {
+    await this.application.generateFixtures(actor.id, params.leagueId, input);
+    return { success: true };
+  }
+
+  @Post(':leagueId/rounds/next')
+  @ResponseContract(LeagueMutationResultDto, 201)
+  async generateNextRound(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueIdDto,
+    @Body() input: FixtureScheduleDto,
+  ) {
+    await this.application.generateNextRound(actor.id, params.leagueId, input);
+    return { success: true };
+  }
+
+  @Put(':leagueId/matches/:matchId')
+  @ResponseContract(LeagueMutationResultDto)
+  async rescheduleMatch(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueMatchIdDto,
+    @Body() input: CreateLeagueMatchDto,
+  ) {
+    await this.application.rescheduleMatch(
+      actor.id,
+      params.leagueId,
+      params.matchId,
+      input,
+    );
+    return { success: true };
+  }
+
+  @Delete(':leagueId/matches/:matchId')
+  @ResponseContract(LeagueMutationResultDto)
+  async cancelMatch(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: LeagueMatchIdDto,
+  ) {
+    await this.application.cancelMatch(
+      actor.id,
+      params.leagueId,
+      params.matchId,
+    );
     return { success: true };
   }
 

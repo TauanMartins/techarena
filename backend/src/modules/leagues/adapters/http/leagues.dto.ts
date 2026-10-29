@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsInt,
+  IsIn,
   IsISO8601,
   IsOptional,
   IsString,
@@ -38,6 +39,49 @@ export class CreateLeagueDto {
 
   @IsOptional() @IsString() @MaxLength(500) description?: string | null;
   @IsBigintId() sportId!: string;
+  @IsOptional()
+  @IsIn(['round_robin', 'knockout', 'groups_knockout'])
+  tournamentFormat: 'round_robin' | 'knockout' | 'groups_knockout' =
+    'round_robin';
+  @IsOptional() @Type(() => Number) @IsInt() @Min(2) @Max(16) groupCount = 2;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(8)
+  qualifiersPerGroup = 2;
+}
+
+export class UpdateLeagueDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @Length(1, 45)
+  name?: string;
+
+  @IsOptional() @IsString() @MaxLength(500) description?: string | null;
+  @IsOptional() @IsBigintId() sportId?: string;
+  @IsOptional()
+  @IsIn(['round_robin', 'knockout', 'groups_knockout'])
+  tournamentFormat?: 'round_robin' | 'knockout' | 'groups_knockout';
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(2)
+  @Max(16)
+  groupCount?: number;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(8)
+  qualifiersPerGroup?: number;
+}
+
+export class LeagueStatusDto {
+  @IsIn(['completed', 'canceled']) status!: 'completed' | 'canceled';
 }
 
 export class RegisterLeagueTeamDto {
@@ -55,6 +99,18 @@ export class CreateLeagueMatchDto {
 export class RecordLeagueResultDto {
   @Type(() => Number) @IsInt() @Min(0) @Max(100000) homeScore!: number;
   @Type(() => Number) @IsInt() @Min(0) @Max(100000) awayScore!: number;
+}
+
+export class FixtureScheduleDto {
+  @IsBigintId() arenaId!: string;
+  @IsBigintId() scheduleId!: string;
+  @IsString() @IsISO8601({ strict: true }) date!: string;
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(30)
+  daysBetweenMatches = 1;
 }
 
 export class LeagueSummaryDto {
@@ -90,6 +146,12 @@ export class LeagueSummaryDto {
   @ValidateIf((_o, value: unknown) => value !== null)
   @IsString()
   sportName!: string | null;
+  @Expose()
+  @IsIn(['round_robin', 'knockout', 'groups_knockout'])
+  tournamentFormat!: 'round_robin' | 'knockout' | 'groups_knockout';
+  @Expose() @IsIn(['open', 'active', 'completed', 'canceled']) status!: string;
+  @Expose() @IsInt() @Min(2) @Max(16) groupCount!: number;
+  @Expose() @IsInt() @Min(1) @Max(8) qualifiersPerGroup!: number;
   @Expose() @IsISO8601() createdAt!: string;
   @Expose() @IsInt() @Min(0) teamCount!: number;
   @Expose() @IsInt() @Min(0) matchCount!: number;
@@ -110,6 +172,11 @@ export class LeagueTeamDto {
   @ValidateIf((_o, value: unknown) => value !== null)
   @IsString()
   captainName!: string | null;
+  @ApiProperty({ type: Number, nullable: true })
+  @Expose()
+  @ValidateIf((_o, value: unknown) => value !== null)
+  @IsInt()
+  groupNumber!: number | null;
 }
 
 export class LeagueMatchResultDto {
@@ -129,6 +196,13 @@ export class LeagueMatchDto {
   @Expose() @IsISO8601() scheduledAt!: string;
   @Expose() @IsString() status!: string;
   @Expose() @IsBoolean() resultAllowed!: boolean;
+  @Expose() @IsIn(['manual', 'group', 'knockout']) phase!: string;
+  @Expose() @IsInt() @Min(1) roundNumber!: number;
+  @ApiProperty({ type: Number, nullable: true })
+  @Expose()
+  @ValidateIf((_o, value: unknown) => value !== null)
+  @IsInt()
+  groupNumber!: number | null;
   @ApiProperty({ type: String, nullable: true })
   @Expose()
   @ValidateIf((_o, value: unknown) => value !== null)
@@ -158,6 +232,11 @@ export class LeagueStandingDto {
   @ValidateIf((_o, value: unknown) => value !== null)
   @IsString()
   image!: string | null;
+  @ApiProperty({ type: Number, nullable: true })
+  @Expose()
+  @ValidateIf((_o, value: unknown) => value !== null)
+  @IsInt()
+  groupNumber!: number | null;
   @Expose() @IsInt() @Min(0) played!: number;
   @Expose() @IsInt() @Min(0) wins!: number;
   @Expose() @IsInt() @Min(0) losses!: number;
