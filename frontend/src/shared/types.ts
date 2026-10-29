@@ -145,3 +145,70 @@ export interface MembershipRequest {
   status: 'pending' | 'accepted' | 'declined';
   createdAt: string;
 }
+
+export interface LeagueSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  image: string | null;
+  ownerId: string | null;
+  ownerName: string | null;
+  sportId: string | null;
+  sportName: string | null;
+  createdAt: string;
+  teamCount: number;
+  matchCount: number;
+  completedMatchCount: number;
+  isOwner: boolean;
+}
+
+export interface LeagueTeam {
+  id: string;
+  name: string;
+  image: string | null;
+  captainName: string | null;
+}
+
+export interface LeagueMatch {
+  id: string;
+  appointmentId: string;
+  matchNumber: number;
+  scheduledAt: string;
+  status: Appointment['status'];
+  resultAllowed: boolean;
+  arenaAddress: string | null;
+  homeTeam: LeagueTeam;
+  awayTeam: LeagueTeam;
+  result: {
+    winnerTeamId: string | null;
+    homeScore: number;
+    awayScore: number;
+  } | null;
+}
+
+export interface LeagueStanding {
+  teamId: string;
+  teamName: string;
+  image: string | null;
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  points: number;
+  scoreFor: number;
+  scoreAgainst: number;
+}
+
+export interface LeagueDetails {
+  league: LeagueSummary;
+  teams: LeagueTeam[];
+  matches: LeagueMatch[];
+  standings: LeagueStanding[];
+  myCaptainTeamIds: string[];
+}
+
+export interface LeagueArena {
+  id: string;
+  address: string;
+  image: string | null;
+}
