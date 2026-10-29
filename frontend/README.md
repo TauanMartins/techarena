@@ -42,9 +42,13 @@ npm test
 
 As paginas do roteador sao carregadas sob demanda com `lazy` e `Suspense`, mantendo o bundle inicial menor. Acesso ao contexto de autenticacao fica no hook `useAuth`, separado do provider; ele usa a API `use` do React 19 para ler o contexto.
 
+O codigo e organizado por responsabilidade: `pages/` compoe telas e fluxos de rota; `features/` agrupa comportamento e componentes especificos de uma funcionalidade (por exemplo, conversas e ligas); `components/` contem pecas compartilhadas entre funcionalidades; `shared/` concentra contratos, transporte HTTP, validacao e configuracao comum; `auth/` e `features/preferences/` mantem seus providers e hooks de contexto. Evite mover componentes de dominio para `components/` apenas para reduzir o tamanho de uma pagina.
+
 Formularios com varios campos usam React Hook Form e schemas Zod compartilhados em `src/shared/validation.ts`. Os schemas normalizam valores e validam limites antes de chamar a API. Entradas simples e interativas, como composicao de mensagens e filtros, permanecem controladas localmente quando nao se beneficiam do estado e ciclo de validacao de um formulario completo.
 
 Dados remotos usam TanStack Query sobre a camada `fetch` central em `src/shared/api.ts`. Chaves incluem a identidade do usuario, e mutacoes invalidam os dados relacionados para manter as telas sincronizadas; o access token nunca faz parte das chaves de cache. O Supabase Realtime continua responsavel pelos eventos ao vivo do chat.
+
+Componentes de tela extensos devem ser divididos por fluxo de usuario e nao apenas em fragmentos visuais: componentes de dominio ficam no modulo correspondente, hooks de consulta/mutacao concentram acesso a dados e a pagina orquestra o estado entre secoes. A interface de partidas e o modal de detalhes da equipe estao em `features/leagues/` e `features/teams/`; consultas e componentes especificos tambem ficam nesses modulos. No chat, a composicao de conversas, o mapeamento de mensagens, as operacoes de persistencia e a coordenacao do ciclo de vida Realtime estao separados em `features/chat/`. `LeaguePage.tsx` e `TeamsPage.tsx` ainda coordenam varios fluxos e devem continuar sendo decompostas incrementalmente, escolhendo limites que simplifiquem cada fluxo sem criar camadas apenas por padrao. Mantenha cada extracao coberta pelos testes da funcionalidade e sem alterar os contratos visiveis.
 
 ## Funcionalidades e integracoes
 

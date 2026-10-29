@@ -1,14 +1,10 @@
-import {
-  useState,
-  type FormEvent,
-} from "react";
+import { useState, type FormEvent } from "react";
 import Alert from "react-bootstrap/Alert";
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Table from "react-bootstrap/Table";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../auth/useAuth";
 import {
   EmptyState,
@@ -17,33 +13,21 @@ import {
   PageHeading,
 } from "../components/Feedback";
 import { LeagueSettingsFields } from "../features/leagues/LeagueSettingsFields";
+import { LeagueMatchCard } from "../features/leagues/LeagueMatchCard";
+import { localDate } from "../features/leagues/date";
+import { useLeaguesData } from "../features/leagues/useLeaguesData";
 import { api } from "../shared/api";
-import { queryKeys } from "../shared/queryClient";
 import {
   leagueCreateFormSchema,
   leagueScoreSchema,
   leagueUpdateFormSchema,
 } from "../shared/validation";
-import type {
-  LeagueArena,
-  LeagueDetails,
-  LeagueMatch,
-  Schedule,
-} from "../shared/types";
-
-function localDate() {
-  const date = new Date();
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60_000).toISOString().slice(0, 10);
-}
-
-const EMPTY_ITEMS: never[] = [];
+import type { LeagueMatch } from "../shared/types";
 
 function LeaguePage() {
   const { session } = useAuth();
   const token = session!.access_token;
   const userId = session!.user.id;
-  const queryClient = useQueryClient();
   const [teamSearch, setTeamSearch] = useState("");
   const [teamSearchPerformed, setTeamSearchPerformed] = useState(false);
   const [submittedTeamSearch, setSubmittedTeamSearch] = useState("");
@@ -60,77 +44,31 @@ function LeaguePage() {
   const [scoreInputs, setScoreInputs] = useState<
     Record<string, { home: string; away: string }>
   >({});
-  const leaguesQuery = useQuery({
-    queryKey: queryKeys.leagues(userId),
-    queryFn: () => api.listLeagues(token),
+  const leagueData = useLeaguesData({
+    token,
+    userId,
+    leagueId: selectedLeagueId,
+    arenaId,
+    date: matchDate,
+    teamSearch: submittedTeamSearch,
+    teamSearchEnabled: teamSearchPerformed,
   });
-  const sportsQuery = useQuery({
-    queryKey: queryKeys.sports(userId),
-    queryFn: () => api.getSports(token),
-  });
-  const myTeamsQuery = useQuery({
-    queryKey: queryKeys.myTeams(userId),
-    queryFn: () => api.listMyTeams(token),
-  });
-  const invitationsQuery = useQuery({
-    queryKey: queryKeys.leagueInvitations(userId),
-    queryFn: () => api.listLeagueTeamInvitations(token),
-  });
-  const leagues = leaguesQuery.data?.items ?? EMPTY_ITEMS;
-  const sports = sportsQuery.data?.items ?? EMPTY_ITEMS;
-  const myTeams = myTeamsQuery.data?.items ?? EMPTY_ITEMS;
-  const teamInvitations = invitationsQuery.data?.items ?? EMPTY_ITEMS;
-  const selectedId = selectedLeagueId || leagues[0]?.id || "";
-  const detailsQuery = useQuery({
-    queryKey: queryKeys.leagueDetails(userId, selectedId),
-    queryFn: async () => {
-      const [leagueDetails, arenas] = await Promise.all([
-        api.getLeague(token, selectedId),
-        api.getLeagueArenas(token, selectedId),
-      ]);
-      return { details: leagueDetails, arenas: arenas.items };
-    },
-    enabled: Boolean(selectedId),
-  });
-  const details: LeagueDetails | null = detailsQuery.data?.details ?? null;
-  const leagueArenas = detailsQuery.data?.arenas ?? EMPTY_ITEMS;
-  const selectedArenaId = leagueArenas.some((arena) => arena.id === arenaId)
-    ? arenaId
-    : (leagueArenas[0]?.id ?? "");
-  const availabilityQuery = useQuery({
-    queryKey: queryKeys.leagueAvailability(
-      userId,
-      selectedId,
-      selectedArenaId,
-      matchDate,
-    ),
-    queryFn: () =>
-      api.getLeagueAvailability(token, selectedId, selectedArenaId, matchDate),
-    enabled: Boolean(selectedId && selectedArenaId && matchDate),
-  });
-  const teamSearchQuery = useQuery({
-    queryKey: queryKeys.leagueTeams(userId, submittedTeamSearch),
-    queryFn: () => api.listTeams(token, submittedTeamSearch),
-    enabled: teamSearchPerformed,
-  });
-  const teamSearchResults = teamSearchQuery.data?.items ?? EMPTY_ITEMS;
-  const availability: Schedule[] = availabilityQuery.data?.items ?? EMPTY_ITEMS;
-  const loading =
-    leaguesQuery.isPending ||
-    sportsQuery.isPending ||
-    myTeamsQuery.isPending ||
-    invitationsQuery.isPending;
-  const loadingDetails = detailsQuery.isPending;
-  const queryError = [
-    leaguesQuery.error,
-    sportsQuery.error,
-    myTeamsQuery.error,
-    invitationsQuery.error,
-    detailsQuery.error,
-    availabilityQuery.error,
-    teamSearchQuery.error,
-  ].find((cause): cause is Error => cause instanceof Error);
-  const displayError = error ?? queryError?.message;
+  const {
+    leagues,
+    selectedLeagueId: selectedId,
+    sports,
+    myTeams,
+    teamInvitations,
+    teamSearchResults,
+    details,
+    leagueArenas,
+    selectedArenaId,
+    availability,
+    isLoading: loading,
+    isLoadingDetails: loadingDetails,
+    isSearchingTeams,
+  } = leagueData;
+  const displayError = error ?? leagueData.error;
 
   const eligibleTeams = myTeams.filter(
     (team) =>
@@ -145,16 +83,8 @@ function LeaguePage() {
 
   async function refreshSelectedLeague() {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.leagues(userId) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.myTeams(userId) }),
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.leagueInvitations(userId),
-      }),
-      selectedId
-        ? queryClient.invalidateQueries({
-            queryKey: queryKeys.leagueDetails(userId, selectedId),
-          })
-        : Promise.resolve(),
+      leagueData.invalidateCatalog(),
+      selectedId ? leagueData.invalidateDetails(selectedId) : Promise.resolve(),
     ]);
   }
 
@@ -183,9 +113,7 @@ function LeaguePage() {
       setShowCreate(false);
       setSelectedLeagueId(league.id);
       setNotice("Liga criada. Inscreva equipes e organize as partidas.");
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.leagues(userId),
-      });
+      await leagueData.invalidateCatalog();
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -211,9 +139,7 @@ function LeaguePage() {
         data.get("qualifiersPerGroup") ?? details.league.qualifiersPerGroup,
     });
     if (!parsed.success) {
-      setError(
-        parsed.error.issues[0]?.message ?? "Confira os dados da liga.",
-      );
+      setError(parsed.error.issues[0]?.message ?? "Confira os dados da liga.");
       return;
     }
     setSaving(true);
@@ -363,15 +289,8 @@ function LeaguePage() {
           : "Convite recusado.",
       );
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.leagueInvitations(userId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.myTeams(userId),
-        }),
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.leagueDetails(userId, selectedId),
-        }),
+        leagueData.invalidateCatalog(),
+        leagueData.invalidateDetails(selectedId),
       ]);
     } catch (cause) {
       setError(
@@ -646,9 +565,7 @@ function LeaguePage() {
                       onClick={() => {
                         setError(null);
                         if (selectedId === league.id) {
-                          void queryClient.invalidateQueries({
-                            queryKey: queryKeys.leagueDetails(userId, league.id),
-                          });
+                          void leagueData.invalidateDetails(league.id);
                         }
                         setSelectedLeagueId(league.id);
                       }}
@@ -880,13 +797,13 @@ function LeaguePage() {
                               </Button>
                             </Form>
                           )}
-                          {teamSearchQuery.isPending && (
+                          {isSearchingTeams && (
                             <p className="text-secondary mb-0">
                               Buscando equipes...
                             </p>
                           )}
                           {teamSearchPerformed &&
-                            !teamSearchQuery.isPending &&
+                            !isSearchingTeams &&
                             invitableTeams.length === 0 && (
                               <p className="text-secondary mb-0">
                                 {teamSearchResults.length === 0
@@ -1262,7 +1179,7 @@ function LeaguePage() {
                     ) : (
                       <div className="d-grid gap-3">
                         {details.matches.map((match) => (
-                          <MatchCard
+                          <LeagueMatchCard
                             key={match.id}
                             match={match}
                             canRecordResult={details.league.isOwner}
@@ -1370,225 +1287,6 @@ function LeaguePage() {
         </div>
       )}
     </>
-  );
-}
-
-function MatchCard({
-  match,
-  canRecordResult,
-  canManage,
-  isRescheduling,
-  date,
-  arenas,
-  arenaId,
-  availability,
-  scores,
-  saving,
-  onScoreChange,
-  onSaveResult,
-  onCancel,
-  onToggleReschedule,
-  onDateChange,
-  onArenaChange,
-  onReschedule,
-}: {
-  match: LeagueMatch;
-  canRecordResult: boolean;
-  canManage: boolean;
-  isRescheduling: boolean;
-  date: string;
-  arenas: LeagueArena[];
-  arenaId: string;
-  availability: Schedule[];
-  scores: { home: string; away: string };
-  saving: boolean;
-  onScoreChange: (side: "home" | "away", value: string) => void;
-  onSaveResult: () => void;
-  onCancel: () => void;
-  onToggleReschedule: () => void;
-  onDateChange: (date: string) => void;
-  onArenaChange: (id: string) => void;
-  onReschedule: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  const isFinished = match.status === "finished";
-  const isCanceled = match.status === "canceled";
-  const canSubmitScore = canRecordResult && match.resultAllowed && !isCanceled;
-  const canReschedule =
-    canManage &&
-    match.status === "scheduled" &&
-    new Date(match.scheduledAt) > new Date();
-  const statusLabel = isFinished
-    ? "Concluída"
-    : isCanceled
-      ? "Cancelada"
-      : canSubmitScore
-        ? "Resultado pendente"
-        : match.status === "in_progress"
-          ? "Em andamento"
-          : "Agendada";
-  return (
-    <Card>
-      <Card.Body>
-        <div className="d-flex justify-content-between gap-3">
-          <div>
-            <div className="fw-semibold">
-              {match.homeTeam.name} <span className="text-secondary">x</span>{" "}
-              {match.awayTeam.name}
-            </div>
-            <div className="small text-secondary">
-              {new Date(match.scheduledAt).toLocaleString("pt-BR")}
-              {match.arenaAddress ? ` · ${match.arenaAddress}` : ""}
-            </div>
-            <div className="small text-secondary">
-              {match.phase === "knockout"
-                ? `Mata-mata · rodada ${match.roundNumber}`
-                : match.phase === "group"
-                  ? match.groupNumber
-                    ? `Grupos · grupo ${match.groupNumber} · rodada ${match.roundNumber}`
-                    : `Pontos corridos · rodada ${match.roundNumber}`
-                  : "Partida avulsa"}
-            </div>
-          </div>
-          <Badge
-            bg={
-              isFinished
-                ? "success"
-                : isCanceled
-                  ? "danger"
-                  : canSubmitScore
-                    ? "warning"
-                    : "secondary"
-            }
-          >
-            {statusLabel}
-          </Badge>
-        </div>
-        {match.result && (
-          <p className="mt-2 mb-0 fw-semibold">
-            Placar: {match.result.homeScore} x {match.result.awayScore}
-          </p>
-        )}
-        {canSubmitScore ? (
-          <div className="d-flex align-items-end gap-2 mt-3">
-            <Form.Group controlId={`home-score-${match.id}`}>
-              <Form.Label className="small">{match.homeTeam.name}</Form.Label>
-              <Form.Control
-                type="number"
-                min={0}
-                step={1}
-                aria-label={`Placar de ${match.homeTeam.name}`}
-                value={scores.home}
-                onChange={(event) => onScoreChange("home", event.target.value)}
-              />
-            </Form.Group>
-            <span className="pb-2">x</span>
-            <Form.Group controlId={`away-score-${match.id}`}>
-              <Form.Label className="small">{match.awayTeam.name}</Form.Label>
-              <Form.Control
-                type="number"
-                min={0}
-                step={1}
-                aria-label={`Placar de ${match.awayTeam.name}`}
-                value={scores.away}
-                onChange={(event) => onScoreChange("away", event.target.value)}
-              />
-            </Form.Group>
-            <Button disabled={saving} onClick={onSaveResult}>
-              {match.result ? "Atualizar resultado" : "Registrar resultado"}
-            </Button>
-          </div>
-        ) : null}
-        {canReschedule && !isRescheduling && (
-          <div className="d-flex gap-2 mt-3">
-            <Button
-              variant="outline-primary"
-              size="sm"
-              disabled={saving}
-              onClick={onToggleReschedule}
-            >
-              Reagendar
-            </Button>
-            {match.phase === "manual" && (
-              <Button
-                variant="outline-danger"
-                size="sm"
-                disabled={saving}
-                onClick={onCancel}
-              >
-                Cancelar partida
-              </Button>
-            )}
-          </div>
-        )}
-        {isRescheduling && (
-          <Form className="row g-2 mt-2" onSubmit={onReschedule}>
-            <Form.Group
-              className="col-md-4"
-              controlId={`reschedule-date-${match.id}`}
-            >
-              <Form.Label className="small">Nova data</Form.Label>
-              <Form.Control
-                type="date"
-                min={localDate()}
-                value={date}
-                onChange={(event) => onDateChange(event.target.value)}
-                required
-              />
-            </Form.Group>
-            <Form.Group
-              className="col-md-4"
-              controlId={`reschedule-arena-${match.id}`}
-            >
-              <Form.Label className="small">Arena</Form.Label>
-              <Form.Select
-                value={arenaId}
-                onChange={(event) => onArenaChange(event.target.value)}
-                required
-              >
-                {arenas.map((arena) => (
-                  <option key={arena.id} value={arena.id}>
-                    {arena.address}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group
-              className="col-md-4"
-              controlId={`reschedule-time-${match.id}`}
-            >
-              <Form.Label className="small">Horário disponível</Form.Label>
-              <Form.Select name="scheduleId" required defaultValue="">
-                <option value="" disabled>
-                  Selecione
-                </option>
-                {availability.map((schedule) => (
-                  <option key={schedule.id} value={schedule.id}>
-                    {schedule.horary.slice(0, 5)}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <div className="d-flex gap-2">
-              <Button
-                type="submit"
-                size="sm"
-                disabled={saving || availability.length === 0}
-              >
-                Salvar novo horário
-              </Button>
-              <Button
-                type="button"
-                variant="outline-secondary"
-                size="sm"
-                onClick={onToggleReschedule}
-              >
-                Voltar
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Card.Body>
-    </Card>
   );
 }
 
