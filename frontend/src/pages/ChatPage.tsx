@@ -155,13 +155,6 @@ export function ChatPage() {
   );
 
   useEffect(() => {
-    if (!loadingList && !routeKind && !routeId && conversations[0]) {
-      const first = conversations[0];
-      navigate(`/chat/${first.kind}/${first.id}`, { replace: true });
-    }
-  }, [conversations, loadingList, navigate, routeId, routeKind]);
-
-  useEffect(() => {
     const generation = ++conversationGenerationRef.current;
     const client = supabase;
     if (!selected || !selectedTopic || !client) {
@@ -406,17 +399,31 @@ export function ChatPage() {
   );
 
   return (
-    <>
+    <div
+      className={`chat-page${selected ? ' is-thread' : ' is-inbox'}`}
+    >
       <PageHeading
         eyebrow="CONEXÃO EM TEMPO REAL"
         title="Conversas"
         description="Converse com suas amizades, equipes e participantes de agendamentos."
       />
-      {listError && <ErrorState message={listError} />}
-      <div className="chat-layout">
+      {listError && (
+        <div className="chat-page-error">
+          <ErrorState message={listError} />
+        </div>
+      )}
+      <div className={`chat-layout${selected ? ' has-selection' : ''}`}>
         <aside className="chat-list-panel">
           <div className="chat-list-heading">
-            <strong>Conversas</strong>
+            <div>
+              <strong>Conversas</strong>
+              {!loadingList && (
+                <small>
+                  {conversations.length}{' '}
+                  {conversations.length === 1 ? 'conversa' : 'conversas'}
+                </small>
+              )}
+            </div>
             <Button
               size="sm"
               variant="light"
@@ -479,6 +486,15 @@ export function ChatPage() {
           ) : (
             <>
               <header className="chat-thread-header">
+                <Button
+                  size="sm"
+                  variant="light"
+                  className="chat-back-button"
+                  onClick={() => navigate('/chat')}
+                  aria-label="Voltar para conversas"
+                >
+                  <i className="bi bi-arrow-left" aria-hidden="true" />
+                </Button>
                 {selected.kind === 'direct' ? (
                   <ProfileAvatar
                     name={selected.label}
@@ -506,8 +522,8 @@ export function ChatPage() {
                       ? !presenceSynced
                         ? 'Verificando presença...'
                         : otherParticipantOnline
-                          ? 'Online agora'
-                          : 'Offline'
+                          ? 'Pessoa online agora'
+                          : 'Pessoa offline'
                       : !presenceSynced
                         ? 'Verificando presença...'
                         : `${Math.max(0, onlineUserIds.filter((id) => id !== userId).length)} outras pessoas online`}
@@ -516,12 +532,12 @@ export function ChatPage() {
                 <span className={`realtime-status ${connection}`}>
                   <i className="bi bi-circle-fill" />
                   {connection === 'connected'
-                    ? 'Você está conectado'
+                    ? 'Sua conexão: conectada'
                     : connection === 'connecting'
-                      ? 'Conectando...'
+                      ? 'Sua conexão: conectando...'
                       : connection === 'error'
-                        ? 'Conexão indisponível'
-                        : 'Desconectado'}
+                        ? 'Sua conexão: indisponível'
+                        : 'Sua conexão: desconectada'}
                 </span>
                 <Button
                   size="sm"
@@ -529,8 +545,8 @@ export function ChatPage() {
                   onClick={() => setShowDetails(true)}
                   aria-label="Detalhes da conversa"
                 >
-                  <i className="bi bi-info-circle me-1" />
-                  Detalhes
+                  <i className="bi bi-info-circle" aria-hidden="true" />
+                  <span className="chat-details-label">Detalhes</span>
                 </Button>
                 {connection === 'error' && (
                   <Button
@@ -610,7 +626,7 @@ export function ChatPage() {
               >
                 <Form.Control
                   aria-label="Mensagem"
-                  placeholder="Escreva sua mensagem..."
+                  placeholder="Escreva uma mensagem..."
                   value={text}
                   onChange={(event) => setText(event.target.value)}
                   maxLength={1000}
@@ -622,6 +638,7 @@ export function ChatPage() {
                     !text.trim() || sending || connection !== 'connected'
                   }
                   aria-label="Enviar mensagem"
+                  title="Enviar mensagem"
                 >
                   <i className="bi bi-send-fill" />
                 </Button>
@@ -713,6 +730,6 @@ export function ChatPage() {
           )}
         </Modal.Body>
       </Modal>
-    </>
+    </div>
   );
 }
