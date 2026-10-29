@@ -29,7 +29,6 @@ ALTER TABLE public.chat_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
 GRANT USAGE ON SCHEMA public TO authenticated, service_role;
-GRANT USAGE ON SCHEMA realtime TO authenticated;
 REVOKE ALL ON TABLE public.chat_conversations, public.chat_participants, public.chat_messages
     FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON TABLE public.chat_conversations, public.chat_participants TO authenticated;
@@ -37,8 +36,6 @@ GRANT SELECT ON TABLE public.chat_messages TO authenticated;
 GRANT INSERT (topic, sender_id, body) ON TABLE public.chat_messages TO authenticated;
 GRANT ALL ON TABLE public.chat_conversations, public.chat_participants, public.chat_messages
     TO service_role;
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
-GRANT SELECT, INSERT ON TABLE realtime.messages TO authenticated;
 
 DROP POLICY IF EXISTS chat_conversations_read_participant ON public.chat_conversations;
 CREATE POLICY chat_conversations_read_participant ON public.chat_conversations
