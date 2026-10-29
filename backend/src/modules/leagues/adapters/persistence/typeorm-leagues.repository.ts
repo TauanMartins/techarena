@@ -626,16 +626,19 @@ export class TypeormLeaguesRepository implements LeaguesRepository {
 
   async teamInvitations(actor: string): Promise<LeagueTeamInvitationView[]> {
     return this.source.query<LeagueTeamInvitationView[]>(
-      `SELECT DISTINCT invitation.id::text AS id,
+      `SELECT invitation.id::text AS id,
          invitation.league_id::text AS "leagueId",
          league.name AS "leagueName", invitation.team_id::text AS "teamId",
          team.name AS "teamName", invitation.invited_at AS "invitedAt"
        FROM public.league_team_invitation invitation
        JOIN public.league ON league.id=invitation.league_id
        JOIN public.team ON team.id=invitation.team_id
-       JOIN public.user_team membership ON membership.team_id=team.id
-         AND membership.user_id=$1 AND membership.role='captain'
        WHERE invitation.status='pending' AND league.status='open'
+         AND EXISTS (
+           SELECT 1 FROM public.user_team membership
+           WHERE membership.team_id=team.id
+             AND membership.user_id=$1 AND membership.role='captain'
+         )
        ORDER BY invitation.invited_at, invitation.id`,
       [actor],
     );
