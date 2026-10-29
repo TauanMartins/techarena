@@ -19,7 +19,7 @@ npm ci
 npm run dev
 ```
 
-Para executar diretamente no host, crie `frontend/.env.local` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_API_BASE_URL=http://localhost:3000`. Configure Google como provedor em **Supabase > Authentication > Providers** e permita a URL local como redirect URL. Apenas a URL do projeto e a publishable key podem estar no frontend; `SUPABASE_SERVICE_ROLE_KEY` e exclusiva do backend e nunca deve ser exposta ao navegador.
+Para executar diretamente no host, crie `frontend/.env.local` com `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_API_BASE_URL=http://localhost:3000`. Configure Google como provedor em **Supabase > Authentication > Providers** e permita a URL local como redirect URL. Apenas a URL do projeto e a publishable key podem estar no frontend; `SUPABASE_SERVICE_ROLE_KEY` (chave secret `sb_secret_...` ou chave legada `service_role`) e exclusiva do backend e nunca deve ser exposta ao navegador.
 
 O esquema do chat no Supabase e versionado em [`../supabase/migrations/`](../supabase/migrations/). Para aplicar migrations pendentes, instale a [Supabase CLI](https://supabase.com/docs/guides/cli), vincule o projeto uma vez e execute a partir da raiz do repositorio:
 

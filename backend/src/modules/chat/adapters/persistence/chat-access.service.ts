@@ -158,8 +158,11 @@ export class ChatAccessService implements ChatAccessPort {
       },
     );
     if (!response.ok) {
+      const reason = response.status === 401
+        ? ' Verifique se SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY pertencem ao mesmo projeto e se a chave está ativa.'
+        : '';
       throw new BadGatewayException(
-        `Não foi possível registrar o acesso ao chat no Supabase (${response.status}). Confirme que supabase-chat.sql foi aplicado ao projeto.`,
+        `Não foi possível registrar o acesso ao chat no Supabase (${response.status}).${reason}`,
       );
     }
   }
@@ -175,9 +178,12 @@ export class ChatAccessService implements ChatAccessPort {
   }
 
   private headers(key: string) {
+    const headers: Record<string, string> = { apikey: key };
+    if (!key.startsWith('sb_secret_')) {
+      headers.Authorization = `Bearer ${key}`;
+    }
     return {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
+      ...headers,
     };
   }
 }

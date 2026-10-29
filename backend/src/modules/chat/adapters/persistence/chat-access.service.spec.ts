@@ -46,9 +46,37 @@ describe('ChatAccessService', () => {
       'https://project.supabase.co/rest/v1/chat_participants?on_conflict=topic%2Cuser_id',
     );
     const participantRequest = fetchMock.mock.calls[1][1];
+    expect(participantRequest?.headers).toMatchObject({
+      apikey: 'server-only-key',
+      Authorization: 'Bearer server-only-key',
+    });
     expect(participantRequest?.body).toBe(
       JSON.stringify([{ topic, user_id: userId, display_name: 'Atleta' }]),
     );
+  });
+
+  it('sends modern Supabase secret keys only in the apikey header', async () => {
+    query
+      .mockResolvedValueOnce([{ allowed: true }])
+      .mockResolvedValueOnce([{ display_name: 'Atleta' }])
+      .mockResolvedValueOnce([{ allowed: true }]);
+    const fetchMock = vi.fn(async () => new Response(null, { status: 201 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const modernConfiguration = parseEnvironment({
+      DATABASE_URL: 'postgres://localhost:5432/techarena',
+      SUPABASE_URL: 'https://project.supabase.co',
+      SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_test-key',
+    });
+    const service = new ChatAccessService(dataSource, modernConfiguration);
+
+    await service.ensureAccess(userId, topic);
+
+    for (const [, request] of fetchMock.mock.calls) {
+      expect(request?.headers).toMatchObject({
+        apikey: 'sb_secret_test-key',
+      });
+      expect(request?.headers).not.toHaveProperty('Authorization');
+    }
   });
 
   it('does not provision access if the current database denies membership', async () => {
