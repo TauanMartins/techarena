@@ -17,6 +17,7 @@ import { UsersModule } from './modules/users/users.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { HealthModule } from './health/health.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
+import { LeaguesModule } from './modules/leagues/leagues.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ChatModule } from './modules/chat/chat.module.js';
     ArenasModule,
     AppointmentsModule,
     TeamsModule,
+    LeaguesModule,
     FriendsModule,
     ChatModule,
     ConfigurationModule,
