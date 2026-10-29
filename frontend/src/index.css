@@ -185,6 +185,22 @@ a { color: inherit; }
 }
 .user-avatar { width: 39px; height: 39px; }
 .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.settings-profile-photo { display: flex; align-items: center; gap: 14px; color: var(--ink); }
+.settings-profile-photo p { color: var(--muted); font-size: .78rem; }
+.settings-profile-avatar {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9f1ff;
+  color: #2874e8;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.settings-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .user-summary { display: grid; line-height: 1.35; }
 .user-summary strong { color: var(--ink); font-size: .8rem; }
 .user-summary small { color: var(--muted); font-size: .7rem; }

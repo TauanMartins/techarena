@@ -21,7 +21,7 @@ const { apiMock, authMock, themeMock } = vi.hoisted(() => ({
       id: 'user-id',
       name: 'Atleta',
       username: 'atleta',
-      image: null,
+      image: null as string | null,
       permission: 'user',
       email: 'athlete@example.com',
       birthDate: null,
@@ -48,6 +48,7 @@ describe('SettingsPage profile settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authMock.profile.gender = null;
+    authMock.profile.image = null;
     apiMock.getSports.mockResolvedValue({ items: [] });
     apiMock.getFavoriteSports.mockResolvedValue({
       maxFavorites: 5,
@@ -60,7 +61,14 @@ describe('SettingsPage profile settings', () => {
 
   it('updates all editable profile fields, including birth date', async () => {
     const user = userEvent.setup();
+    authMock.profile.image = 'https://example.com/avatar.png';
     render(<SettingsPage />);
+
+    expect(screen.getByRole('img', { name: 'Foto de perfil' })).toHaveAttribute(
+      'src',
+      'https://example.com/avatar.png',
+    );
+    expect(screen.queryByLabelText('URL da imagem de perfil')).not.toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('Nome'));
     await user.type(screen.getByLabelText('Nome'), 'Atleta Exemplo');
@@ -70,10 +78,6 @@ describe('SettingsPage profile settings', () => {
       target: { value: '1990-05-12' },
     });
     await user.selectOptions(screen.getByLabelText('Gênero'), 'O');
-    await user.type(
-      screen.getByLabelText('URL da imagem de perfil'),
-      'https://example.com/avatar.png',
-    );
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
 
     await waitFor(() => {
@@ -82,7 +86,6 @@ describe('SettingsPage profile settings', () => {
         username: 'atleta_exemplo',
         birthDate: '1990-05-12',
         gender: 'O',
-        image: 'https://example.com/avatar.png',
       });
     });
     expect(await screen.findByText('Perfil atualizado.')).toBeInTheDocument();
