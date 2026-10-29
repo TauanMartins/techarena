@@ -12,6 +12,7 @@ import type {
   LeagueMatchInput,
   LeagueResultInput,
   LeagueUpdateInput,
+  LeagueTeamInvitationView,
   FixtureScheduleInput,
   LeaguesRepository,
 } from '../domain/leagues.port.js';
@@ -64,6 +65,24 @@ export class LeaguesApplication {
   async registerTeam(actor: string, leagueId: string, teamId: string) {
     await this.profiles.ensureAdult(actor);
     await this.repository.registerTeam(actor, leagueId, teamId);
+  }
+
+  inviteTeam(actor: string, leagueId: string, teamId: string) {
+    return this.repository.inviteTeam(actor, leagueId, teamId);
+  }
+
+  teamInvitations(actor: string): Promise<LeagueTeamInvitationView[]> {
+    return this.repository.teamInvitations(actor);
+  }
+
+  async respondToTeamInvitation(
+    actor: string,
+    invitationId: string,
+    action: 'accept' | 'decline',
+  ) {
+    if (action === 'accept') await this.profiles.ensureAdult(actor);
+    else await this.profiles.ensureExists(actor);
+    return this.repository.respondToTeamInvitation(actor, invitationId, action);
   }
 
   removeTeam(actor: string, leagueId: string, teamId: string) {

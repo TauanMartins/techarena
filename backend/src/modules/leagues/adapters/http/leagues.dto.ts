@@ -29,6 +29,10 @@ export class LeagueTeamParamsDto extends LeagueIdDto {
   @IsBigintId() teamId!: string;
 }
 
+export class LeagueInvitationParamsDto {
+  @IsBigintId() invitationId!: string;
+}
+
 export class CreateLeagueDto {
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
@@ -86,6 +90,12 @@ export class LeagueStatusDto {
 
 export class RegisterLeagueTeamDto {
   @IsBigintId() teamId!: string;
+}
+
+export class InviteLeagueTeamDto extends RegisterLeagueTeamDto {}
+
+export class RespondLeagueInvitationDto {
+  @IsIn(['accept', 'decline']) action!: 'accept' | 'decline';
 }
 
 export class CreateLeagueMatchDto {
@@ -258,6 +268,11 @@ export class LeagueDetailsDto {
   teams!: LeagueTeamDto[];
   @Expose()
   @IsArray()
+  @Type(() => LeagueTeamInvitationDto)
+  @ValidateNested({ each: true })
+  invitations!: LeagueTeamInvitationDto[];
+  @Expose()
+  @IsArray()
   @Type(() => LeagueMatchDto)
   @ValidateNested({ each: true })
   matches!: LeagueMatchDto[];
@@ -267,6 +282,23 @@ export class LeagueDetailsDto {
   @ValidateNested({ each: true })
   standings!: LeagueStandingDto[];
   @Expose() @IsArray() @IsBigintId({ each: true }) myCaptainTeamIds!: string[];
+}
+
+export class LeagueTeamInvitationDto {
+  @Expose() @IsBigintId() id!: string;
+  @Expose() @IsBigintId() leagueId!: string;
+  @Expose() @IsString() leagueName!: string;
+  @Expose() @IsBigintId() teamId!: string;
+  @Expose() @IsString() teamName!: string;
+  @Expose() @IsISO8601() invitedAt!: string;
+}
+
+export class LeagueTeamInvitationsDto {
+  @Expose()
+  @IsArray()
+  @Type(() => LeagueTeamInvitationDto)
+  @ValidateNested({ each: true })
+  items!: LeagueTeamInvitationDto[];
 }
 
 export class LeagueListDto {
