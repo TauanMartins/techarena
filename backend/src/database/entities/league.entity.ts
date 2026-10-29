@@ -1,4 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
+import type { User } from './users.entity.js';
+import type { Sport } from './sport.entity.js';
 
 @Entity({ name: 'league', schema: 'public' })
 @Unique('league_league_number_key', ['leagueNumber'])
@@ -38,6 +47,31 @@ export class League {
   leagueNumber!: string;
 
   @Column({
+    name: 'owner_id',
+    type: 'uuid',
+    nullable: true,
+    comment: 'Organizador responsável pela liga.',
+  })
+  ownerId!: string | null;
+
+  @Column({
+    name: 'sport_id',
+    type: 'bigint',
+    nullable: true,
+    comment: 'Modalidade esportiva da liga.',
+  })
+  sportId!: string | null;
+
+  @Column({
+    name: 'created_at',
+    type: 'timestamptz',
+    nullable: false,
+    default: () => 'now()',
+    comment: 'Data de criação da liga.',
+  })
+  createdAt!: Date;
+
+  @Column({
     name: 'image',
     type: 'varchar',
     length: 150,
@@ -45,4 +79,20 @@ export class League {
     comment: 'Imagem da liga.',
   })
   image!: string | null;
+
+  @ManyToOne('User', { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({
+    name: 'owner_id',
+    referencedColumnName: 'id',
+    foreignKeyConstraintName: 'league_owner_id_fkey',
+  })
+  owner!: User | null;
+
+  @ManyToOne('Sport', { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({
+    name: 'sport_id',
+    referencedColumnName: 'id',
+    foreignKeyConstraintName: 'league_sport_id_fkey',
+  })
+  sport!: Sport | null;
 }
