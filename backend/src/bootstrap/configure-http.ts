@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { createValidationPipe } from '../common/validation.js';
+import { DomainErrorFilter } from '../common/http/domain-error.filter.js';
 import type { AppConfiguration } from '../config/environment.js';
 
 /** Share the real HTTP pipeline with end-to-end tests. */
@@ -9,6 +10,7 @@ export function configureHttp(
   configuration: AppConfiguration,
 ): void {
   app.useGlobalPipes(createValidationPipe());
+  app.useGlobalFilters(new DomainErrorFilter());
   app.enableCors({
     origin: configuration.cors.origins,
     credentials: false,
@@ -17,7 +19,7 @@ export function configureHttp(
   });
   const config = new DocumentBuilder()
     .setTitle('TechArena API')
-    .setDescription('API documentation for the TechArena backend.')
+    .setDescription('Documentação da API do backend TechArena.')
     .addBearerAuth()
     .setVersion('1.0.0')
     .build();

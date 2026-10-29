@@ -15,17 +15,23 @@ export function ApiEndpoint(tag: string) {
     ApiTags(tag),
     ApiBearerAuth(),
     UseFilters(DomainErrorFilter),
-    ApiBadRequestResponse({ description: 'Invalid input or business rule.' }),
+    ApiBadRequestResponse({
+      description: 'Dados inválidos ou regra de negócio não atendida.',
+    }),
     ApiUnauthorizedResponse({
       description: 'Missing or invalid Bearer token.',
     }),
     ApiForbiddenResponse({
-      description: 'The authenticated user cannot perform this action.',
+      description: 'O usuário autenticado não pode realizar esta ação.',
     }),
-    ApiNotFoundResponse({ description: 'Referenced record not found.' }),
-    ApiConflictResponse({ description: 'State or uniqueness conflict.' }),
+    ApiNotFoundResponse({
+      description: 'Registro relacionado não encontrado.',
+    }),
+    ApiConflictResponse({
+      description: 'Conflito de estado ou de unicidade.',
+    }),
     ApiServiceUnavailableResponse({
-      description: 'Authentication unavailable.',
+      description: 'Serviço de autenticação indisponível.',
     }),
   );
 }

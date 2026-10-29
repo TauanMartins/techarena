@@ -17,21 +17,23 @@ export class HealthController {
   @Public()
   @Get()
   @ApiOperation({
-    summary: 'Check PostgreSQL availability and pending migrations',
+    summary: 'Verifica a disponibilidade do PostgreSQL e migrações pendentes',
   })
   @ApiServiceUnavailableResponse({
-    description: 'PostgreSQL is unavailable or has pending migrations.',
+    description: 'PostgreSQL indisponível ou com migrações pendentes.',
   })
   @ResponseContract(HealthResponseDto)
   async check(): Promise<HealthResponseDto> {
     try {
       await this.dataSource.query('SELECT 1');
       if (await this.dataSource.showMigrations()) {
-        throw new ServiceUnavailableException('Database migrations pending');
+        throw new ServiceUnavailableException(
+          'O banco de dados ainda possui migrações pendentes.',
+        );
       }
     } catch {
       throw new ServiceUnavailableException(
-        'Database unavailable or migrations pending',
+        'O banco de dados está indisponível ou possui migrações pendentes.',
       );
     }
     return { status: 'ok', database: 'up' };
