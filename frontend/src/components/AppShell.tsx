@@ -27,7 +27,11 @@ export function AppShell() {
     try {
       await logout();
     } catch (cause) {
-      setLogoutError(cause instanceof Error ? cause.message : 'Não foi possível encerrar a sessão.');
+      setLogoutError(
+        cause instanceof Error
+          ? cause.message
+          : 'Não foi possível encerrar a sessão.',
+      );
     }
   }
 
@@ -37,17 +41,23 @@ export function AppShell() {
         <img src={logo} className="brand-logo" alt="TechArena" />
         <h1>Não foi possível carregar seu perfil</h1>
         <p>
-          O login foi validado pelo Supabase, mas a API atual não encontrou ou não
-          conseguiu consultar seu perfil. Confira a configuração do trigger de
-          cadastro e do banco usado pelo backend.
+          Não foi possível carregar os dados do seu perfil. Tente novamente em
+          alguns instantes.
         </p>
         <ErrorState message={profileError ?? 'Perfil indisponível.'} />
-        {logoutError && <div className="mt-3"><ErrorState message={logoutError} /></div>}
+        {logoutError && (
+          <div className="mt-3">
+            <ErrorState message={logoutError} />
+          </div>
+        )}
         <div className="d-flex gap-2 mt-3">
           <Button variant="primary" onClick={() => void refreshProfile()}>
             Tentar novamente
           </Button>
-          <Button variant="outline-secondary" onClick={() => void handleLogout()}>
+          <Button
+            variant="outline-secondary"
+            onClick={() => void handleLogout()}
+          >
             Sair
           </Button>
         </div>
@@ -69,25 +79,23 @@ export function AppShell() {
               key={item.to}
               to={item.to}
               end={'end' in item ? item.end : false}
-              className={({ isActive }) => `sidebar-link${isActive ? ' active' : ''}`}
+              className={({ isActive }) =>
+                `sidebar-link${isActive ? ' active' : ''}`
+              }
             >
               <i className={`bi ${item.icon}`} aria-hidden="true" />
               {item.label}
               {item.to === '/chat' && (
-                <span className="sidebar-link-hint" aria-label="Mensagens em tempo real">
+                <span
+                  className="sidebar-link-hint"
+                  aria-label="Mensagens em tempo real"
+                >
                   <i className="bi bi-lightning-charge-fill" />
                 </span>
               )}
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-footer">
-          <div className="connection-indicator">
-            <span />
-            Sessão autenticada
-          </div>
-          <small>API protegida por access token Supabase</small>
-        </div>
       </aside>
 
       <div className="app-main">
@@ -96,25 +104,39 @@ export function AppShell() {
             <img src={logo} alt="" />
             <span>TECHARENA</span>
           </div>
-          <div className="topbar-current">{navigation.find((item) => item.to === location.pathname)?.label ?? 'TechArena'}</div>
+          <div className="topbar-current">
+            {navigation.find((item) => item.to === location.pathname)?.label ??
+              'TechArena'}
+          </div>
           <div className="topbar-user">
             <div className="user-avatar">
               {profile.image ? (
                 <Image src={profile.image} alt="" roundedCircle />
               ) : (
-                (profile.name ?? profile.username ?? 'A').slice(0, 1).toUpperCase()
+                (profile.name ?? profile.username ?? 'A')
+                  .slice(0, 1)
+                  .toUpperCase()
               )}
             </div>
             <div className="user-summary">
-              <strong>{profile.name ?? profile.username ?? session?.user.email ?? 'Atleta'}</strong>
-              <small>{profile.username ? `@${profile.username}` : 'Atleta TechArena'}</small>
+              <strong>
+                {profile.name ??
+                  profile.username ??
+                  session?.user.email ??
+                  'Atleta'}
+              </strong>
+              <small>
+                {profile.username ? `@${profile.username}` : 'Atleta TechArena'}
+              </small>
             </div>
           </div>
         </Navbar>
         <main className="page-content">
           <Outlet />
         </main>
-        <footer className="app-footer">TechArena · esporte é melhor em equipe</footer>
+        <footer className="app-footer">
+          TechArena · esporte é melhor em equipe
+        </footer>
       </div>
     </div>
   );

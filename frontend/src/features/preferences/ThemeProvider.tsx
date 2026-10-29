@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { useAuth } from '../../auth/AuthProvider';
 import { api } from '../../shared/api';
 
@@ -25,16 +33,23 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTheme(saved.theme);
       setError(null);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar o tema da conta.');
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : 'Não foi possível carregar o tema da conta.',
+      );
     }
   }, [session]);
 
-  const saveTheme = useCallback(async (nextTheme: ThemePreference) => {
-    if (!session) throw new Error('Uma sessão autenticada é necessária para alterar o tema.');
-    const saved = await api.setTheme(session.access_token, nextTheme);
-    setTheme(saved.theme);
-    setError(null);
-  }, [session]);
+  const saveTheme = useCallback(
+    async (nextTheme: ThemePreference) => {
+      if (!session) throw new Error('Entre na sua conta para alterar o tema.');
+      const saved = await api.setTheme(session.access_token, nextTheme);
+      setTheme(saved.theme);
+      setError(null);
+    },
+    [session],
+  );
 
   useEffect(() => {
     void reloadTheme();
@@ -43,7 +58,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const applyTheme = () => {
-      const activeTheme = theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
+      const activeTheme =
+        theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
       document.documentElement.dataset.theme = activeTheme;
     };
     applyTheme();
@@ -51,12 +67,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', applyTheme);
   }, [theme]);
 
-  const value = useMemo(() => ({ theme, error, reloadTheme, saveTheme }), [theme, error, reloadTheme, saveTheme]);
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  const value = useMemo(
+    () => ({ theme, error, reloadTheme, saveTheme }),
+    [theme, error, reloadTheme, saveTheme],
+  );
+  return (
+    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+  );
 }
 
 export function useThemePreference() {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error('useThemePreference deve ser usado dentro de ThemeProvider.');
+  if (!context)
+    throw new Error(
+      'useThemePreference deve ser usado dentro de ThemeProvider.',
+    );
   return context;
 }

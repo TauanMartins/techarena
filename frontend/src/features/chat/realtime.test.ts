@@ -3,12 +3,20 @@ import {
   chatMessageFromRow,
   conversationTopic,
   mergeChatMessages,
+  otherOnlineParticipantIds,
 } from './realtime';
 
 describe('conversationTopic', () => {
   it('uses the backend policy topic for one-to-one chats independent of argument order', () => {
-    expect(conversationTopic('direct', 'B0000000-0000-0000-0000-000000000000', 'a0000000-0000-0000-0000-000000000000'))
-      .toBe('direct:a0000000-0000-0000-0000-000000000000:b0000000-0000-0000-0000-000000000000');
+    expect(
+      conversationTopic(
+        'direct',
+        'B0000000-0000-0000-0000-000000000000',
+        'a0000000-0000-0000-0000-000000000000',
+      ),
+    ).toBe(
+      'direct:a0000000-0000-0000-0000-000000000000:b0000000-0000-0000-0000-000000000000',
+    );
   });
 
   it('uses stable topics for team and appointment rooms', () => {
@@ -17,12 +25,14 @@ describe('conversationTopic', () => {
   });
 
   it('rejects direct chats without the second participant', () => {
-    expect(() => conversationTopic('direct', 'participant')).toThrow('exige o identificador');
+    expect(() => conversationTopic('direct', 'participant')).toThrow(
+      'exige o identificador',
+    );
   });
 });
 
 describe('persisted chat messages', () => {
-  it('maps Supabase rows and merges duplicates in chronological order', () => {
+  it('maps message rows and merges duplicates in chronological order', () => {
     const first = {
       id: 'first',
       sender_id: 'user-id',
@@ -38,7 +48,8 @@ describe('persisted chat messages', () => {
     };
     const mappedFirst = chatMessageFromRow(first);
     const mappedSecond = chatMessageFromRow(second);
-    if (!mappedFirst || !mappedSecond) throw new Error('Expected valid message rows.');
+    if (!mappedFirst || !mappedSecond)
+      throw new Error('Expected valid message rows.');
     expect(chatMessageFromRow({ id: 'invalid' })).toBeNull();
     expect(mappedFirst).toEqual({
       id: 'first',
@@ -47,9 +58,31 @@ describe('persisted chat messages', () => {
       text: 'Olá',
       createdAt: first.created_at,
     });
-    expect(mergeChatMessages([mappedFirst], [mappedFirst, mappedSecond])).toEqual([
-      mappedFirst,
-      mappedSecond,
-    ]);
+    expect(
+      mergeChatMessages([mappedFirst], [mappedFirst, mappedSecond]),
+    ).toEqual([mappedFirst, mappedSecond]);
+  });
+});
+
+describe('chat presence', () => {
+  it('excludes the current user when identifying other online participants', () => {
+    expect(
+      otherOnlineParticipantIds(
+        {
+          'current-user': [{ userId: 'CURRENT-USER' }],
+          'other-user': [{ userId: 'OTHER-USER' }],
+        },
+        'current-user',
+      ),
+    ).toEqual(['other-user']);
+  });
+
+  it('uses the presence key when a participant has no user id in its metadata', () => {
+    expect(
+      otherOnlineParticipantIds(
+        { 'current-user': [{}], 'other-user': [{}] },
+        'current-user',
+      ),
+    ).toEqual(['other-user']);
   });
 });
