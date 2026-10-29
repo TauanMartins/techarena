@@ -17,6 +17,13 @@ export interface CreateAppointment {
   holder: boolean;
   maxPlayers?: number;
 }
+export interface AppointmentParticipant {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+  holder: boolean;
+}
 export interface BookingCard {
   id: string;
   title: string;
@@ -35,6 +42,7 @@ export interface BookingCard {
   startingPlayers: number;
   isInside: boolean;
   distanceKm: number | null;
+  participants: AppointmentParticipant[];
 }
 export interface AvailabilityQuery {
   arenaId: string;

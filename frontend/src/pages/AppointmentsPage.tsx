@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { AppointmentCard } from '../components/AppointmentCard';
 import { BookingModal } from '../components/BookingForm';
@@ -9,6 +10,7 @@ import type { Appointment } from '../shared/types';
 
 export function AppointmentsPage() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const token = session!.access_token;
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,9 +75,13 @@ export function AppointmentsPage() {
               <div className="col-md-6 col-xl-4" key={appointment.id}>
                 <AppointmentCard
                   appointment={appointment}
-                  action={isOrganizer ? undefined : () => void join(appointment)}
-                  actionLabel={joining === appointment.id ? 'Entrando...' : 'Participar'}
-                  disabled={joining === appointment.id}
+                  action={isOrganizer || appointment.isInside
+                    ? () => navigate(`/chat/appointment/${appointment.id}`)
+                    : () => void join(appointment)}
+                  actionLabel={isOrganizer || appointment.isInside
+                    ? 'Ir para conversa'
+                    : joining === appointment.id ? 'Entrando...' : 'Participar'}
+                  disabled={!isOrganizer && !appointment.isInside && joining === appointment.id}
                 />
               </div>
             );

@@ -66,4 +66,9 @@ export class TeamRequestsApplication {
     assertPageRequest(query);
     return this.repository.requests(actor, query, teamId);
   }
+
+  async members(teamId: string, query: PageRequest) {
+    assertPageRequest(query);
+    return this.repository.members(teamId, query);
+  }
 }

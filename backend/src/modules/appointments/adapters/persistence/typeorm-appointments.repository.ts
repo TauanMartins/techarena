@@ -16,6 +16,7 @@ import type {
   AppointmentQuery,
   AppointmentsRepository,
   AvailabilityQuery,
+  AppointmentParticipant,
   BookingCard,
   CreateAppointment,
 } from '../../domain/appointments.port.js';
@@ -27,6 +28,7 @@ function card(
   startingPlayers: number,
   isInside: boolean,
   distanceKm: number | null,
+  participants: AppointmentParticipant[] = [],
 ): BookingCard {
   return {
     id: a.id,
@@ -46,6 +48,7 @@ function card(
     startingPlayers,
     isInside,
     distanceKm,
+    participants,
   };
 }
 export class TypeormAppointmentsRepository implements AppointmentsRepository {
@@ -109,6 +112,34 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       .skip((query.page - 1) * query.limit)
       .take(query.limit)
       .getRawAndEntities();
+    const participantsByAppointment = new Map<
+      string,
+      AppointmentParticipant[]
+    >();
+    const appointmentIds = result.entities.map((appointment) => appointment.id);
+    if (appointmentIds.length) {
+      const participantRows = await this.source
+        .getRepository(UserAppointment)
+        .createQueryBuilder('membership')
+        .innerJoin('membership.user', 'user')
+        .select('membership.appointmentId', 'appointmentId')
+        .addSelect('user.id', 'id')
+        .addSelect('user.name', 'name')
+        .addSelect('user.username', 'username')
+        .addSelect('user.image', 'image')
+        .addSelect('membership.holder', 'holder')
+        .where('membership.appointmentId IN (:...appointmentIds)', {
+          appointmentIds,
+        })
+        .orderBy('user.name', 'ASC', 'NULLS LAST')
+        .addOrderBy('user.id', 'ASC')
+        .getRawMany<AppointmentParticipant & { appointmentId: string }>();
+      for (const { appointmentId, ...participant } of participantRows) {
+        const participants = participantsByAppointment.get(appointmentId) ?? [];
+        participants.push(participant);
+        participantsByAppointment.set(appointmentId, participants);
+      }
+    }
     return paginate(
       result.entities.map((a, i) =>
         card(
@@ -120,6 +151,7 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
           result.raw[i].distance_km == null
             ? null
             : Number(result.raw[i].distance_km),
+          participantsByAppointment.get(a.id) ?? [],
         ),
       ),
       total,
@@ -218,7 +250,15 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
         });
         row.arena = arena;
         row.sport = sport;
-        return card(row, actor, 1, input.holder ? 1 : 0, true, null);
+        return card(row, actor, 1, input.holder ? 1 : 0, true, null, [
+          {
+            id: actor,
+            name: null,
+            username: null,
+            image: null,
+            holder: input.holder,
+          },
+        ]);
       }),
     );
   }

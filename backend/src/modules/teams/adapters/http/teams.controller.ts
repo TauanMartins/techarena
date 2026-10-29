@@ -22,6 +22,7 @@ import {
   TeamExistsDto,
   TeamNameQueryDto,
   TeamCatalogPageDto,
+  TeamMemberPageDto,
   TeamQueryDto,
   TeamRequestQueryDto,
   UpdateTeamDto,
@@ -30,7 +31,9 @@ import {
 @Controller('team')
 export class TeamCatalogController {
   constructor(private readonly app: TeamCatalogApplication) {}
-  @Get() @ResponseContract(TeamCatalogPageDto) async list(@Query() q: TeamQueryDto) {
+  @Get() @ResponseContract(TeamCatalogPageDto) async list(
+    @Query() q: TeamQueryDto,
+  ) {
     const p = await this.app.list(q);
     return {
       ...p,
@@ -69,6 +72,21 @@ export class TeamManagementController {
 @Controller()
 export class TeamRequestsController {
   constructor(private readonly app: TeamRequestsApplication) {}
+  @Get('team/members')
+  @ResponseContract(TeamMemberPageDto)
+  async members(
+    @CurrentUser() _actor: AuthenticatedUser,
+    @Query() q: TeamRequestQueryDto,
+  ) {
+    const page = await this.app.members(q.teamId, q);
+    return {
+      ...page,
+      items: page.items.map((member) => ({
+        ...member,
+        joinedAt: member.joinedAt?.toISOString() ?? null,
+      })),
+    };
+  }
   @Post('team/user') @ResponseContract(MembershipRequestDto, 201) async invite(
     @CurrentUser() a: AuthenticatedUser,
     @Body() b: InviteMemberDto,

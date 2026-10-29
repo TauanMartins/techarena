@@ -2,13 +2,18 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
+import Image from 'react-bootstrap/Image';
+import Modal from 'react-bootstrap/Modal';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
+import { ProfileAvatar } from '../components/ProfileAvatar';
 import { api } from '../shared/api';
 import type { FriendGroups, UserCard } from '../shared/types';
 
 export function CommunityPage() {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const token = session!.access_token;
   const [groups, setGroups] = useState<FriendGroups | null>(null);
   const [people, setPeople] = useState<UserCard[]>([]);
@@ -17,6 +22,7 @@ export function CommunityPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busyFriendId, setBusyFriendId] = useState<string | null>(null);
+  const [selectedPerson, setSelectedPerson] = useState<UserCard | null>(null);
 
   const loadCommunity = useCallback(async (term: string) => {
     setLoading(true);
@@ -104,11 +110,16 @@ export function CommunityPage() {
                 const requested = outgoingIds.has(person.id);
                 return (
                   <div className="person-row" key={person.id}>
-                    <div className="person-avatar">{person.name?.slice(0, 1).toUpperCase() ?? <i className="bi bi-person" />}</div>
-                    <div className="person-info"><strong>{person.name ?? 'Atleta'}</strong><span>{person.username ? `@${person.username}` : 'TechArena'}</span></div>
-                    <Button size="sm" variant={isFriend ? 'outline-success' : 'outline-primary'} disabled={isFriend || requested || busyFriendId === person.id} onClick={() => void requestFriend(person.id)}>
-                      {isFriend ? 'Amigos' : requested ? 'Solicitado' : 'Adicionar'}
-                    </Button>
+                    <ProfileAvatar name={person.name} image={person.image} />
+                    <button className="person-info person-detail-trigger" type="button" onClick={() => setSelectedPerson(person)}>
+                      <strong>{person.name ?? 'Atleta'}</strong><span>{person.username ? `@${person.username}` : 'TechArena'}</span>
+                    </button>
+                    <div className="d-flex gap-2">
+                      <Button size="sm" variant="outline-secondary" onClick={() => setSelectedPerson(person)}>Detalhes</Button>
+                      <Button size="sm" variant={isFriend ? 'outline-success' : 'outline-primary'} disabled={isFriend || requested || busyFriendId === person.id} onClick={() => void requestFriend(person.id)}>
+                        {isFriend ? 'Amigos' : requested ? 'Solicitado' : 'Adicionar'}
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -125,8 +136,10 @@ export function CommunityPage() {
           <div className="people-list content-card">
             {incoming.map((friend) => (
               <div className="person-row" key={friend.id}>
-                <div className="person-avatar">{friend.user.name?.slice(0, 1).toUpperCase() ?? <i className="bi bi-person" />}</div>
-                <div className="person-info"><strong>{friend.user.name ?? 'Atleta'}</strong><span>{friend.user.username ? `@${friend.user.username}` : 'Solicitação de amizade'}</span></div>
+                <ProfileAvatar name={friend.user.name} image={friend.user.image} />
+                <button className="person-info person-detail-trigger" type="button" onClick={() => setSelectedPerson(friend.user)}>
+                  <strong>{friend.user.name ?? 'Atleta'}</strong><span>{friend.user.username ? `@${friend.user.username}` : 'Solicitação de amizade'}</span>
+                </button>
                 <div className="d-flex gap-2">
                   <Button size="sm" onClick={() => void friendAction(friend.id, 'accept')} disabled={busyFriendId === friend.id}>Aceitar</Button>
                   <Button size="sm" variant="outline-secondary" onClick={() => void friendAction(friend.id, 'block')} disabled={busyFriendId === friend.id}>Bloquear</Button>
@@ -144,14 +157,33 @@ export function CommunityPage() {
           <div className="people-list content-card">
             {groups.friends.items.map((friend) => (
               <div className="person-row" key={friend.id}>
-                <div className="person-avatar">{friend.user.name?.slice(0, 1).toUpperCase() ?? <i className="bi bi-person" />}</div>
-                <div className="person-info"><strong>{friend.user.name ?? 'Atleta'}</strong><span>{friend.user.username ? `@${friend.user.username}` : 'Amizade aceita'}</span></div>
-                <span className="status-label"><i className="bi bi-circle-fill" /> Conectado</span>
+                <ProfileAvatar name={friend.user.name} image={friend.user.image} />
+                <button className="person-info person-detail-trigger" type="button" onClick={() => setSelectedPerson(friend.user)}>
+                  <strong>{friend.user.name ?? 'Atleta'}</strong><span>{friend.user.username ? `@${friend.user.username}` : 'Amizade aceita'}</span>
+                </button>
+                <div className="d-flex gap-2">
+                  <Button size="sm" variant="outline-secondary" onClick={() => setSelectedPerson(friend.user)}>Detalhes</Button>
+                  <Button size="sm" onClick={() => navigate(`/chat/direct/${friend.user.id}`)}>Conversar</Button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </section>
+      <Modal show={selectedPerson !== null} onHide={() => setSelectedPerson(null)} centered>
+        <Modal.Header closeButton><Modal.Title>Perfil do atleta</Modal.Title></Modal.Header>
+        <Modal.Body>
+          {selectedPerson && (
+            <div className="profile-detail">
+              {selectedPerson.image
+                ? <Image className="profile-detail-image" src={selectedPerson.image} alt={`Foto de ${selectedPerson.name ?? 'atleta'}`} roundedCircle />
+                : <ProfileAvatar name={selectedPerson.name} image={null} className="person-avatar profile-detail-avatar" />}
+              <h3>{selectedPerson.name ?? 'Atleta'}</h3>
+              <p>{selectedPerson.username ? `@${selectedPerson.username}` : 'Nome de usuário não informado'}</p>
+            </div>
+          )}
+        </Modal.Body>
+      </Modal>
     </>
   );
 }

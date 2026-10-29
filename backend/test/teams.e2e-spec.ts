@@ -27,6 +27,14 @@ describe('teams migration workflows', () => {
 
   it('creates captain membership and only lets the captain edit the team', async () => {
     const created = await team();
+    const members = await h
+      .get('/team/members')
+      .query({ teamId: created.id })
+      .expect(200);
+    expect(members.body).toMatchObject({
+      total: 1,
+      items: [{ id: actors.alice, role: 'captain' }],
+    });
     expect(
       await h.db.getRepository(UserTeam).existsBy({
         teamId: created.id,
@@ -123,6 +131,14 @@ describe('teams migration workflows', () => {
       .put('/team/user')
       .send({ teamId: created.id, userId: actors.bob })
       .expect(200);
+    const members = await h
+      .get('/team/members', 'bob')
+      .query({ teamId: created.id })
+      .expect(200);
+    expect(
+      members.body.items.map((member: { id: string }) => member.id),
+    ).toEqual(expect.arrayContaining([actors.alice, actors.bob]));
+    expect(members.body.total).toBe(2);
     expect(
       (
         await h.db

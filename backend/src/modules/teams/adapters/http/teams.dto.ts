@@ -112,3 +112,37 @@ export class MembershipRequestPageDto extends PageResponseDto {
   @ValidateNested({ each: true })
   items!: MembershipRequestDto[];
 }
+
+export class TeamMemberDto {
+  @Expose() @IsUUID() id!: string;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  name!: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  username!: string | null;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsString()
+  image!: string | null;
+  @Expose() @IsIn(['captain', 'member']) role!: string;
+  @ApiProperty({ type: String, nullable: true })
+  @Expose()
+  @ValidateIf((_o, v: unknown) => v !== null)
+  @IsISO8601()
+  joinedAt!: string | null;
+}
+
+export class TeamMemberPageDto extends PageResponseDto {
+  @ApiProperty({ type: [TeamMemberDto] })
+  @Expose()
+  @IsArray()
+  @Type(() => TeamMemberDto)
+  @ValidateNested({ each: true })
+  items!: TeamMemberDto[];
+}

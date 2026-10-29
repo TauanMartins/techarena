@@ -63,6 +63,9 @@ describe('appointments migration workflows', () => {
       .query({ lat: fixture.arena.lat, longitude: fixture.arena.longitude })
       .expect(200);
     expect(discovery.body.items[0].distanceKm).toBeLessThan(0.001);
+    expect(discovery.body.items[0].participants).toMatchObject([
+      { id: actors.alice, holder: true },
+    ]);
     expect(discovery.body.items[0].isInside).toBe(true);
     const mine = await h.get('/appointments/user').expect(200);
     expect(mine.body.total).toBe(1);
@@ -174,6 +177,15 @@ describe('appointments migration workflows', () => {
       .post('/users/me/appointments/' + first.body.id)
       .send({})
       .expect(201);
+    const discoveryWithParticipants = await h.get('/appointments').expect(200);
+    const firstDiscovery = discoveryWithParticipants.body.items.find(
+      (appointment: { id: string }) => appointment.id === first.body.id,
+    );
+    expect(
+      firstDiscovery.participants.map(
+        (participant: { id: string }) => participant.id,
+      ),
+    ).toEqual(expect.arrayContaining([actors.alice, actors.bob]));
     const mine = await h.get('/appointments/user').expect(200);
     expect(mine.body.total).toBe(1);
     expect(mine.body.items[0].isInside).toBe(true);
