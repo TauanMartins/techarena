@@ -1,13 +1,13 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LeaguePage } from './LeaguePage';
-import { api } from '../shared/api';
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LeaguePage } from "./LeaguePage";
+import { api } from "../shared/api";
 
-vi.mock('../auth/AuthProvider', () => ({
-  useAuth: () => ({ session: { access_token: 'test-token' } }),
+vi.mock("../auth/AuthProvider", () => ({
+  useAuth: () => ({ session: { access_token: "test-token" } }),
 }));
 
-vi.mock('../shared/api', () => ({
+vi.mock("../shared/api", () => ({
   api: {
     listLeagues: vi.fn(),
     getSports: vi.fn(),
@@ -19,22 +19,26 @@ vi.mock('../shared/api', () => ({
 }));
 
 const league = {
-  id: '1',
-  name: 'Liga de teste',
-  description: 'Descrição',
+  id: "1",
+  name: "Liga de teste",
+  description: "Descrição",
   image: null,
-  ownerId: 'owner-1',
-  ownerName: 'Organizador',
-  sportId: '2',
-  sportName: 'Futebol',
-  createdAt: '2026-10-29T00:00:00.000Z',
+  ownerId: "owner-1",
+  ownerName: "Organizador",
+  sportId: "2",
+  sportName: "Futebol",
+  tournamentFormat: "round_robin" as const,
+  status: "open" as const,
+  groupCount: 2,
+  qualifiersPerGroup: 2,
+  createdAt: "2026-10-29T00:00:00.000Z",
   teamCount: 0,
   matchCount: 0,
   completedMatchCount: 0,
   isOwner: true,
 };
 
-describe('LeaguePage', () => {
+describe("LeaguePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.listLeagues).mockResolvedValue({ items: [league] });
@@ -66,16 +70,18 @@ describe('LeaguePage', () => {
     vi.mocked(api.getLeagueArenas).mockResolvedValue({ items: [] });
   });
 
-  it('reloads details when the already selected league is clicked', async () => {
+  it("reloads details when the already selected league is clicked", async () => {
     render(<LeaguePage />);
 
-    await screen.findByRole('button', { name: 'Ver liga' });
+    await screen.findByRole("button", { name: "Ver liga" });
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver liga' }));
+    fireEvent.click(screen.getByRole("button", { name: "Ver liga" }));
 
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
-    expect(screen.getAllByRole('heading', { name: 'Liga de teste' })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("heading", { name: "Liga de teste" }),
+    ).toHaveLength(2);
   });
 });
