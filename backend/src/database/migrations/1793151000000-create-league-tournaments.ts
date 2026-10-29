@@ -5,15 +5,28 @@ export class CreateLeagueTournaments1793151000000 implements MigrationInterface 
     await queryRunner.query(`
       CREATE SEQUENCE IF NOT EXISTS public.league_league_number_seq;
     `);
-    await queryRunner.query(`
+    const [{ maxLeagueNumber }] = (await queryRunner.query(`
+      SELECT MAX(league_number)::text AS "maxLeagueNumber"
+      FROM public.league
+    `)) as { maxLeagueNumber: string | null }[];
+    const [{ lastValue, isCalled }] = (await queryRunner.query(`
+      SELECT last_value::text AS "lastValue", is_called AS "isCalled"
+      FROM public.league_league_number_seq
+    `)) as { lastValue: string; isCalled: boolean }[];
+    const sequenceValue = [
+      BigInt(maxLeagueNumber ?? '1'),
+      BigInt(lastValue),
+    ].reduce((max, value) => (value > max ? value : max));
+    await queryRunner.query(
+      `
       SELECT setval(
         'public.league_league_number_seq',
-        GREATEST(COALESCE(MAX(league_number), 1), sequence.last_value),
-        MAX(league_number) IS NOT NULL OR sequence.is_called
+        $1,
+        $2
       )
-      FROM public.league
-      CROSS JOIN public.league_league_number_seq sequence;
-    `);
+    `,
+      [sequenceValue.toString(), maxLeagueNumber !== null || isCalled],
+    );
     await queryRunner.query(`
       ALTER TABLE public.league
         ALTER COLUMN league_number SET DEFAULT nextval('public.league_league_number_seq'),
