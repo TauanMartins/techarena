@@ -38,9 +38,9 @@ export class UpdateProfileDto {
   @IsISO8601({ strict: true })
   birthDate?: string;
 
-  @ValidateIf((_object, value: unknown) => value !== undefined)
+  @IsOptional()
   @IsIn(['M', 'F', 'O'])
-  gender?: string;
+  gender?: string | null;
 
   @ApiPropertyOptional({ type: String, nullable: true, maxLength: 150 })
   @IsOptional()
