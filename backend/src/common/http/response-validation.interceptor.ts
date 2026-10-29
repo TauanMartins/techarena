@@ -24,14 +24,18 @@ export class ResponseValidationInterceptor implements NestInterceptor {
     return next.handle().pipe(
       mergeMap(async (value: unknown) => {
         if (!value || typeof value !== 'object' || Array.isArray(value)) {
-          throw new InternalServerErrorException('Response contract violation');
+          throw new InternalServerErrorException(
+            'O servidor não conseguiu processar a resposta da solicitação.',
+          );
         }
         const response = plainToInstance(dto, value, {
           excludeExtraneousValues: true,
         });
         const errors = await validate(response, { forbidUnknownValues: true });
         if (errors.length)
-          throw new InternalServerErrorException('Response contract violation');
+          throw new InternalServerErrorException(
+            'O servidor não conseguiu processar a resposta da solicitação.',
+          );
         return instanceToPlain(response);
       }),
     );
