@@ -104,8 +104,14 @@ export function ChatPage() {
     [conversations, routeId, routeKind],
   );
   const selectedTopic = useMemo(
-    () => selected ? conversationTopic(selected.kind, selected.id, selected.otherUserId) : null,
-    [selected],
+    () => selected
+      ? conversationTopic(
+        selected.kind,
+        selected.kind === 'direct' ? userId : selected.id,
+        selected.otherUserId,
+      )
+      : null,
+    [selected, userId],
   );
 
   useEffect(() => {
