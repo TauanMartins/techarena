@@ -43,7 +43,7 @@ npm test
 - Login Google pelo Supabase Auth; a sessao renovavel fornece o access token enviado como `Authorization: Bearer <accessToken>` em todas as rotas protegidas do NestJS.
 - Perfil, preferencias de tema e esportes favoritos usam `/users/me`, `/users/me/theme` e `/users/me/sports`.
 - Agendamentos, horarios, arenas, equipes, amizades e busca de atletas consomem os endpoints atuais descritos no Swagger do backend.
-- A tela de ligas segue o fluxo legado de criacao de eventos usando os endpoints atuais de esporte, arena, disponibilidade e agendamento. O backend atual nao expoe endpoints de CRUD para `league` ou `league_team`, portanto a interface nao inventa nem persiste dados dessas entidades.
+- Ligas permitem configurar pontos corridos, mata-mata ou grupos seguidos de mata-mata; inscrever equipes, gerar calendarios, lancar e corrigir resultados, avancar fases, reagendar partidas e encerrar competicoes. O acesso de gerenciamento e restrito ao organizador, e o backend valida a integridade da tabela e do calendario.
 - Chat direto, de equipe e de agendamento carrega mensagens persistentes de `chat_messages` e recebe novas mensagens via Supabase Realtime. A tela carrega o historico recente e permite paginar para mensagens anteriores; mensagens do sistema legado nao sao importadas automaticamente. Presenca mostra quem esta conectado ao canal da conversa no momento; nao representa um status global do usuario. RLS limita leitura/envio aos participantes provisionados pelo backend, e bloquear uma amizade revoga os dois participantes da conversa direta.
 
 ## Testes
