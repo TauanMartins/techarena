@@ -20,10 +20,11 @@ Para executar os comandos fora do Docker, entre em `backend/`, copie
 `.env.example` para `.env`, instale as dependências com `npm ci` e use os mesmos
 scripts npm. A URL com `localhost` é para o host; no container o Compose fornece
 uma URL com o hostname `postgres` quando não existe override.
-Se o `.env` da raiz define `DATABASE_URL` apontando ao Supabase, o backend e os
-comandos executados por `docker compose exec backend` usam **esse banco remoto**.
-Migrar `localhost:5432/techarena` no host não migra o Supabase. Confira o destino
-antes de executar comandos de escrita; não publique a URL com credenciais.
+No Docker Compose, `DATABASE_URL` vem de `.env.backend`. Se apontar ao Supabase,
+o backend e os comandos executados por `docker compose exec backend` usam **esse
+banco remoto**. Migrar `localhost:5432/techarena` no host não migra o Supabase.
+Confira o destino antes de executar comandos de escrita; não publique a URL com
+credenciais.
 
 ## Verificar o esquema antes de servir a API
 

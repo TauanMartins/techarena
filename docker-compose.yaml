@@ -6,10 +6,8 @@ services:
     container_name: techarena_frontend
     restart: unless-stopped
     command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 4200"
-    environment:
-      VITE_API_BASE_URL: "${VITE_API_BASE_URL:-http://localhost:3000}"
-      VITE_SUPABASE_URL: "${SUPABASE_URL:-}"
-      VITE_SUPABASE_PUBLISHABLE_KEY: "${SUPABASE_PUBLISHABLE_KEY:-}"
+    env_file:
+      - .env.frontend
     ports:
       - "4200:4200"
     volumes:
@@ -28,13 +26,8 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      SUPABASE_URL: "${SUPABASE_URL:-}"
-      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY:-}"
-      CORS_ORIGINS: "${CORS_ORIGINS:-http://localhost:4200}"
-      DATABASE_URL: "${DATABASE_URL:-postgresql://postgres:secret@postgres:5432/techarena}"
+    env_file:
+      - .env.backend
     depends_on:
       postgres:
         condition: service_healthy
