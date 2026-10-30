@@ -5,17 +5,18 @@ API NestJS com PostgreSQL/PostGIS e TypeORM. O código Laravel anterior está em
 
 ## Ambiente local
 
-Na raiz do repositório:
+Na raiz do repositório, prepare os arquivos de ambiente para cada serviço:
 
 ```sh
-cp .env.example .env
-# Edite .env para configurar SUPABASE_URL e CORS_ORIGINS.
+cp .env.frontend.example .env.frontend
+cp .env.backend.example .env.backend
+# Edite os dois arquivos; SUPABASE_SERVICE_ROLE_KEY pertence somente ao backend.
 docker compose up -d
 docker compose exec backend npm run db:migrate
 docker compose exec backend npm run db:seed
 ```
 
-Configure `SUPABASE_URL` e `CORS_ORIGINS` no `.env` da raiz antes de subir o Compose.
+Configure `SUPABASE_URL` e `CORS_ORIGINS` em `.env.backend` antes de subir o Compose.
 A URL é obtida no diálogo **Connect** do projeto Supabase. O backend valida tokens
 com as chaves públicas JWKS e não precisa da publishable key; o SDK do frontend
 precisa dela. Veja [onde obter os valores e como a validação funciona](docs/AUTHENTICATION.md).
@@ -24,8 +25,8 @@ um Bearer token válido e o provedor configurado. Não existe login local altern
 A autenticação remota não implica trocar o PostgreSQL local ou instalar Supabase local.
 
 No host, use as versões de Node/npm indicadas em `package.json`, `npm ci`, copie
-`.env.example` para `.env` e execute `npm run start:dev`. A configuração das variáveis
-fica exclusivamente em `src/config/environment.ts`.
+`backend/.env.example` para `backend/.env` e execute `npm run start:dev`. A configuração
+das variáveis fica exclusivamente em `src/config/environment.ts`.
 
 - Saúde com consulta ao banco: `GET /health` (200 ou 503).
 - Swagger UI: `/api`; OpenAPI JSON: `/api-json`.

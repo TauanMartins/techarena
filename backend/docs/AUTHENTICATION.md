@@ -34,16 +34,19 @@ Fonte: [API keys e Connect dialog](https://supabase.com/docs/guides/getting-star
 
 ## Configuração local
 
-No Compose, copie `.env.example` para `.env` na raiz e preencha:
+No Compose, copie os templates da raiz para os arquivos de ambiente dos serviços:
 
-```dotenv
-SUPABASE_URL=https://seu-projeto.supabase.co
-CORS_ORIGINS=http://localhost:4200
+```sh
+cp .env.frontend.example .env.frontend
+cp .env.backend.example .env.backend
 ```
 
-Execute `docker compose up -d` para aplicar a configuração ao container. O Compose
-repassa essas variáveis pelo bloco `environment`. Na execução direta no host, use
-`backend/.env`. A leitura e validação continuam centralizadas em `src/config/environment.ts`.
+Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` em `.env.frontend`;
+configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL` e `CORS_ORIGINS`
+em `.env.backend`. Nunca coloque a service role key no arquivo do frontend. Execute
+`docker compose up -d` para aplicar a configuração aos containers. Na execução direta
+no host, use `backend/.env`. A leitura e validação continuam centralizadas em
+`src/config/environment.ts`.
 Sem URL de Auth, o health check funciona; chamadas protegidas com Bearer recebem 503.
 Não existe bypass de autenticação no ambiente local.
 
