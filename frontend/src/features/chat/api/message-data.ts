@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   chatMessageFromRow,
   type ChatMessage,
-} from "../message-mapper";
+} from "./message-mapper";
 
 const HISTORY_PAGE_SIZE = 50;
 const MESSAGE_COLUMNS = "id, sender_id, sender_name, body, created_at";

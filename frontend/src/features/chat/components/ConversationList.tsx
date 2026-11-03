@@ -1,6 +1,6 @@
 import Button from "react-bootstrap/Button";
-import { LoadingState } from "../../../components/Feedback";
-import type { Conversation } from "../conversations";
+import { LoadingState } from "../../../components/ui/Feedback";
+import type { Conversation } from "../types/conversation.types";
 import { ConversationAvatar } from "./ConversationAvatar";
 
 export function ConversationList({ conversations, selected, loading, onRefresh, onOpen }: {

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../shared/api";
+import { api } from "../../../lib/api-client";
 
 export const settingsApi = { profile: api.getProfile, updateProfile: api.updateProfile, sports: api.getSports, favorites: api.getFavoriteSports, replaceFavorites: api.replaceFavoriteSports, theme: api.getTheme, setTheme: api.setTheme };
 

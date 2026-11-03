@@ -3,7 +3,7 @@ import {
   conversationTopic,
   otherOnlineParticipantIds,
 } from './realtime';
-import { chatMessageFromRow, mergeChatMessages } from './message-mapper';
+import { chatMessageFromRow, mergeChatMessages } from '../api/message-mapper';
 
 describe('conversationTopic', () => {
   it('uses the backend policy topic for one-to-one chats independent of argument order', () => {

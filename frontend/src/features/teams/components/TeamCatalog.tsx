@@ -4,7 +4,7 @@ import Form from "react-bootstrap/Form";
 import Image from "react-bootstrap/Image";
 import type { FormEvent } from "react";
 import type { Team } from "../types/teams.types";
-import { EmptyState, LoadingState } from "../../../components/Feedback";
+import { EmptyState, LoadingState } from "../../../components/ui/Feedback";
 
 export function TeamCatalog({ teams, loading, error, myTeamIds, pendingIds, onDetails, onJoin }: { teams: Team[]; loading: boolean; error: boolean; myTeamIds: Set<string>; pendingIds: Set<string>; onDetails: (team: Team) => void; onJoin: (team: Team) => void }) {
   return <section className="content-section"><div className="section-title-row"><div><span className="eyebrow">COMUNIDADE</span><h2>Encontrar equipes</h2></div></div>

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { leaguesApi } from "../api/leagues.api";
 import { useLeaguesData } from "./useLeaguesData";
-import { queryKeys } from "../../../shared/queryClient";
+import { queryKeys } from "../../../lib/query-client";
 import { leagueCreateFormSchema, leagueScoreSchema, leagueUpdateFormSchema } from "../schemas/league.schema";
 import { localDate } from "../date";
 import type { LeagueMatch, LeagueSummary } from "../types/leagues.types";

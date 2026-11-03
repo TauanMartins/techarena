@@ -28,4 +28,21 @@ describe('AppointmentsPage', () => {
     expect(await screen.findByText('Serviço indisponível (503)')).toBeInTheDocument();
     expect(screen.queryByText('Nenhum agendamento encontrado')).not.toBeInTheDocument();
   });
+
+  it('joins a scheduled appointment and reports the successful action', async () => {
+    const user = userEvent.setup();
+    const appointment = {
+      id: 'appointment-1', title: 'Futebol de sábado', description: null, scheduledAt: '2999-01-01T10:00:00Z', status: 'scheduled',
+      organizerId: 'organizer-1', arenaId: null, sportId: null, scheduleId: null, arenaAddress: null, arenaImage: null, sportName: 'Futebol',
+      maxPlayers: 12, players: 2, startingPlayers: 1, isInside: false, distanceKm: null, participants: [],
+    };
+    vi.spyOn(appointmentApi, 'list').mockResolvedValue({ items: [appointment, { ...appointment, id: 'owned-appointment', title: 'Minha partida', organizerId: 'user-1' }], total: 2 } as never);
+    const join = vi.spyOn(appointmentApi, 'join').mockResolvedValue({ success: true } as never);
+    renderWithProviders(<AppointmentsPage />);
+
+    await user.click(await screen.findByRole('button', { name: 'Participar' }));
+    await vi.waitFor(() => expect(join).toHaveBeenCalledWith('token', 'appointment-1'));
+    expect(await screen.findByRole('status')).toHaveTextContent('Você entrou no agendamento.');
+    await user.click(screen.getByRole('button', { name: 'Ir para conversa' }));
+  });
 });

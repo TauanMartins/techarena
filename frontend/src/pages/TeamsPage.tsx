@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Button from "react-bootstrap/Button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { ErrorState, PageHeading } from "../components/Feedback";
+import { ErrorState, PageHeading } from "../components/ui/Feedback";
 import { CreateTeamModal } from "../features/teams/components/CreateTeamModal";
 import { MyTeamsList } from "../features/teams/components/MyTeamsList";
 import { TeamCatalog, TeamSearchBar } from "../features/teams/components/TeamCatalog";

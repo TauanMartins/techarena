@@ -1,7 +1,7 @@
 import Image from "react-bootstrap/Image";
 import Modal from "react-bootstrap/Modal";
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
-import type { Conversation } from "../conversations";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
+import type { Conversation } from "../types/conversation.types";
 
 export function ConversationDetailsModal({ conversation, show, onHide }: { conversation?: Conversation; show: boolean; onHide: () => void }) {
   return <Modal show={show && Boolean(conversation)} onHide={onHide} centered><Modal.Header closeButton><Modal.Title>Detalhes da conversa</Modal.Title></Modal.Header><Modal.Body>

@@ -1,7 +1,7 @@
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import type { FormEvent } from "react";
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
 import type { UserCard } from "../types/community.types";
 
 export function AthleteDirectory({ people, friends, requested, search, onSearchChange, onSearch, onDetails, onRequest, busy }: {

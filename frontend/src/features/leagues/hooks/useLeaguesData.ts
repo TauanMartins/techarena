@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { leaguesApi } from "../api/leagues.api";
-import { queryKeys } from "../../../shared/queryClient";
+import { queryKeys } from "../../../lib/query-client";
 const EMPTY_ITEMS: never[] = [];
 
 export function useLeaguesData({

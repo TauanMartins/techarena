@@ -1,6 +1,6 @@
 import Image from "react-bootstrap/Image";
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
-import type { Conversation } from "../conversations";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
+import type { Conversation } from "../types/conversation.types";
 
 export function ConversationAvatar({ conversation, className = "chat-avatar" }: { conversation: Conversation; className?: string }) {
   if (conversation.kind === "direct") return <ProfileAvatar name={conversation.label} image={conversation.image ?? null} className={className} />;

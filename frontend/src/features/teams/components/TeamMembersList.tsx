@@ -1,5 +1,5 @@
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
-import { LoadingState } from "../../../components/Feedback";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
+import { LoadingState } from "../../../components/ui/Feedback";
 import type { TeamMember } from "../types/teams.types";
 
 export function TeamMembersList({ members, loading }: { members: TeamMember[]; loading: boolean }) {

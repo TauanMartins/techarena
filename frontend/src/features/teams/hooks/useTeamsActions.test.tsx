@@ -27,4 +27,30 @@ describe('useTeamsActions', () => {
     await waitFor(() => expect(result.current.error).toBe('Equipe lotada'));
     expect(result.current.notice).toBeNull();
   });
+
+  it('guards invitations without a team and completes a captain invite', async () => {
+    const invite = vi.spyOn(teamsApi, 'invite').mockResolvedValue({ success: true } as never);
+    const { result } = renderHook(() => useTeamsActions('token', 'user-1'), { wrapper: createTestWrapper() });
+    const athlete = { id: 'athlete-1', name: null, username: null, image: null };
+
+    await result.current.inviteUser(null, athlete);
+    expect(invite).not.toHaveBeenCalled();
+
+    await result.current.inviteUser({ id: 'team-1', name: 'Equipe', description: null, image: null, role: 'captain' }, athlete);
+    await waitFor(() => expect(result.current.notice).toBe('Convite enviado para atleta.'));
+    expect(invite).toHaveBeenCalledWith('token', 'team-1', 'athlete-1');
+    expect(result.current.invitingUserId).toBeNull();
+  });
+
+  it('guards request decisions without a team and handles non-Error failures', async () => {
+    const decide = vi.spyOn(teamsApi, 'decideRequest').mockRejectedValue('offline');
+    const { result } = renderHook(() => useTeamsActions('token', 'user-1'), { wrapper: createTestWrapper() });
+    const request = { id: 'request-1', teamId: 'team-1', teamName: 'Equipe', userId: 'athlete-1', userName: null, createdBy: 'captain-1', kind: 'request' as const, status: 'pending' as const, createdAt: '2026-01-01' };
+
+    await result.current.decideTeamRequest(null, request, 'accept');
+    expect(decide).not.toHaveBeenCalled();
+    await result.current.decideTeamRequest({ id: 'team-1', name: 'Equipe', description: null, image: null, role: 'captain' }, request, 'decline');
+    await waitFor(() => expect(result.current.error).toBe('Não foi possível concluir a operação.'));
+    expect(decide).toHaveBeenCalledWith('token', 'team-1', 'athlete-1', 'decline');
+  });
 });

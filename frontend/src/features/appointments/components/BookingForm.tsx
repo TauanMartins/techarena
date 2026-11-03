@@ -4,10 +4,10 @@ import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
 import { useAuth } from "../../../auth/useAuth";
-import { ApiError } from "../../../shared/api";
+import { ApiError } from "../../../lib/api-client";
 import { bookingFormSchema, type BookingFormInput } from "../schemas/booking.schema";
 import { useAppointmentAvailability, useBookingOptions, useCreateAppointment } from "../api/appointments.api";
-import { ErrorState } from "../../../components/Feedback";
+import { ErrorState } from "../../../components/ui/Feedback";
 import { BookingFields } from "./BookingFields";
 
 function dateInputToday() {

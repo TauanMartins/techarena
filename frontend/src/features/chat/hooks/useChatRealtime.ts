@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { chatMessageFromRow, type ChatMessage } from "../message-mapper";
-import { otherOnlineParticipantIds } from "../realtime";
+import { chatMessageFromRow, type ChatMessage } from "../api/message-mapper";
+import { otherOnlineParticipantIds } from "./realtime";
 import { chatApi } from "../api/chat.api";
 
 type Connection = "idle" | "connecting" | "connected" | "error";

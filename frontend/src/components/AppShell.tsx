@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { ErrorState } from './Feedback';
+import { ErrorState } from './ui/Feedback';
 import { CommunityNavigation } from './CommunityNavigation';
 import { communityNavigation } from './CommunityNavigation.data';
 import Button from 'react-bootstrap/Button';
