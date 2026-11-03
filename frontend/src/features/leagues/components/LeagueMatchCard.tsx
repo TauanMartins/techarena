@@ -5,6 +5,7 @@ import Card from "react-bootstrap/Card";
 import type { LeagueArena, LeagueMatch, Schedule } from "../../../shared/types";
 import { MatchResultFields } from "./MatchResultFields";
 import { MatchRescheduleForm } from "./MatchRescheduleForm";
+import { useCurrentTimestamp } from "../../../shared/clock";
 
 interface LeagueMatchCardProps {
   match: LeagueMatch; canRecordResult: boolean; canManage: boolean; isRescheduling: boolean; date: string;
@@ -15,11 +16,12 @@ interface LeagueMatchCardProps {
 }
 
 export function LeagueMatchCard(props: LeagueMatchCardProps) {
+  const now = useCurrentTimestamp();
   const { match, canRecordResult, canManage, isRescheduling, date, arenas, arenaId, availability, scores, saving, onScoreChange, onSaveResult, onCancel, onToggleReschedule, onDateChange, onArenaChange, onReschedule } = props;
   const finished = match.status === "finished";
   const canceled = match.status === "canceled";
   const canScore = canRecordResult && match.resultAllowed && !canceled;
-  const canReschedule = canManage && match.status === "scheduled" && new Date(match.scheduledAt) > new Date();
+  const canReschedule = canManage && match.status === "scheduled" && Date.parse(match.scheduledAt) > now;
   const statusLabel = finished ? "Concluída" : canceled ? "Cancelada" : canScore ? "Resultado pendente" : match.status === "in_progress" ? "Em andamento" : "Agendada";
   const phase = match.phase === "knockout" ? `Mata-mata · rodada ${match.roundNumber}` : match.phase === "group" ? match.groupNumber ? `Grupos · grupo ${match.groupNumber} · rodada ${match.roundNumber}` : `Pontos corridos · rodada ${match.roundNumber}` : "Partida avulsa";
   return <Card><Card.Body>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/useAuth';
 import { settingsApi } from '../settings/api/settings.api';
@@ -22,10 +22,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(queryKeys.theme(session!.user.id), saved);
     },
   });
+  const mutateTheme = saveThemeMutation.mutateAsync;
   const theme = themeQuery.data?.theme ?? 'system';
-  const saveTheme = async (nextTheme: ThemePreference) => {
-    await saveThemeMutation.mutateAsync(nextTheme);
-  };
+  const refetchTheme = themeQuery.refetch;
+  const themeError = themeQuery.error;
+  const saveTheme = useCallback(async (nextTheme: ThemePreference) => {
+    await mutateTheme(nextTheme);
+  }, [mutateTheme]);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
@@ -42,17 +45,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       theme,
-      error: themeQuery.error
-        ? themeQuery.error instanceof Error
-          ? themeQuery.error.message
+      error: themeError
+        ? themeError instanceof Error
+          ? themeError.message
           : 'Não foi possível carregar o tema da conta.'
         : null,
       reloadTheme: async () => {
-        await themeQuery.refetch();
+        await refetchTheme();
       },
       saveTheme,
     }),
-    [saveTheme, theme, themeQuery.error, themeQuery.refetch],
+    [saveTheme, theme, themeError, refetchTheme],
   );
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

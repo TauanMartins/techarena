@@ -11,6 +11,7 @@ import { PreferencesForm } from "../features/settings/components/PreferencesForm
 import { profileFormSchema, type ProfileFormInput, type ProfileFormValues } from "../features/settings/schemas/profile.schema";
 import { useSettingsData, useSavePreferences, useUpdateProfile } from "../features/settings/api/settings.api";
 import { useThemePreference } from "../features/preferences/hooks/useThemePreference";
+import type { ThemePreference } from "../features/preferences/ThemeContext";
 
 function dateInputToday() {
   const date = new Date();
@@ -23,8 +24,8 @@ export function SettingsPage() {
   const token = session!.access_token;
   const userId = session!.user.id;
   const settingsQuery = useSettingsData(token, userId);
-  const [selectedSportIds, setSelectedSportIds] = useState<string[]>([]);
-  const [selectedTheme, setSelectedTheme] = useState(theme);
+  const [themeDraft, setThemeDraft] = useState<{ source: ThemePreference; value: ThemePreference } | null>(null);
+  const [favoriteDraft, setFavoriteDraft] = useState<{ source: NonNullable<typeof settingsQuery.data>['favorites']; ids: string[] } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ProfileFormInput, undefined, ProfileFormValues>({ resolver: zodResolver(profileFormSchema), defaultValues: { name: profile?.name ?? "", username: profile?.username ?? "", birthDate: profile?.birthDate ?? "", gender: profile?.gender === "M" || profile?.gender === "F" || profile?.gender === "O" ? profile.gender : "" } });
@@ -32,8 +33,8 @@ export function SettingsPage() {
   const savePreferences = useSavePreferences(token, userId, saveTheme);
   const favorites = settingsQuery.data?.favorites;
   const sports = settingsQuery.data?.sports ?? [];
-  useEffect(() => { setSelectedTheme(theme); }, [theme]);
-  useEffect(() => { if (favorites) setSelectedSportIds(favorites.items.map((sport) => sport.id)); }, [favorites]);
+  const selectedTheme = themeDraft?.source === theme ? themeDraft.value : theme;
+  const selectedSportIds = favoriteDraft && favoriteDraft.source === favorites ? favoriteDraft.ids : favorites?.items.map((sport) => sport.id) ?? [];
   useEffect(() => { reset({ name: profile?.name ?? "", username: profile?.username ?? "", birthDate: profile?.birthDate ?? "", gender: profile?.gender === "M" || profile?.gender === "F" || profile?.gender === "O" ? profile.gender : "" }); }, [profile, reset]);
 
   function submitProfile(values: ProfileFormValues) {
@@ -42,14 +43,19 @@ export function SettingsPage() {
   }
   function submitPreferences() {
     setNotice(null);
-    savePreferences.mutate({ sportIds: selectedSportIds, theme: selectedTheme }, { onSuccess: () => setNotice("Preferências salvas.") });
+    savePreferences.mutate({ sportIds: selectedSportIds, theme: selectedTheme }, { onSuccess: () => { setNotice("Preferências salvas."); setThemeDraft(null); setFavoriteDraft(null); } });
   }
   async function signOut() {
     setLogoutError(null);
     try { await logout(); } catch (cause) { setLogoutError(cause instanceof Error ? cause.message : "Não foi possível encerrar a sessão."); }
   }
   function toggleSport(id: string) {
-    setSelectedSportIds((current) => current.includes(id) ? current.filter((item) => item !== id) : favorites && current.length >= favorites.maxFavorites ? current : [...current, id]);
+    if (!favorites) return;
+    setFavoriteDraft((draft) => {
+      const current = draft?.source === favorites ? draft.ids : favorites.items.map((sport) => sport.id);
+      const ids = current.includes(id) ? current.filter((item) => item !== id) : current.length >= favorites.maxFavorites ? current : [...current, id];
+      return { source: favorites, ids };
+    });
   }
   const errorMessage = settingsQuery.error instanceof Error ? settingsQuery.error.message : updateProfile.error instanceof Error ? updateProfile.error.message : savePreferences.error instanceof Error ? savePreferences.error.message : logoutError ?? themeError;
 
@@ -60,7 +66,7 @@ export function SettingsPage() {
     {settingsQuery.isPending && <LoadingState label="Carregando preferências..." />}
     <div className="settings-grid">
       <Card className="content-card"><Card.Body><div className="section-title-row"><div><span className="eyebrow">DADOS DA CONTA</span><h2>Meu perfil</h2></div></div><ProfileForm profile={profile} email={profile?.email ?? session?.user.email ?? ""} today={dateInputToday()} register={register} errors={errors} busy={isSubmitting || updateProfile.isPending} onSubmit={(event) => void handleSubmit(submitProfile)(event)} /></Card.Body></Card>
-      <Card className="content-card"><Card.Body><div className="section-title-row"><div><span className="eyebrow">PERSONALIZAÇÃO</span><h2>Preferências</h2></div></div><PreferencesForm sports={sports} selectedSportIds={selectedSportIds} maxFavorites={favorites?.maxFavorites ?? 5} theme={selectedTheme} busy={savePreferences.isPending || settingsQuery.isPending} onThemeChange={setSelectedTheme} onToggleSport={toggleSport} onSave={() => void submitPreferences()} /></Card.Body></Card>
+      <Card className="content-card"><Card.Body><div className="section-title-row"><div><span className="eyebrow">PERSONALIZAÇÃO</span><h2>Preferências</h2></div></div><PreferencesForm sports={sports} selectedSportIds={selectedSportIds} maxFavorites={favorites?.maxFavorites ?? 5} theme={selectedTheme} busy={savePreferences.isPending || settingsQuery.isPending} onThemeChange={(value) => setThemeDraft({ source: theme, value })} onToggleSport={toggleSport} onSave={() => void submitPreferences()} /></Card.Body></Card>
     </div>
     <Card className="content-card mt-4 logout-card"><Card.Body><div><h3>Encerrar sessão</h3><p>Saia da sua conta neste dispositivo.</p></div><Button variant="outline-danger" onClick={() => void signOut()}>Sair da conta <i className="bi bi-box-arrow-right ms-2" /></Button></Card.Body></Card>
   </>;

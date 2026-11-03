@@ -21,4 +21,11 @@ describe('AppointmentsPage', () => {
     await user.click(screen.getByRole('button', { name: 'Criar agendamento' }));
     expect(await screen.findByText('Novo agendamento')).toBeInTheDocument();
   });
+
+  it('renders query failures instead of an empty result state', async () => {
+    vi.spyOn(appointmentApi, 'list').mockRejectedValue(new Error('Serviço indisponível (503)'));
+    renderWithProviders(<AppointmentsPage />);
+    expect(await screen.findByText('Serviço indisponível (503)')).toBeInTheDocument();
+    expect(screen.queryByText('Nenhum agendamento encontrado')).not.toBeInTheDocument();
+  });
 });
