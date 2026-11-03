@@ -137,4 +137,15 @@ describe('SettingsPage profile settings', () => {
     ).toBeInTheDocument();
     expect(apiMock.updateProfile).not.toHaveBeenCalled();
   });
+
+  it('shows a backend failure and re-enables the profile submit button', async () => {
+    const user = userEvent.setup();
+    apiMock.updateProfile.mockRejectedValueOnce(new Error('Falha no servidor (500)'));
+    renderSettings();
+    fireEvent.change(screen.getByLabelText('Data de nascimento'), { target: { value: '1990-05-12' } });
+    await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+
+    expect(await screen.findByText('Falha no servidor (500)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar perfil' })).toBeEnabled();
+  });
 });

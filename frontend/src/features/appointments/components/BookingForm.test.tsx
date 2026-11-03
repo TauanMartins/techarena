@@ -42,4 +42,23 @@ describe('BookingForm', () => {
     })));
     expect(onCreated).toHaveBeenCalledOnce();
   });
+
+  it('renders a mutation error and restores the submit action after the request settles', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(appointmentApi, 'sports').mockResolvedValue({ items: [{ id: 'sport-1', name: 'Futebol', defaultPlayers: 10 }] } as never);
+    vi.spyOn(appointmentApi, 'arenas').mockResolvedValue({ items: [{ id: 'arena-1', address: 'Arena Central', lat: 0, longitude: 0, image: null, isLeagueOnly: false, sportIds: ['sport-1'], distanceKm: null }] } as never);
+    vi.spyOn(appointmentApi, 'availability').mockResolvedValue({ items: [{ id: 'slot-1', horary: '20:00' }] } as never);
+    vi.spyOn(appointmentApi, 'create').mockRejectedValue(new Error('Não foi possível salvar (500)'));
+    renderWithProviders(<BookingForm onCreated={vi.fn()} />);
+
+    await screen.findByRole('option', { name: 'Futebol' });
+    await user.selectOptions(screen.getByLabelText('Esporte'), 'sport-1');
+    await user.selectOptions(screen.getByLabelText('Arena'), 'arena-1');
+    await screen.findByRole('option', { name: '20:00' });
+    await user.selectOptions(screen.getByLabelText('Horário disponível'), 'slot-1');
+    await user.click(screen.getByRole('button', { name: 'Publicar agendamento' }));
+
+    expect(await screen.findByText('Não foi possível salvar (500)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Publicar agendamento' })).toBeEnabled();
+  });
 });

@@ -1,10 +1,5 @@
 import { NavLink } from "react-router-dom";
-
-export const communityNavigation = [
-  { to: "/social", label: "Comunidade", icon: "bi-person-hearts", end: true },
-  { to: "/equipes", label: "Equipes", icon: "bi-people", end: true },
-  { to: "/chat", label: "Conversas", icon: "bi-chat-dots" },
-];
+import { communityNavigation } from "./CommunityNavigation.data";
 
 export function CommunityNavigation({ open, active, onToggle }: { open: boolean; active: boolean; onToggle: () => void }) {
   return <div className={`sidebar-community${open ? " open" : ""}`}>

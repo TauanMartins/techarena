@@ -41,4 +41,20 @@ describe('CommunityPage', () => {
     await waitFor(() => expect(request).toHaveBeenCalledWith('token', 'athlete-1'));
     expect(await screen.findByRole('status')).toHaveTextContent('Solicitação de amizade enviada.');
   });
+
+  it('shows a failed friend request and does not show the success notice', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(communityApi, 'listFriends').mockResolvedValue(groups as never);
+    vi.spyOn(communityApi, 'searchUsers').mockResolvedValue(page([
+      { id: 'athlete-2', name: 'Bruno', username: 'bruno', image: null },
+    ]) as never);
+    vi.spyOn(communityApi, 'requestFriend').mockRejectedValue(new Error('Solicitação recusada (400)'));
+    renderWithProviders(<CommunityPage />);
+
+    await user.type(screen.getByRole('textbox', { name: 'Buscar atletas' }), 'bruno');
+    await user.click(screen.getByRole('button', { name: 'Buscar' }));
+    await user.click(await screen.findByRole('button', { name: 'Adicionar' }));
+    expect(await screen.findByText('Solicitação recusada (400)')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
 });

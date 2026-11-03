@@ -1,10 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { chatMessageFromRow, type ChatMessage } from "../message-mapper";
 import { otherOnlineParticipantIds } from "../realtime";
 import { chatApi } from "../api/chat.api";
 
 type Connection = "idle" | "connecting" | "connected" | "error";
+interface RealtimeState {
+  client: SupabaseClient | null;
+  topic: string | null;
+  token: string;
+  userId: string;
+  displayName: string;
+  retryCount: number;
+  connection: Connection;
+  connectedTopic: string | null;
+  error: string | null;
+  onlineUserIds: string[];
+  presenceSynced: boolean;
+}
 
 export function useChatRealtime({
   client,
@@ -21,37 +34,42 @@ export function useChatRealtime({
   displayName: string;
   onMessage: (message: ChatMessage) => void;
 }) {
-  const [connection, setConnection] = useState<Connection>("idle");
-  const [connectedTopic, setConnectedTopic] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
-  const [presenceSynced, setPresenceSynced] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const channelRef = useRef<RealtimeChannel | null>(null);
+  const [state, setState] = useState<RealtimeState>({
+    client: null, topic: null, token: "", userId: "", displayName: "", retryCount: -1,
+    connection: "idle", connectedTopic: null, error: null, onlineUserIds: [], presenceSynced: false,
+  });
   const onMessageRef = useRef(onMessage);
-  onMessageRef.current = onMessage;
+  useLayoutEffect(() => { onMessageRef.current = onMessage; }, [onMessage]);
+  const isCurrent = state.client === client && state.topic === topic && state.token === token
+    && state.userId === userId && state.displayName === displayName && state.retryCount === retryCount;
+  const connection = !client || !topic ? "idle" : isCurrent ? state.connection : "connecting";
+  const connectedTopic = isCurrent ? state.connectedTopic : null;
+  const error = isCurrent ? state.error : null;
+  const onlineUserIds = isCurrent ? state.onlineUserIds : [];
+  const presenceSynced = isCurrent && state.presenceSynced;
 
   useEffect(() => {
-    if (!client || !topic) {
-      setConnection("idle");
-      setConnectedTopic(null);
-      setOnlineUserIds([]);
-      setPresenceSynced(false);
-      setError(null);
-      return;
-    }
+    if (!client || !topic) return;
 
     let active = true;
     let cancelSubscribe: (() => void) | null = null;
     const channel = client.channel(`chat:${topic}`, {
       config: { private: true, presence: { key: userId } },
     });
-    channelRef.current = channel;
-    setConnection("connecting");
-    setConnectedTopic(null);
-    setError(null);
-    setOnlineUserIds([]);
-    setPresenceSynced(false);
+    const updateState = (patch: Partial<RealtimeState>) => setState((current) => {
+      const sameIdentity = current.client === client && current.topic === topic && current.token === token
+        && current.userId === userId && current.displayName === displayName && current.retryCount === retryCount;
+      return {
+        client, topic, token, userId, displayName, retryCount,
+        connection: sameIdentity ? current.connection : "connecting",
+        connectedTopic: sameIdentity ? current.connectedTopic : null,
+        error: sameIdentity ? current.error : null,
+        onlineUserIds: sameIdentity ? current.onlineUserIds : [],
+        presenceSynced: sameIdentity ? current.presenceSynced : false,
+        ...patch,
+      };
+    });
 
     channel
       .on("postgres_changes", {
@@ -65,8 +83,7 @@ export function useChatRealtime({
       })
       .on("presence", { event: "sync" }, () => {
         if (!active) return;
-        setOnlineUserIds(otherOnlineParticipantIds(channel.presenceState(), userId));
-        setPresenceSynced(true);
+        updateState({ onlineUserIds: otherOnlineParticipantIds(channel.presenceState(), userId), presenceSynced: true });
       });
 
     void (async () => {
@@ -80,44 +97,39 @@ export function useChatRealtime({
             if (!active) return;
             if (status === "SUBSCRIBED") {
               cancelSubscribe = null;
-              setConnection("connected");
-              setConnectedTopic(topic);
+              updateState({ connection: "connected", connectedTopic: topic });
               resolve();
             } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
               cancelSubscribe = null;
-              setConnection("error");
-              setConnectedTopic(null);
+              updateState({ connection: "error", connectedTopic: null });
               reject(cause ?? new Error("Não foi possível conectar a esta conversa."));
             }
           });
         });
         if (!active) return;
         const presenceStatus = await channel.track({ userId, name: displayName, onlineAt: new Date().toISOString() });
-        if (active && presenceStatus !== "ok") setError("Não foi possível atualizar o status de presença.");
+        if (active && presenceStatus !== "ok") updateState({ error: "Não foi possível atualizar o status de presença." });
       } catch {
         if (!active) return;
-        setConnection("error");
-        setConnectedTopic(null);
-        setError("Não foi possível abrir esta conversa. Tente novamente.");
+        updateState({ connection: "error", connectedTopic: null, error: "Não foi possível abrir esta conversa. Tente novamente." });
       }
     })();
 
     return () => {
       active = false;
       cancelSubscribe?.();
-      if (channelRef.current === channel) channelRef.current = null;
       void client.removeChannel(channel);
     };
   }, [client, displayName, retryCount, token, topic, userId]);
 
+  const retry = useCallback(() => setRetryCount((count) => count + 1), []);
   return {
     connection,
     connectedTopic,
     error,
     onlineUserIds,
     presenceSynced,
-    retry: () => setRetryCount((count) => count + 1),
+    retry,
     retryCount,
-    channelRef,
   };
 }

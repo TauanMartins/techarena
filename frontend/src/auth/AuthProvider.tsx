@@ -14,12 +14,11 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase-client';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(supabase));
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
       return;
     }
 
@@ -62,9 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: () => api.getProfile(session!.access_token),
     enabled: Boolean(session),
   });
+  const refetchProfile = profileQuery.refetch;
   const refreshProfile = useCallback(async () => {
-    if (session) await profileQuery.refetch();
-  }, [profileQuery.refetch, session]);
+    if (session) await refetchProfile();
+  }, [refetchProfile, session]);
 
   const loginWithGoogle = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) {

@@ -1,13 +1,11 @@
-import { useMemo, useState } from "react";
+import { useState, type FormEvent } from "react";
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
 import { useAuth } from "../../../auth/useAuth";
 import { ApiError } from "../../../shared/api";
-import { bookingFormSchema, type BookingFormInput, type BookingFormValues } from "../schemas/booking.schema";
+import { bookingFormSchema, type BookingFormInput } from "../schemas/booking.schema";
 import { useAppointmentAvailability, useBookingOptions, useCreateAppointment } from "../api/appointments.api";
 import { ErrorState } from "../../../components/Feedback";
 import { BookingFields } from "./BookingFields";
@@ -21,41 +19,48 @@ export function BookingForm({ titlePrefix = "Partida de", onCreated }: { titlePr
   const { session } = useAuth();
   const token = session!.access_token;
   const userId = session!.user.id;
-  const today = useMemo(dateInputToday, []);
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<BookingFormInput, undefined, BookingFormValues>({
-    resolver: zodResolver(bookingFormSchema),
-    defaultValues: { sportId: "", arenaId: "", scheduleId: "", date: today, title: "", description: "", maxPlayers: "" },
-  });
-  const sportId = watch("sportId");
-  const arenaId = watch("arenaId");
-  const date = watch("date");
-  const scheduleId = watch("scheduleId");
+  const [today] = useState(dateInputToday);
+  const [values, setValues] = useState<BookingFormInput>(() => ({ sportId: "", arenaId: "", scheduleId: "", date: today, title: "", description: "", maxPlayers: "" }));
+  const [errors, setErrors] = useState<Partial<Record<keyof BookingFormInput, string>>>({});
   const [success, setSuccess] = useState(false);
   const optionsQuery = useBookingOptions(token, userId);
-  const availabilityQuery = useAppointmentAvailability(token, userId, arenaId, sportId, date);
+  const availabilityQuery = useAppointmentAvailability(token, userId, values.arenaId, values.sportId, values.date);
   const createMutation = useCreateAppointment(token, userId);
   const sports = optionsQuery.data?.sports ?? [];
   const arenas = optionsQuery.data?.arenas ?? [];
-  const availableArenas = arenas.filter((arena) => !sportId || arena.sportIds.includes(sportId));
+  const availableArenas = arenas.filter((arena) => !values.sportId || arena.sportIds.includes(values.sportId));
   const slots = availabilityQuery.data?.items ?? [];
 
-  function submit(values: BookingFormValues) {
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const parsed = bookingFormSchema.safeParse(values);
+    if (!parsed.success) {
+      const nextErrors: Partial<Record<keyof BookingFormInput, string>> = {};
+      for (const issue of parsed.error.issues) {
+        const field = issue.path[0] as keyof BookingFormInput;
+        if (field in values && !nextErrors[field]) nextErrors[field] = issue.message;
+      }
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
+    const booking = parsed.data;
     setSuccess(false);
-    createMutation.mutate({ arenaId: values.arenaId, sportId: values.sportId, date: values.date, scheduleId: values.scheduleId,
-      title: values.title || `${titlePrefix} ${sports.find((sport) => sport.id === values.sportId)?.name ?? "esporte"}`,
-      description: values.description || undefined, holder: true, maxPlayers: values.maxPlayers,
-    }, { onSuccess: () => { setSuccess(true); reset({ ...values, title: "", description: "", maxPlayers: "", scheduleId: "" }); onCreated(); } });
+    createMutation.mutate({ arenaId: booking.arenaId, sportId: booking.sportId, date: booking.date, scheduleId: booking.scheduleId,
+      title: booking.title || `${titlePrefix} ${sports.find((sport) => sport.id === booking.sportId)?.name ?? "esporte"}`,
+      description: booking.description || undefined, holder: true, maxPlayers: booking.maxPlayers,
+    }, { onSuccess: () => { setSuccess(true); setValues((current) => ({ ...current, title: "", description: "", maxPlayers: "", scheduleId: "" })); onCreated(); } });
   }
   const cause = createMutation.error ?? availabilityQuery.error ?? optionsQuery.error;
   const errorMessage = cause ? cause instanceof ApiError || cause instanceof Error ? cause.message : "Não foi possível concluir a solicitação." : null;
 
-  return <Form onSubmit={handleSubmit(submit)} className="booking-form" noValidate>
+  return <Form onSubmit={submit} className="booking-form" noValidate>
     {errorMessage && <ErrorState message={errorMessage} />}
     {success && <Alert variant="success">Agendamento criado com sucesso.</Alert>}
     {(optionsQuery.isPending || availabilityQuery.isFetching) && <div className="form-note">Atualizando opções...</div>}
     {!optionsQuery.isPending && arenas.length === 0 && <Alert variant="info">Nenhuma arena disponível para este esporte no momento.</Alert>}
-    <BookingFields sports={sports} availableArenas={availableArenas} slots={slots} sportId={sportId} today={today} titlePrefix={titlePrefix} register={register} setValue={setValue} errors={errors} />
-    <Button type="submit" className="w-100" disabled={isSubmitting || createMutation.isPending || optionsQuery.isPending || availabilityQuery.isFetching || !scheduleId}>{isSubmitting || createMutation.isPending ? "Salvando..." : titlePrefix.startsWith("Torneio") ? "Criar evento de liga" : "Publicar agendamento"}</Button>
+    <BookingFields sports={sports} availableArenas={availableArenas} slots={slots} values={values} today={today} titlePrefix={titlePrefix} onChange={(name, value) => { setValues((current) => ({ ...current, [name]: value })); setErrors((current) => { const next = { ...current }; delete next[name]; return next; }); }} errors={errors} />
+    <Button type="submit" className="w-100" disabled={createMutation.isPending || optionsQuery.isPending || availabilityQuery.isFetching || !values.scheduleId}>{createMutation.isPending ? "Salvando..." : titlePrefix.startsWith("Torneio") ? "Criar evento de liga" : "Publicar agendamento"}</Button>
   </Form>;
 }
 
