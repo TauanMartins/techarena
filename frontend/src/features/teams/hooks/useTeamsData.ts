@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../../shared/api";
 import { queryKeys } from "../../../shared/queryClient";
-import type { TeamOverview } from "../TeamDetailsModal";
+import type { TeamOverview } from "../components/TeamDetailsModal";
 
 export function useTeamsData({
   token,
