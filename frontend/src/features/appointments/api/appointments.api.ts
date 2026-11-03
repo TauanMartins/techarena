@@ -11,6 +11,7 @@ export const appointmentApi = {
   availability: api.getAvailability,
   sports: api.getSports,
   arenas: api.listArenas,
+  favorites: api.getFavoriteSports,
 };
 
 export function useAppointments(token: string, userId: string, params: AppointmentListParams = {}) {
@@ -20,11 +21,11 @@ export function useAppointments(token: string, userId: string, params: Appointme
   });
 }
 
-export function useJoinAppointment(token: string, userId: string) {
+export function useJoinAppointment(token: string, userId: string, onJoined?: () => void) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: (appointmentId: string) => appointmentApi.join(token, appointmentId),
-    onSuccess: () => client.invalidateQueries({ queryKey: ["appointments", userId] }),
+    onSuccess: () => { onJoined?.(); return client.invalidateQueries({ queryKey: ["appointments", userId] }); },
   });
 }
 
@@ -36,5 +37,37 @@ export function useCreateAppointment(token: string, userId: string) {
       client.invalidateQueries({ queryKey: ["appointments", userId] }),
       client.invalidateQueries({ queryKey: queryKeys.myAppointments(userId) }),
     ]),
+  });
+}
+
+export function useBookingOptions(token: string, userId: string) {
+  return useQuery({
+    queryKey: ["bookingOptions", userId],
+    queryFn: async () => {
+      const [sports, arenas] = await Promise.all([appointmentApi.sports(token), appointmentApi.arenas(token)]);
+      return { sports: sports.items, arenas: arenas.items.filter((arena) => !arena.isLeagueOnly) };
+    },
+  });
+}
+
+export function useAppointmentAvailability(token: string, userId: string, arenaId: string, sportId: string, date: string) {
+  return useQuery({
+    queryKey: queryKeys.availability(userId, arenaId, sportId, date),
+    queryFn: () => appointmentApi.availability(token, arenaId, sportId, date),
+    enabled: Boolean(arenaId && sportId && date),
+  });
+}
+
+export function useHomeDashboard(token: string, userId: string) {
+  const params = { page: 1, limit: 6, orderByTime: "future" as const, preferSports: true };
+  return useQuery({
+    queryKey: queryKeys.appointments(userId, params),
+    queryFn: async () => {
+      const [appointments, favorites] = await Promise.all([
+        appointmentApi.list(token, params),
+        appointmentApi.favorites(token),
+      ]);
+      return { appointments: appointments.items, favorites };
+    },
   });
 }

@@ -1,11 +1,12 @@
 import Button from "react-bootstrap/Button";
+import type { RefObject } from "react";
 import { ErrorState, LoadingState } from "../../../components/Feedback";
 import type { ChatMessage } from "../message-mapper";
 
 export function MessageList({ messages, userId, connection, chatError, hasOlderMessages, loadingHistory, onLoadOlder, listRef, endRef }: {
   messages: ChatMessage[]; userId: string; connection: string; chatError: string | null;
   hasOlderMessages: boolean; loadingHistory: boolean; onLoadOlder: () => void;
-  listRef: React.RefObject<HTMLDivElement | null>; endRef: React.RefObject<HTMLDivElement | null>;
+  listRef: RefObject<HTMLDivElement | null>; endRef: RefObject<HTMLDivElement | null>;
 }) {
   return <>
     <div className="message-list" aria-live="polite" ref={listRef}>

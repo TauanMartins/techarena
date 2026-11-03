@@ -1,48 +1,22 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { AppointmentCard } from '../components/AppointmentCard';
-import { BookingModal } from '../components/BookingForm';
+import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
+import { BookingModal } from '../features/appointments/components/BookingForm';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
-import { api } from '../shared/api';
-import { queryKeys } from '../shared/queryClient';
+import { useAppointments, useJoinAppointment } from '../features/appointments/api/appointments.api';
 
 export function AppointmentsPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
   const token = session!.access_token;
   const userId = session!.user.id;
-  const queryClient = useQueryClient();
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
-  const appointmentsQuery = useQuery({
-    queryKey: queryKeys.appointments(userId, {
-      page: 1,
-      limit: 30,
-      orderByTime: 'future',
-      preferSports: false,
-    }),
-    queryFn: () =>
-      api.listAppointments(token, {
-        page: 1,
-        limit: 30,
-        orderByTime: 'future',
-        preferSports: false,
-      }),
-  });
+  const appointmentsQuery = useAppointments(token, userId, { page: 1, limit: 30, orderByTime: 'future', preferSports: false });
   const appointments = appointmentsQuery.data?.items ?? [];
-  const joinMutation = useMutation({
-    mutationFn: (appointmentId: string) =>
-      api.joinAppointment(token, appointmentId),
-    onSuccess: async () => {
-      setNotice('Você entrou no agendamento.');
-      await queryClient.invalidateQueries({
-        queryKey: ['appointments', userId],
-      });
-    },
-  });
+  const joinMutation = useJoinAppointment(token, userId, () => setNotice('Você entrou no agendamento.'));
 
   return (
     <>

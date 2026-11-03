@@ -8,9 +8,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import type { Session } from '@supabase/supabase-js';
 import { AuthContext } from './AuthContext';
-import { api } from '../shared/api';
-import { queryClient, queryKeys } from '../shared/queryClient';
-import { isSupabaseConfigured, supabase } from '../shared/supabase';
+import { api } from '../lib/api-client';
+import { queryClient, queryKeys } from '../lib/query-client';
+import { isSupabaseConfigured, supabase } from '../lib/supabase-client';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

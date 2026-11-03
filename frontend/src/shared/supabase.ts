@@ -1,18 +1,2 @@
-import { createClient } from '@supabase/supabase-js';
-
-const url = import.meta.env.VITE_SUPABASE_URL?.trim();
-const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
-
-export const isSupabaseConfigured = Boolean(url && publishableKey);
-
-export const supabase =
-  isSupabaseConfigured && url && publishableKey
-    ? createClient(url, publishableKey, {
-        auth: {
-          flowType: 'pkce',
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true,
-        },
-      })
-    : null;
+// Compatibility exports. Supabase initialization lives in src/lib.
+export { isSupabaseConfigured, supabase } from "../lib/supabase-client";

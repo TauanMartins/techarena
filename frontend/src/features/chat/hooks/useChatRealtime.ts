@@ -22,6 +22,7 @@ export function useChatRealtime({
   onMessage: (message: ChatMessage) => void;
 }) {
   const [connection, setConnection] = useState<Connection>("idle");
+  const [connectedTopic, setConnectedTopic] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([]);
   const [presenceSynced, setPresenceSynced] = useState(false);
@@ -33,6 +34,7 @@ export function useChatRealtime({
   useEffect(() => {
     if (!client || !topic) {
       setConnection("idle");
+      setConnectedTopic(null);
       setOnlineUserIds([]);
       setPresenceSynced(false);
       setError(null);
@@ -46,6 +48,7 @@ export function useChatRealtime({
     });
     channelRef.current = channel;
     setConnection("connecting");
+    setConnectedTopic(null);
     setError(null);
     setOnlineUserIds([]);
     setPresenceSynced(false);
@@ -78,10 +81,12 @@ export function useChatRealtime({
             if (status === "SUBSCRIBED") {
               cancelSubscribe = null;
               setConnection("connected");
+              setConnectedTopic(topic);
               resolve();
             } else if (["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"].includes(status)) {
               cancelSubscribe = null;
               setConnection("error");
+              setConnectedTopic(null);
               reject(cause ?? new Error("Não foi possível conectar a esta conversa."));
             }
           });
@@ -92,6 +97,7 @@ export function useChatRealtime({
       } catch {
         if (!active) return;
         setConnection("error");
+        setConnectedTopic(null);
         setError("Não foi possível abrir esta conversa. Tente novamente.");
       }
     })();
@@ -106,10 +112,12 @@ export function useChatRealtime({
 
   return {
     connection,
+    connectedTopic,
     error,
     onlineUserIds,
     presenceSynced,
     retry: () => setRetryCount((count) => count + 1),
+    retryCount,
     channelRef,
   };
 }
