@@ -215,7 +215,7 @@ describe("LeaguePage", () => {
     fireEvent.change(screen.getByLabelText("Equipe visitante"), {
       target: { value: "team-2" },
     });
-    fireEvent.change(screen.getByLabelText("Horário disponível"), {
+    fireEvent.change(screen.getByLabelText("Horário da partida"), {
       target: { value: "schedule-1" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Agendar partida" }));

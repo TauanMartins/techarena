@@ -51,7 +51,7 @@ export function CommunityPage() {
       <AthleteDirectory people={people} friends={friendIds} requested={requestedIds} search={search} onSearchChange={setSearch} onSearch={submitSearch} onDetails={setSelectedPerson} onRequest={(id) => void requestFriend(id)} busy={mutations.request.isPending} />
       {directoryQuery.isFetching && <LoadingState label="Buscando atletas..." />}
       {!directoryQuery.isFetching && !people.length && <EmptyState icon="bi-person-search" title={search.trim().length >= 2 ? "Nenhum atleta encontrado" : "Busque atletas da comunidade"} description={search.trim().length >= 2 ? "Experimente buscar por outro nome ou usuário." : "Digite pelo menos 2 caracteres para encontrar pessoas."} />}
-    </Card>
+    </Card.Body></Card>
     <FriendSections incoming={incoming} friends={friends} onDetails={setSelectedPerson} onAccept={(id) => void decideFriend(id, "accept")} onBlock={(id) => void decideFriend(id, "block")} onChat={(person) => navigate(`/chat/direct/${person.id}`)} busy={mutations.decide.isPending} />
     {groupsQuery.isPending && <LoadingState />}
     <AthleteDetailsModal person={selectedPerson} onHide={() => setSelectedPerson(null)} />

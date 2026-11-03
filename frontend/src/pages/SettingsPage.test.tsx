@@ -39,7 +39,7 @@ const { apiMock, authMock, themeMock } = vi.hoisted(() => ({
 
 vi.mock('../shared/api', () => ({ api: apiMock }));
 vi.mock('../auth/useAuth', () => ({ useAuth: () => authMock }));
-vi.mock('../features/preferences/useThemePreference', () => ({
+vi.mock('../features/preferences/hooks/useThemePreference', () => ({
   useThemePreference: () => themeMock,
 }));
 
