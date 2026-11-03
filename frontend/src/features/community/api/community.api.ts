@@ -14,12 +14,13 @@ export function useAthleteDirectory(token: string, userId: string, search: strin
 
 export function useFriendMutations(token: string, userId: string) {
   const client = useQueryClient();
-  const refresh = () => Promise.all([
-    client.invalidateQueries({ queryKey: queryKeys.community(userId) }),
+  const refreshFriends = () => client.invalidateQueries({ queryKey: queryKeys.community(userId) });
+  const refreshDecisions = () => Promise.all([
+    refreshFriends(),
     client.invalidateQueries({ queryKey: queryKeys.chatConversations(userId) }),
   ]);
   return {
-    request: useMutation({ mutationFn: (friendId: string) => communityApi.requestFriend(token, friendId), onSuccess: refresh }),
-    decide: useMutation({ mutationFn: ({ friendId, action }: { friendId: string; action: "accept" | "block" }) => communityApi.decideFriend(token, friendId, action), onSuccess: refresh }),
+    request: useMutation({ mutationFn: (friendId: string) => communityApi.requestFriend(token, friendId), onSuccess: refreshFriends }),
+    decide: useMutation({ mutationFn: ({ friendId, action }: { friendId: string; action: "accept" | "block" }) => communityApi.decideFriend(token, friendId, action), onSuccess: refreshDecisions }),
   };
 }

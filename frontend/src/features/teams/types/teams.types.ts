@@ -5,4 +5,6 @@ export type {
   TeamMembership,
   UserCard,
 } from "../../../shared/types";
-export type { TeamOverview } from "../TeamDetailsModal";
+import type { Team as TeamModel } from "../../../shared/types";
+
+export type TeamOverview = Pick<TeamModel, "id" | "name" | "description" | "image"> & { role?: string };

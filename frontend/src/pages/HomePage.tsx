@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 import { useAuth } from '../auth/useAuth';
-import { AppointmentCard } from '../components/AppointmentCard';
-import { BookingModal } from '../components/BookingForm';
+import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
+import { BookingModal } from '../features/appointments/components/BookingForm';
 import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
-import { api } from '../shared/api';
-import { queryKeys } from '../shared/queryClient';
+import { useHomeDashboard } from '../features/appointments/api/appointments.api';
 import { SportIcon } from '../components/SportIcon';
 
 export function HomePage() {
@@ -16,26 +14,7 @@ export function HomePage() {
   const token = session!.access_token;
   const userId = session!.user.id;
   const [showBooking, setShowBooking] = useState(false);
-  const dashboardQuery = useQuery({
-    queryKey: queryKeys.appointments(userId, {
-      page: 1,
-      limit: 6,
-      orderByTime: 'future',
-      preferSports: true,
-    }),
-    queryFn: async () => {
-      const [appointmentPage, favorites] = await Promise.all([
-        api.listAppointments(token, {
-          page: 1,
-          limit: 6,
-          orderByTime: 'future',
-          preferSports: true,
-        }),
-        api.getFavoriteSports(token),
-      ]);
-      return { appointments: appointmentPage.items, favorites };
-    },
-  });
+  const dashboardQuery = useHomeDashboard(token, userId);
   const appointments = dashboardQuery.data?.appointments ?? [];
   const favorites = dashboardQuery.data?.favorites;
 

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ErrorState } from './Feedback';
+import { CommunityNavigation, communityNavigation } from './CommunityNavigation';
 import Button from 'react-bootstrap/Button';
 import Image from 'react-bootstrap/Image';
 import Navbar from 'react-bootstrap/Navbar';
@@ -12,12 +13,6 @@ const navigation = [
   { to: '/agendamentos', label: 'Agendamentos', icon: 'bi-calendar2-event' },
   { to: '/ligas', label: 'Ligas', icon: 'bi-trophy' },
   { to: '/configuracoes', label: 'Configurações', icon: 'bi-gear' },
-];
-
-const communityNavigation = [
-  { to: '/social', label: 'Comunidade', icon: 'bi-person-hearts', end: true },
-  { to: '/equipes', label: 'Equipes', icon: 'bi-people', end: true },
-  { to: '/chat', label: 'Conversas', icon: 'bi-chat-dots' },
 ];
 
 export function AppShell() {
@@ -102,49 +97,7 @@ export function AppShell() {
               {item.label}
             </NavLink>
           ))}
-          <div className={`sidebar-community${communitiesOpen ? ' open' : ''}`}>
-            <button
-              type="button"
-              className={`sidebar-link sidebar-community-toggle${isCommunityRoute ? ' active' : ''}`}
-              aria-expanded={communitiesOpen}
-              aria-controls="sidebar-community-links"
-              onClick={() => setCommunitiesOpen((open) => !open)}
-            >
-              <i className="bi bi-people-fill" aria-hidden="true" />
-              Comunidades
-              <i
-                className="bi bi-chevron-down sidebar-community-chevron"
-                aria-hidden="true"
-              />
-            </button>
-            <div
-              className="sidebar-community-links"
-              id="sidebar-community-links"
-              hidden={!communitiesOpen}
-            >
-              {communityNavigation.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  className={({ isActive }) =>
-                    `sidebar-link sidebar-community-link${isActive ? ' active' : ''}`
-                  }
-                >
-                  <i className={`bi ${item.icon}`} aria-hidden="true" />
-                  {item.label}
-                  {item.to === '/chat' && (
-                    <span
-                      className="sidebar-link-hint"
-                      aria-label="Mensagens em tempo real"
-                    >
-                      <i className="bi bi-lightning-charge-fill" />
-                    </span>
-                  )}
-                </NavLink>
-              ))}
-            </div>
-          </div>
+          <CommunityNavigation open={communitiesOpen} active={isCommunityRoute} onToggle={() => setCommunitiesOpen((open) => !open)} />
           {navigation.slice(3).map((item) => (
             <NavLink
               key={item.to}

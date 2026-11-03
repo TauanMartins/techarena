@@ -7,7 +7,7 @@ import type { Schedule } from "../../../shared/types";
 import { localDate } from "../date";
 
 interface ScheduleProps {
-  league: LeagueSummary; teams: LeagueTeam[]; arenas: LeagueArena[]; arenaId: string;
+  league: LeagueSummary; teams: LeagueTeam[]; matchesCount: number; arenas: LeagueArena[]; arenaId: string;
   date: string; schedules: Schedule[]; saving: boolean;
   onDateChange: (date: string) => void; onArenaChange: (id: string) => void;
   onGenerate: (event: FormEvent<HTMLFormElement>, nextRound?: boolean) => void;
@@ -32,7 +32,7 @@ function FixtureForm({ title, nextRound = false, ...props }: ScheduleProps & { t
 }
 
 export function LeagueScheduleForms(props: ScheduleProps) {
-  const canGenerate = props.league.isOwner && props.league.status === "open" && props.teams.length >= 2;
+  const canGenerate = props.league.isOwner && props.league.status === "open" && props.teams.length >= 2 && props.matchesCount === 0;
   const canAdvance = props.league.isOwner && props.league.status === "active" && props.league.tournamentFormat !== "round_robin";
   const canSchedule = props.league.isOwner && ["open", "active"].includes(props.league.status) && props.teams.length >= 2;
   return <>

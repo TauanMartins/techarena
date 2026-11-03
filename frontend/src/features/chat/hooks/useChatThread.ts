@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent }
 import { conversationTopic } from "../realtime";
 import { mergeChatMessages, type ChatMessage } from "../message-mapper";
 import type { Conversation } from "../conversations";
-import { createChatMessage, loadLatestMessages, loadOlderMessages as fetchOlderMessages } from "../message-data";
+import { createChatMessage, loadLatestMessages, loadOlderMessages as fetchOlderMessages } from "../api/message-data";
 import { supabase } from "../../../shared/supabase";
 import { useChatRealtime } from "./useChatRealtime";
 
@@ -49,10 +49,10 @@ export function useChatThread({
     setText("");
     setChatError(null);
     previousScrollHeightRef.current = null;
-  }, [selectedTopic]);
+  }, [realtime.retryCount, selectedTopic]);
 
   useEffect(() => {
-    if (!supabase || !selectedTopic || realtime.connection !== "connected") return;
+    if (!supabase || !selectedTopic || realtime.connectedTopic !== selectedTopic) return;
     let active = true;
     const generation = generationRef.current;
     setLoadingHistory(true);
@@ -66,7 +66,7 @@ export function useChatThread({
       if (active && generation === generationRef.current) setLoadingHistory(false);
     });
     return () => { active = false; };
-  }, [realtime.connection, selectedTopic]);
+  }, [realtime.connectedTopic, selectedTopic]);
 
   useEffect(() => {
     if (realtime.error) setChatError(realtime.error);

@@ -19,3 +19,13 @@ export function useSaveFavoriteSports(token: string, userId: string) {
   const client = useQueryClient();
   return useMutation({ mutationFn: (sportIds: string[]) => settingsApi.replaceFavorites(token, sportIds), onSuccess: () => client.invalidateQueries({ queryKey: ["settings", userId] }) });
 }
+
+export function useSavePreferences(token: string, userId: string, saveTheme: (theme: "light" | "dark" | "system") => Promise<void>) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ sportIds, theme }: { sportIds: string[]; theme: "light" | "dark" | "system" }) => Promise.all([
+      settingsApi.replaceFavorites(token, sportIds), saveTheme(theme),
+    ]),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["settings", userId] }),
+  });
+}

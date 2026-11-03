@@ -2,6 +2,7 @@ import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
 import Image from "react-bootstrap/Image";
+import type { FormEvent } from "react";
 import type { Team } from "../types/teams.types";
 import { EmptyState, LoadingState } from "../../../components/Feedback";
 
@@ -20,6 +21,6 @@ export function TeamCatalog({ teams, loading, error, myTeamIds, pendingIds, onDe
   </section>;
 }
 
-export function TeamSearchBar({ value, onChange, onSubmit }: { value: string; onChange: (value: string) => void; onSubmit: (event: React.FormEvent<HTMLFormElement>) => void }) {
+export function TeamSearchBar({ value, onChange, onSubmit }: { value: string; onChange: (value: string) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) {
   return <Form className="search-bar mb-4" onSubmit={onSubmit}><i className="bi bi-search" aria-hidden="true" /><Form.Control aria-label="Buscar equipes" placeholder="Buscar equipe pelo nome" value={value} onChange={(event) => onChange(event.target.value)} /><Button type="submit" variant="outline-primary">Buscar</Button></Form>;
 }

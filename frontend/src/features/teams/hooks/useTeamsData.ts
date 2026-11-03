@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../shared/api";
+import { teamsApi } from "../api/teams.api";
 import { queryKeys } from "../../../shared/queryClient";
 import type { TeamOverview } from "../components/TeamDetailsModal";
 
@@ -19,23 +19,23 @@ export function useTeamsData({
   const queryClient = useQueryClient();
   const teamsQuery = useQuery({
     queryKey: queryKeys.teams(userId, catalogSearch),
-    queryFn: () => api.listTeams(token, catalogSearch),
+    queryFn: () => teamsApi.list(token, catalogSearch),
   });
   const myTeamsQuery = useQuery({
     queryKey: queryKeys.myTeams(userId),
-    queryFn: () => api.listMyTeams(token),
+    queryFn: () => teamsApi.listMine(token),
   });
   const requestsQuery = useQuery({
     queryKey: queryKeys.teamRequests(userId),
-    queryFn: () => api.listMyTeamRequests(token),
+    queryFn: () => teamsApi.listRequests(token),
   });
   const teamDetailsQuery = useQuery({
     queryKey: queryKeys.teamDetails(userId, selectedTeam?.id ?? ""),
     queryFn: async () => {
       const [members, teamRequests] = await Promise.all([
-        api.listTeamMembers(token, selectedTeam!.id),
+        teamsApi.listMembers(token, selectedTeam!.id),
         selectedTeam?.role === "captain"
-          ? api.listTeamRequests(token, selectedTeam.id)
+          ? teamsApi.listTeamRequests(token, selectedTeam.id)
           : Promise.resolve(null),
       ]);
       return { members: members.items, requests: teamRequests?.items ?? [] };
@@ -44,7 +44,7 @@ export function useTeamsData({
   });
   const inviteCandidatesQuery = useQuery({
     queryKey: queryKeys.directory(userId, `team:${inviteSearch}`),
-    queryFn: () => api.searchUsers(token, inviteSearch),
+    queryFn: () => teamsApi.searchUsers(token, inviteSearch),
     enabled: inviteSearch.length >= 2 && selectedTeam?.role === "captain",
   });
   const queryError = [

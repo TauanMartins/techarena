@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../shared/api";
+import { leaguesApi } from "../api/leagues.api";
 import { queryKeys } from "../../../shared/queryClient";
 const EMPTY_ITEMS: never[] = [];
 
@@ -23,27 +23,27 @@ export function useLeaguesData({
   const queryClient = useQueryClient();
   const leaguesQuery = useQuery({
     queryKey: queryKeys.leagues(userId),
-    queryFn: () => api.listLeagues(token),
+    queryFn: () => leaguesApi.list(token),
   });
   const sportsQuery = useQuery({
     queryKey: queryKeys.sports(userId),
-    queryFn: () => api.getSports(token),
+    queryFn: () => leaguesApi.sports(token),
   });
   const myTeamsQuery = useQuery({
     queryKey: queryKeys.myTeams(userId),
-    queryFn: () => api.listMyTeams(token),
+    queryFn: () => leaguesApi.teams(token),
   });
   const invitationsQuery = useQuery({
     queryKey: queryKeys.leagueInvitations(userId),
-    queryFn: () => api.listLeagueTeamInvitations(token),
+    queryFn: () => leaguesApi.invitations(token),
   });
   const resolvedLeagueId = leagueId || leaguesQuery.data?.items[0]?.id || "";
   const detailsQuery = useQuery({
     queryKey: queryKeys.leagueDetails(userId, resolvedLeagueId),
     queryFn: async () => {
       const [details, arenas] = await Promise.all([
-        api.getLeague(token, resolvedLeagueId),
-        api.getLeagueArenas(token, resolvedLeagueId),
+        leaguesApi.detail(token, resolvedLeagueId),
+        leaguesApi.arenas(token, resolvedLeagueId),
       ]);
       return { details, arenas: arenas.items };
     },
@@ -62,12 +62,12 @@ export function useLeaguesData({
       date,
     ),
     queryFn: () =>
-      api.getLeagueAvailability(token, resolvedLeagueId, selectedArenaId, date),
+      leaguesApi.availability(token, resolvedLeagueId, selectedArenaId, date),
     enabled: Boolean(resolvedLeagueId && selectedArenaId && date),
   });
   const teamSearchQuery = useQuery({
     queryKey: queryKeys.leagueTeams(userId, teamSearch),
-    queryFn: () => api.listTeams(token, teamSearch),
+    queryFn: () => leaguesApi.searchTeams(token, teamSearch),
     enabled: teamSearchEnabled,
   });
   const queryError = [

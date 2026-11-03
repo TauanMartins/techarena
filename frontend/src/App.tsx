@@ -7,7 +7,7 @@ import { AppShell } from './components/AppShell';
 import { LoadingState } from './components/Feedback';
 import { LoginPage } from './pages/LoginPage';
 import { ThemeProvider } from './features/preferences/ThemeProvider';
-import { queryClient } from './shared/queryClient';
+import { queryClient } from './lib/query-client';
 
 const AppointmentsPage = lazy(() =>
   import('./pages/AppointmentsPage').then((module) => ({
