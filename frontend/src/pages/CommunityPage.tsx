@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import { useAuth } from "../auth/useAuth";
-import { EmptyState, ErrorState, LoadingState, PageHeading } from "../components/Feedback";
+import { EmptyState, ErrorState, LoadingState, PageHeading } from "../components/ui/Feedback";
 import { AthleteDetailsModal } from "../features/community/components/AthleteDetailsModal";
 import { AthleteDirectory } from "../features/community/components/AthleteDirectory";
 import { FriendSections } from "../features/community/components/FriendSections";

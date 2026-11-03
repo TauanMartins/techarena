@@ -17,3 +17,8 @@ Object.defineProperty(window, 'matchMedia', {
     removeListener: vi.fn(),
   })),
 });
+
+Object.defineProperty(Element.prototype, 'scrollIntoView', {
+  configurable: true,
+  value: vi.fn(),
+});

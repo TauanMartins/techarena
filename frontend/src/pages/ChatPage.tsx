@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
-import { EmptyState, ErrorState, PageHeading } from "../components/Feedback";
+import { EmptyState, ErrorState, PageHeading } from "../components/ui/Feedback";
 import { ConversationDetailsModal } from "../features/chat/components/ConversationDetailsModal";
 import { ConversationHeader } from "../features/chat/components/ConversationHeader";
 import { ConversationList } from "../features/chat/components/ConversationList";
 import { MessageComposer } from "../features/chat/components/MessageComposer";
 import { MessageList } from "../features/chat/components/MessageList";
-import type { Conversation } from "../features/chat/conversations";
+import type { Conversation } from "../features/chat/types/conversation.types";
 import { useChatConversations } from "../features/chat/hooks/useChatConversations";
 import { useChatThread } from "../features/chat/hooks/useChatThread";
 

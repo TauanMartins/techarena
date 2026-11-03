@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './auth/AuthProvider';
 import { useAuth } from './auth/useAuth';
 import { AppShell } from './components/AppShell';
-import { LoadingState } from './components/Feedback';
+import { LoadingState } from './components/ui/Feedback';
 import { LoginPage } from './pages/LoginPage';
 import { ThemeProvider } from './features/preferences/ThemeProvider';
 import { queryClient } from './lib/query-client';

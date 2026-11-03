@@ -5,7 +5,7 @@ import Alert from "react-bootstrap/Alert";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { useAuth } from "../auth/useAuth";
-import { ErrorState, LoadingState, PageHeading } from "../components/Feedback";
+import { ErrorState, LoadingState, PageHeading } from "../components/ui/Feedback";
 import { ProfileForm } from "../features/settings/components/ProfileForm";
 import { PreferencesForm } from "../features/settings/components/PreferencesForm";
 import { profileFormSchema, type ProfileFormInput, type ProfileFormValues } from "../features/settings/schemas/profile.schema";

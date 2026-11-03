@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../auth/useAuth';
 import { settingsApi } from '../settings/api/settings.api';
-import { queryKeys } from '../../shared/queryClient';
+import { queryKeys } from '../../lib/query-client';
 import { ThemeContext, type ThemePreference } from './ThemeContext';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {

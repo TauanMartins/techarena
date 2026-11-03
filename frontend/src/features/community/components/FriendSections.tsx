@@ -1,6 +1,6 @@
 import Button from "react-bootstrap/Button";
 import type { Friend, UserCard } from "../types/community.types";
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
 
 export function FriendSections({ incoming, friends, onDetails, onAccept, onBlock, onChat, busy }: {
   incoming: Friend[]; friends: Friend[]; onDetails: (person: UserCard) => void;

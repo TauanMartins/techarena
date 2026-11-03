@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { conversationTopic } from "../realtime";
-import { mergeChatMessages, type ChatMessage } from "../message-mapper";
-import type { Conversation } from "../conversations";
+import { conversationTopic } from "./realtime";
+import { mergeChatMessages, type ChatMessage } from "../api/message-mapper";
+import type { Conversation } from "../types/conversation.types";
 import { createChatMessage, loadLatestMessages, loadOlderMessages as fetchOlderMessages } from "../api/message-data";
-import { supabase } from "../../../shared/supabase";
+import { supabase } from "../../../lib/supabase-client";
 import { useChatRealtime } from "./useChatRealtime";
 
 interface ThreadDraft {

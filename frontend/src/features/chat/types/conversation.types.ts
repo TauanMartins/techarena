@@ -2,8 +2,8 @@ import type {
   AppointmentMembership,
   FriendGroups,
   TeamMembership,
-} from "../../shared/types";
-import type { ConversationKind } from "./realtime";
+} from "../../../shared/types";
+import type { ConversationKind } from "../hooks/realtime";
 
 export interface Conversation {
   id: string;

@@ -1,5 +1,5 @@
-import { buildConversations } from "./conversations";
-import type { FriendGroups } from "../../shared/types";
+import { buildConversations } from "./conversation.types";
+import type { FriendGroups } from "../../../shared/types";
 import { describe, expect, it } from "vitest";
 
 const emptyPage = {

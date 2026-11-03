@@ -1,7 +1,7 @@
 import { useAuth } from "../auth/useAuth";
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
-import { EmptyState, ErrorState, LoadingState, PageHeading } from "../components/Feedback";
+import { EmptyState, ErrorState, LoadingState, PageHeading } from "../components/ui/Feedback";
 import { LeagueCatalog } from "../features/leagues/components/LeagueCatalog";
 import { LeagueCreatePanel } from "../features/leagues/components/LeagueCreatePanel";
 import { LeagueInvitations } from "../features/leagues/components/LeagueInvitations";

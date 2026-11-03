@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { teamsApi } from "../api/teams.api";
-import { queryKeys } from "../../../shared/queryClient";
+import { queryKeys } from "../../../lib/query-client";
 import type { MembershipRequest, Team, UserCard } from "../types/teams.types";
 import type { TeamFormValues } from "../schemas/team.schema";
 import type { TeamOverview } from "../components/TeamDetailsModal";

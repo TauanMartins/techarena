@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../../shared/api";
-import { queryKeys } from "../../../shared/queryClient";
-import { buildConversations } from "../conversations";
+import { api } from "../../../lib/api-client";
+import { queryKeys } from "../../../lib/query-client";
+import { buildConversations } from "../types/conversation.types";
 
 export const chatApi = { ensureAccess: api.ensureChatAccess, friends: api.listFriends, teams: api.listMyTeams, appointments: api.listMyAppointments };
 

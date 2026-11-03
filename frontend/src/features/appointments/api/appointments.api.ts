@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../shared/api";
-import { queryKeys } from "../../../shared/queryClient";
+import { api } from "../../../lib/api-client";
+import { queryKeys } from "../../../lib/query-client";
 import type { CreateAppointmentInput, AppointmentListParams } from "../types/appointments.types";
 
 export const appointmentApi = {

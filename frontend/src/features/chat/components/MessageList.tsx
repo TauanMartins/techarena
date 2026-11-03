@@ -1,7 +1,7 @@
 import Button from "react-bootstrap/Button";
 import type { RefObject } from "react";
-import { ErrorState, LoadingState } from "../../../components/Feedback";
-import type { ChatMessage } from "../message-mapper";
+import { ErrorState, LoadingState } from "../../../components/ui/Feedback";
+import type { ChatMessage } from "../api/message-mapper";
 
 export function MessageList({ messages, userId, connection, chatError, hasOlderMessages, loadingHistory, onLoadOlder, listRef, endRef }: {
   messages: ChatMessage[]; userId: string; connection: string; chatError: string | null;

@@ -5,9 +5,9 @@ import Card from 'react-bootstrap/Card';
 import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingForm';
-import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
+import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/ui/Feedback';
 import { useHomeDashboard } from '../features/appointments/api/appointments.api';
-import { SportIcon } from '../components/SportIcon';
+import { SportIcon } from '../components/ui/SportIcon';
 
 export function HomePage() {
   const { session, profile } = useAuth();

@@ -1,7 +1,7 @@
 import { createRef } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { ChatMessage } from '../message-mapper';
+import type { ChatMessage } from '../api/message-mapper';
 import { MessageList } from './MessageList';
 
 const message: ChatMessage = { id: 'message-1', userId: 'other', name: 'Bia', text: 'Vamos jogar?', createdAt: '2026-11-03T10:00:00Z' };

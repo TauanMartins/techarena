@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import type { MembershipRequest, TeamMember, UserCard } from "../types/teams.types";
-import { ProfileAvatar } from "../../../components/ProfileAvatar";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
 
 export function TeamInvitePanel({ members, requests, candidates, search, invitingUserId, onSearchChange, onSearchSubmit, onInvite, onDecideRequest }: {
   members: TeamMember[]; requests: MembershipRequest[]; candidates: UserCard[]; search: string; invitingUserId: string | null;

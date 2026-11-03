@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Conversation } from '../conversations';
+import type { Conversation } from '../types/conversation.types';
 import { ConversationDetailsModal } from './ConversationDetailsModal';
 
 describe('ConversationDetailsModal', () => {

@@ -8,7 +8,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { LeaguePage } from "./LeaguePage";
-import { api } from "../shared/api";
+import { api } from "../lib/api-client";
 
 vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({
@@ -19,7 +19,7 @@ vi.mock("../auth/useAuth", () => ({
   }),
 }));
 
-vi.mock("../shared/api", () => ({
+vi.mock("../lib/api-client", () => ({
   api: {
     listLeagues: vi.fn(),
     getSports: vi.fn(),
@@ -32,6 +32,8 @@ vi.mock("../shared/api", () => ({
     inviteLeagueTeam: vi.fn(),
     respondToLeagueTeamInvitation: vi.fn(),
     createLeagueMatch: vi.fn(),
+    updateLeague: vi.fn(),
+    setLeagueStatus: vi.fn(),
   },
 }));
 
@@ -129,6 +131,31 @@ describe("LeaguePage", () => {
     expect(
       screen.getAllByRole("heading", { name: "Liga de teste" }),
     ).toHaveLength(2);
+  });
+
+  it("opens and closes the league creation form and surfaces validation errors", async () => {
+    renderLeaguePage();
+    await screen.findByRole("button", { name: "Ver liga" });
+    fireEvent.click(screen.getByRole("button", { name: "Criar liga" }));
+    expect(await screen.findByRole("heading", { name: "Nova liga" })).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Criar liga" }).at(-1)!);
+    expect(await screen.findByText(/Informe o nome da liga/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    expect(screen.queryByRole("heading", { name: "Nova liga" })).not.toBeInTheDocument();
+  });
+
+  it("updates league settings and confirms an owner status change", async () => {
+    vi.mocked(api.updateLeague).mockResolvedValue({ success: true });
+    vi.mocked(api.setLeagueStatus).mockResolvedValue({ success: true });
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    renderLeaguePage();
+    await screen.findByRole("button", { name: "Salvar configurações" });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar configurações" }));
+    await waitFor(() => expect(api.updateLeague).toHaveBeenCalledWith("test-token", "1", expect.objectContaining({ name: "Liga de teste" })));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar liga" }));
+    await waitFor(() => expect(api.setLeagueStatus).toHaveBeenCalledWith("test-token", "1", "canceled"));
+    fireEvent.click(screen.getByRole("button", { name: "Close alert" }));
+    expect(screen.queryByText("Liga cancelada.")).not.toBeInTheDocument();
   });
 
   it("lets a league organizer search for and invite another team", async () => {

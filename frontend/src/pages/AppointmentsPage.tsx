@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingForm';
-import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/Feedback';
+import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/ui/Feedback';
 import { useAppointments, useJoinAppointment } from '../features/appointments/api/appointments.api';
 
 export function AppointmentsPage() {

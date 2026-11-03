@@ -3,8 +3,8 @@ import Card from 'react-bootstrap/Card';
 import Modal from 'react-bootstrap/Modal';
 import { useState } from 'react';
 import type { Appointment } from '../types/appointments.types';
-import { SportIcon } from '../../../components/SportIcon';
-import { ProfileAvatar } from '../../../components/ProfileAvatar';
+import { SportIcon } from '../../../components/ui/SportIcon';
+import { ProfileAvatar } from '../../../components/ui/ProfileAvatar';
 
 export function AppointmentCard({
   appointment,

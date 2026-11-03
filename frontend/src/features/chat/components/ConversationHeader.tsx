@@ -1,5 +1,5 @@
 import Button from "react-bootstrap/Button";
-import type { Conversation } from "../conversations";
+import type { Conversation } from "../types/conversation.types";
 import type { useChatThread } from "../hooks/useChatThread";
 import { ConversationAvatar } from "./ConversationAvatar";
 
