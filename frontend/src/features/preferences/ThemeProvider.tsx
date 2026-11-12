@@ -35,7 +35,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const applyTheme = () => {
       const activeTheme =
         theme === 'system' ? (media.matches ? 'dark' : 'light') : theme;
-      document.documentElement.dataset.theme = activeTheme;
+      document.documentElement.dataset.bsTheme = activeTheme;
     };
     applyTheme();
     media.addEventListener('change', applyTheme);

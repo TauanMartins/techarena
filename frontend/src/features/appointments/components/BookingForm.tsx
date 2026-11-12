@@ -54,10 +54,10 @@ export function BookingForm({ titlePrefix = "Partida de", onCreated }: { titlePr
   const cause = createMutation.error ?? availabilityQuery.error ?? optionsQuery.error;
   const errorMessage = cause ? cause instanceof ApiError || cause instanceof Error ? cause.message : "Não foi possível concluir a solicitação." : null;
 
-  return <Form onSubmit={submit} className="booking-form" noValidate>
+  return <Form onSubmit={submit} className="d-grid gap-2" noValidate>
     {errorMessage && <ErrorState message={errorMessage} />}
     {success && <Alert variant="success">Agendamento criado com sucesso.</Alert>}
-    {(optionsQuery.isPending || availabilityQuery.isFetching) && <div className="form-note">Atualizando opções...</div>}
+    {(optionsQuery.isPending || availabilityQuery.isFetching) && <div className="small text-body-secondary">Atualizando opções...</div>}
     {!optionsQuery.isPending && arenas.length === 0 && <Alert variant="info">Nenhuma arena disponível para este esporte no momento.</Alert>}
     <BookingFields sports={sports} availableArenas={availableArenas} slots={slots} values={values} today={today} titlePrefix={titlePrefix} onChange={(name, value) => { setValues((current) => ({ ...current, [name]: value })); setErrors((current) => { const next = { ...current }; delete next[name]; return next; }); }} errors={errors} />
     <Button type="submit" className="w-100" disabled={createMutation.isPending || optionsQuery.isPending || availabilityQuery.isFetching || !values.scheduleId}>{createMutation.isPending ? "Salvando..." : titlePrefix.startsWith("Torneio") ? "Criar evento de liga" : "Publicar agendamento"}</Button>

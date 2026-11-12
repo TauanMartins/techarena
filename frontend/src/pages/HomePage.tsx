@@ -26,35 +26,35 @@ export function HomePage() {
         description="Descubra uma partida, encontre seu time e coloque o jogo na agenda."
         action={<Button onClick={() => setShowBooking(true)}><i className="bi bi-plus-lg me-2" />Criar agendamento</Button>}
       />
-      <section className="welcome-banner">
+      <section className="d-flex align-items-center justify-content-between gap-4 p-4 p-md-5 rounded-4 bg-primary-subtle text-primary-emphasis">
         <div>
-          <span className="banner-kicker">HORA DE ENTRAR EM CAMPO</span>
-          <h2>O próximo jogo pode começar com você.</h2>
+          <span className="small fw-semibold">HORA DE ENTRAR EM CAMPO</span>
+          <h2 className="h5 fw-bold mb-0">O próximo jogo pode começar com você.</h2>
           <p>Encontre atletas perto de você e transforme qualquer dia em dia de jogo.</p>
           <Link to="/agendamentos" className="btn btn-light">Explorar agendamentos <i className="bi bi-arrow-up-right ms-2" /></Link>
         </div>
-        <div className="banner-mark" aria-hidden="true"><i className="bi bi-trophy-fill" /></div>
+        <div className="d-none d-lg-block display-1" aria-hidden="true"><i className="bi bi-trophy-fill" /></div>
       </section>
 
-      <section className="content-section">
-        <div className="section-title-row">
-          <div><span className="eyebrow">SELEÇÃO PERSONALIZADA</span><h2>Seus esportes favoritos</h2></div>
-          <Link to="/configuracoes" className="text-link">Editar favoritos <i className="bi bi-arrow-right" /></Link>
+      <section className="my-4">
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+          <div><span className="d-block small fw-semibold text-body-secondary mb-1">SELEÇÃO PERSONALIZADA</span><h2 className="h5 fw-bold mb-0">Seus esportes favoritos</h2></div>
+          <Link to="/configuracoes" className="link-primary fw-semibold small text-decoration-none">Editar favoritos <i className="bi bi-arrow-right" /></Link>
         </div>
         {favorites && (
           favorites.items.length ? (
-            <div className="favorite-grid">
+            <div className="d-flex flex-wrap gap-3">
               {favorites.items.map((sport) => (
-                <Card className="favorite-card" key={sport.id}>
-                  <Card.Body>
-                    <span className="sport-icon"><SportIcon name={sport.name} /></span>
+                <Card className="border rounded-4" key={sport.id}>
+                  <Card.Body className="d-flex align-items-center gap-2">
+                    <SportIcon name={sport.name} />
                     <strong>{sport.name}</strong>
                   </Card.Body>
                 </Card>
               ))}
             </div>
           ) : (
-            <Card className="content-card">
+            <Card className="border rounded-4 shadow-sm bg-body">
               <Card.Body className="d-flex align-items-center justify-content-between gap-3 flex-wrap">
                 <span>Escolha até {favorites.maxFavorites} esportes para personalizar suas recomendações.</span>
                 <Link to="/configuracoes" className="btn btn-outline-primary">Escolher modalidades</Link>
@@ -64,10 +64,10 @@ export function HomePage() {
         )}
       </section>
 
-      <section className="content-section">
-        <div className="section-title-row">
-          <div><span className="eyebrow">VAMOS JOGAR?</span><h2>Próximos agendamentos</h2></div>
-          <Link to="/agendamentos" className="text-link">Ver todos <i className="bi bi-arrow-right" /></Link>
+      <section className="my-4">
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+          <div><span className="d-block small fw-semibold text-body-secondary mb-1">VAMOS JOGAR?</span><h2 className="h5 fw-bold mb-0">Próximos agendamentos</h2></div>
+          <Link to="/agendamentos" className="link-primary fw-semibold small text-decoration-none">Ver todos <i className="bi bi-arrow-right" /></Link>
         </div>
         {dashboardQuery.isPending && <LoadingState label="Buscando partidas..." />}
         {dashboardQuery.error && (

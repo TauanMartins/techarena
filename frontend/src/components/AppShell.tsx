@@ -5,8 +5,12 @@ import { ErrorState } from './ui/Feedback';
 import { CommunityNavigation } from './CommunityNavigation';
 import { communityNavigation } from './CommunityNavigation.data';
 import Button from 'react-bootstrap/Button';
-import Image from 'react-bootstrap/Image';
+import { ProfileAvatar } from './ui/ProfileAvatar';
 import Navbar from 'react-bootstrap/Navbar';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Nav from 'react-bootstrap/Nav';
 import logo from '../assets/brand/logo-dark.png';
 
 const navigation = [
@@ -48,118 +52,190 @@ export function AppShell() {
 
   if (profileError || !profile) {
     return (
-      <main className="container profile-error-page">
-        <img src={logo} className="brand-logo" alt="TechArena" />
-        <h1>Não foi possível carregar seu perfil</h1>
-        <p>
-          Não foi possível carregar os dados do seu perfil. Tente novamente em
-          alguns instantes.
-        </p>
-        <ErrorState message={profileError ?? 'Perfil indisponível.'} />
-        {logoutError && (
-          <div className="mt-3">
-            <ErrorState message={logoutError} />
-          </div>
-        )}
-        <div className="d-flex gap-2 mt-3">
-          <Button variant="primary" onClick={() => void refreshProfile()}>
-            Tentar novamente
-          </Button>
-          <Button
-            variant="outline-secondary"
-            onClick={() => void handleLogout()}
+      <Container
+        as="main"
+        className="min-vh-100 d-flex align-items-center py-5"
+      >
+        <Row className="justify-content-center w-100 g-0">
+          <Col
+            md={8}
+            lg={6}
+            className="bg-body border rounded-4 shadow-sm p-4 p-md-5"
           >
-            Sair
-          </Button>
-        </div>
-      </main>
+            <img
+              src={logo}
+              width={56}
+              height={56}
+              className="object-fit-contain bg-white rounded-3 p-1 mb-4"
+              alt="TechArena"
+            />
+            <h1 className="h3 fw-bold">Não foi possível carregar seu perfil</h1>
+            <p className="text-body-secondary">
+              Não foi possível carregar os dados do seu perfil. Tente novamente
+              em alguns instantes.
+            </p>
+            <ErrorState message={profileError ?? 'Perfil indisponível.'} />
+            {logoutError && (
+              <div className="mt-3">
+                <ErrorState message={logoutError} />
+              </div>
+            )}
+            <div className="d-flex flex-wrap gap-2 mt-3">
+              <Button variant="primary" onClick={() => void refreshProfile()}>
+                Tentar novamente
+              </Button>
+              <Button
+                variant="outline-secondary"
+                onClick={() => void handleLogout()}
+              >
+                Sair
+              </Button>
+            </div>
+          </Col>
+        </Row>
+      </Container>
     );
   }
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
-        <NavLink to="/" className="brand-lockup" aria-label="TechArena, início">
-          <img src={logo} alt="" className="brand-logo" />
-          <span>TECHARENA</span>
-        </NavLink>
-        <div className="sidebar-caption">MENU PRINCIPAL</div>
-        <nav className="sidebar-nav" aria-label="Navegação principal">
-          {navigation.slice(0, 3).map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={'end' in item ? item.end : false}
-              className={({ isActive }) =>
-                `sidebar-link${isActive ? ' active' : ''}`
-              }
-            >
-              <i className={`bi ${item.icon}`} aria-hidden="true" />
-              {item.label}
-            </NavLink>
-          ))}
-          <CommunityNavigation open={communitiesOpen} active={isCommunityRoute} onToggle={() => setCommunitiesOpen((open) => !open)} />
-          {navigation.slice(3).map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={'end' in item ? item.end : false}
-              className={({ isActive }) =>
-                `sidebar-link${isActive ? ' active' : ''}`
-              }
-            >
-              <i className={`bi ${item.icon}`} aria-hidden="true" />
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
-      </aside>
+    <Container
+      fluid
+      className="vh-100 d-flex flex-column bg-body-tertiary p-0 overflow-hidden"
+    >
+      <a
+        href="#main-content"
+        className="visually-hidden-focusable position-absolute top-0 start-0 z-3 bg-body p-3"
+      >
+        Pular para o conteúdo
+      </a>
+      <Row className="g-0 h-100 flex-column flex-lg-row flex-nowrap overflow-hidden">
+        <Col
+          as="aside"
+          xs={12}
+          lg={3}
+          xxl={2}
+          className="bg-body border-end border-bottom flex-shrink-0 mh-100 overflow-auto p-3 p-lg-4"
+        >
+          <Navbar expand="lg" className="d-block p-0" key={location.pathname}>
+            <div className="d-flex align-items-center justify-content-between gap-2 mb-lg-4">
+              <NavLink
+                to="/"
+                className="d-flex align-items-center gap-2 text-body text-decoration-none fw-bold"
+                aria-label="TechArena, início"
+              >
+                <img
+                  src={logo}
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="object-fit-contain bg-white rounded-3 p-1"
+                />
+                <span>TECHARENA</span>
+              </NavLink>
+              <Navbar.Toggle
+                aria-controls="main-navigation"
+                label="Abrir ou fechar menu"
+              />
+            </div>
+            <Navbar.Collapse id="main-navigation" className="mt-3 mt-lg-0">
+              <div className="w-100">
+                <div className="d-none d-lg-block small fw-semibold text-body-secondary mb-3">
+                  MENU PRINCIPAL
+                </div>
+                <Nav
+                  as="nav"
+                  variant="pills"
+                  className="flex-column gap-2"
+                  aria-label="Navegação principal"
+                >
+                  {navigation.slice(0, 3).map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={'end' in item ? item.end : false}
+                      className={({ isActive }) =>
+                        `nav-link d-flex align-items-center gap-3 rounded-3 px-3 py-2${isActive ? ' active' : ' text-body'}`
+                      }
+                    >
+                      <i className={`bi ${item.icon}`} aria-hidden="true" />
+                      {item.label}
+                    </NavLink>
+                  ))}
+                  <CommunityNavigation
+                    open={communitiesOpen}
+                    active={isCommunityRoute}
+                    onToggle={() => setCommunitiesOpen((open) => !open)}
+                  />
+                  {navigation.slice(3).map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={'end' in item ? item.end : false}
+                      className={({ isActive }) =>
+                        `nav-link d-flex align-items-center gap-3 rounded-3 px-3 py-2${isActive ? ' active' : ' text-body'}`
+                      }
+                    >
+                      <i className={`bi ${item.icon}`} aria-hidden="true" />
+                      {item.label}
+                    </NavLink>
+                  ))}
+                </Nav>
+              </div>
+            </Navbar.Collapse>
+          </Navbar>
+        </Col>
 
-      <div className="app-main">
-        <Navbar className="topbar">
-          <div className="topbar-mobile-brand">
-            <img src={logo} alt="" />
-            <span>TECHARENA</span>
-          </div>
-          <div className="topbar-current">
-            {navigation.find((item) => item.to === location.pathname)?.label ??
-              communityNavigation.find((item) =>
-                item.to === '/chat'
-                  ? location.pathname.startsWith(item.to)
-                  : item.to === location.pathname,
-              )?.label ??
-              'TechArena'}
-          </div>
-          <div className="topbar-user">
-            <div className="user-avatar">
-              {profile.image ? (
-                <Image src={profile.image} alt="" roundedCircle />
-              ) : (
-                (profile.name ?? profile.username ?? 'A')
-                  .slice(0, 1)
-                  .toUpperCase()
-              )}
+        <Col
+          xs={12}
+          lg={9}
+          xxl={10}
+          className="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden"
+        >
+          <Navbar className="bg-body border-bottom px-3 px-md-4 py-3 gap-3">
+            <div className="small text-body-secondary fw-semibold">
+              {navigation.find((item) => item.to === location.pathname)
+                ?.label ??
+                communityNavigation.find((item) =>
+                  item.to === '/chat'
+                    ? location.pathname.startsWith(item.to)
+                    : item.to === location.pathname,
+                )?.label ??
+                'TechArena'}
             </div>
-            <div className="user-summary">
-              <strong>
-                {profile.name ??
-                  profile.username ??
-                  session?.user.email ??
-                  'Atleta'}
-              </strong>
-              <small>
-                {profile.username ? `@${profile.username}` : 'Atleta TechArena'}
-              </small>
+            <div className="d-flex align-items-center gap-2 ms-auto">
+              <ProfileAvatar
+                name={profile.name ?? profile.username}
+                image={profile.image}
+              />
+              <div className="d-none d-sm-flex flex-column small text-break">
+                <strong>
+                  {profile.name ??
+                    profile.username ??
+                    session?.user.email ??
+                    'Atleta'}
+                </strong>
+                <small className="text-body-secondary">
+                  {profile.username
+                    ? `@${profile.username}`
+                    : 'Atleta TechArena'}
+                </small>
+              </div>
             </div>
-          </div>
-        </Navbar>
-        <main className="page-content">
-          <Outlet />
-        </main>
-        <footer className="app-footer">
-          TechArena · esporte é melhor em equipe
-        </footer>
-      </div>
-    </div>
+          </Navbar>
+          <Container
+            fluid
+            as="main"
+            id="main-content"
+            tabIndex={-1}
+            className="flex-grow-1 overflow-auto p-3 p-md-4 p-xl-5"
+          >
+            <Outlet />
+          </Container>
+          <footer className="small text-body-secondary px-3 px-md-4 pb-4">
+            TechArena · esporte é melhor em equipe
+          </footer>
+        </Col>
+      </Row>
+    </Container>
   );
 }

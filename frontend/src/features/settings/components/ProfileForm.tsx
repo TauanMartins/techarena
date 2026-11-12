@@ -1,7 +1,7 @@
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
-import Image from "react-bootstrap/Image";
+import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
 import type { SubmitEvent } from "react";
 import type { Profile } from "../types/settings.types";
 import type { ProfileFormInput } from "../schemas/profile.schema";
@@ -11,7 +11,7 @@ export function ProfileForm({ profile, email, today, register, errors, busy, onS
   errors: FieldErrors<ProfileFormInput>; busy: boolean; onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
 }) {
   return <Form onSubmit={onSubmit} noValidate>
-    <div className="settings-profile-photo mb-4"><div className="settings-profile-avatar">{profile?.image ? <Image src={profile.image} alt="Foto de perfil" roundedCircle /> : (profile?.name ?? profile?.username ?? "A").slice(0, 1).toUpperCase()}</div><div><strong>Foto de perfil</strong><p className="mb-0">A foto vinculada à sua conta é exibida aqui e não pode ser alterada nesta tela.</p></div></div>
+    <div className="d-flex align-items-center gap-3 mb-4"><ProfileAvatar name={null} image={profile?.image ?? null} size={80} /><div><strong>Foto de perfil</strong><p className="mb-0">A foto vinculada à sua conta é exibida aqui e não pode ser alterada nesta tela.</p></div></div>
     <Form.Group className="mb-3"><Form.Label htmlFor="profile-name">Nome</Form.Label><Form.Control id="profile-name" autoComplete="name" isInvalid={!!errors.name} {...register("name")} /><Form.Control.Feedback type="invalid">{errors.name?.message}</Form.Control.Feedback></Form.Group>
     <Form.Group className="mb-3"><Form.Label htmlFor="profile-username">Nome de usuário</Form.Label><Form.Control id="profile-username" aria-describedby="username-help" autoComplete="username" isInvalid={!!errors.username} {...register("username")} /><Form.Text id="username-help">Use letras minúsculas, números e sublinhado.</Form.Text><Form.Control.Feedback type="invalid">{errors.username?.message}</Form.Control.Feedback></Form.Group>
     <Form.Group className="mb-3"><Form.Label htmlFor="profile-birth-date">Data de nascimento</Form.Label><Form.Control id="profile-birth-date" type="date" max={today} autoComplete="bday" aria-describedby="birth-date-help" isInvalid={!!errors.birthDate} {...register("birthDate")} /><Form.Text id="birth-date-help">Informe uma data válida. É necessário ter pelo menos 18 anos para participar de agendamentos.</Form.Text><Form.Control.Feedback type="invalid">{errors.birthDate?.message}</Form.Control.Feedback></Form.Group>

@@ -13,7 +13,7 @@ export function LeagueTeamsPanel({ league, details, eligibleTeams, teamSearch, s
   onSearch: (event: SubmitEvent<HTMLFormElement>) => void; onInvite: (event: SubmitEvent<HTMLFormElement>) => void;
   onRemove: (teamId: string) => void;
 }) {
-  return <Card className="content-card mb-4"><Card.Body><h3 className="h4">Equipes inscritas</h3>
+  return <Card className="border rounded-4 shadow-sm bg-body mb-4"><Card.Body><h3 className="h4">Equipes inscritas</h3>
     {!details.teams.length ? <p className="text-secondary">Ainda não há equipes inscritas.</p> : <ul className="list-group mb-3">{details.teams.map((team) => {
       const canRemove = league.isOwner || details.myCaptainTeamIds.includes(team.id);
       return <li className="list-group-item d-flex justify-content-between align-items-center gap-2" key={team.id}><span><strong>{team.name}</strong>{team.groupNumber && <Badge bg="secondary" className="ms-2">Grupo {team.groupNumber}</Badge>}{team.captainName && <span className="text-secondary ms-2">Capitão: {team.captainName}</span>}</span>

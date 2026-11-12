@@ -19,7 +19,7 @@ export function TeamDetailsModal(props: TeamDetailsModalProps) {
   const { team, members, requests, candidates, loading, search, invitingUserId, joined, requestPending, onClose, onSearchChange, onSearchSubmit, onInvite, onDecideRequest, onRequestJoin, onOpenChat } = props;
   return <Modal show={team !== null} onHide={onClose} centered size="lg"><Modal.Header closeButton><Modal.Title>{team?.name ?? "Equipe"}</Modal.Title></Modal.Header><Modal.Body>
     {team && <>
-      {team.image && <Image className="team-detail-image mb-3" src={team.image} alt={`Imagem da equipe ${team.name}`} />}
+      {team.image && <Image className="w-100 object-fit-contain rounded-3 mb-3" src={team.image} alt={`Imagem da equipe ${team.name}`} />}
       <p>{team.description || "Esta equipe ainda não tem uma descrição."}</p>
       <p className="text-secondary">{team.role ? `Seu papel: ${team.role}` : "Explore a equipe e solicite participação para entrar."}</p><hr />
       <TeamMembersList members={members} loading={loading} />

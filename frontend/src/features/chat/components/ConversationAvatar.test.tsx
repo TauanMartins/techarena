@@ -6,7 +6,7 @@ import { ConversationAvatar } from './ConversationAvatar';
 describe('ConversationAvatar', () => {
   it('uses profile presentation for direct conversations', () => {
     render(<ConversationAvatar conversation={{ id: 'u1', kind: 'direct', label: 'Ana', image: null }} />);
-    expect(screen.getByText('A')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Avatar padrão de Ana' })).toBeInTheDocument();
   });
 
   it('uses a team or appointment icon when no image is available', () => {

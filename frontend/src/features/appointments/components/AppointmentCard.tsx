@@ -22,62 +22,62 @@ export function AppointmentCard({
   const scheduledAt = new Date(appointment.scheduledAt);
   const [showDetails, setShowDetails] = useState(false);
   return (
-    <Card className="event-card h-100">
+    <Card className="border rounded-4 shadow-sm h-100">
       <Card.Body>
         {appointment.arenaImage && (
           <Card.Img
-            className="event-card-image"
+            height={170} className="w-100 object-fit-cover rounded-3 mb-3"
             variant="top"
             src={appointment.arenaImage}
             alt={`Arena de ${appointment.title}`}
           />
         )}
-        <div className="event-card-topline">
-          <span className="sport-tag">
+        <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span className="d-inline-flex align-items-center gap-2 small fw-semibold text-body">
             <SportIcon name={appointment.sportName ?? ''} />
             {appointment.sportName ?? 'Esporte'}
           </span>
-          <span className="event-status">
+          <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">
             {appointment.status === 'scheduled'
               ? 'Confirmado'
               : appointment.status}
           </span>
         </div>
-        <h3>{appointment.title}</h3>
-        <p className="event-description">
+        <h3 className="h5 fw-bold mt-3 mb-2">{appointment.title}</h3>
+        <p className="text-body-secondary mb-0">
           {appointment.description ||
             'Encontre pessoas para jogar e pratique seu esporte favorito.'}
         </p>
-        <div className="event-meta">
+        <div className="d-flex flex-column gap-2 mt-3 small text-body-secondary">
           <span>
-            <i className="bi bi-calendar3" />
+            <i className="me-2 bi bi-calendar3" />
             {scheduledAt.toLocaleDateString('pt-BR')}
           </span>
           <span>
-            <i className="bi bi-clock" />
+            <i className="me-2 bi bi-clock" />
             {scheduledAt.toLocaleTimeString('pt-BR', {
               hour: '2-digit',
               minute: '2-digit',
             })}
           </span>
           <span>
-            <i className="bi bi-geo-alt" />
+            <i className="me-2 bi bi-geo-alt" />
             {appointment.arenaAddress ?? 'Local a confirmar'}
           </span>
           <span>
-            <i className="bi bi-people" />
+            <i className="me-2 bi bi-people" />
             {appointment.players} participantes
           </span>
           {appointment.maxPlayers !== null && (
             <span>
-              <i className="bi bi-person-fill-check" />
+              <i className="me-2 bi bi-person-fill-check" />
               {appointment.startingPlayers}/{appointment.maxPlayers} vagas
               titulares
             </span>
           )}
           {appointment.distanceKm !== null && (
             <span>
-              <i className="bi bi-signpost-2" />
+              <i className="me-2 bi bi-signpost-2" />
               {appointment.distanceKm.toFixed(1)} km
             </span>
           )}
@@ -107,7 +107,7 @@ export function AppointmentCard({
           </Modal.Header>
           <Modal.Body>
             <p>{appointment.description || 'Sem descrição adicional.'}</p>
-            <dl className="appointment-details">
+            <dl className="mt-3 small">
               <dt>Esporte</dt>
               <dd>{appointment.sportName ?? 'Não informado'}</dd>
               <dt>Data e horário</dt>
@@ -146,14 +146,14 @@ export function AppointmentCard({
                 <>
                   <dt>Atletas</dt>
                   <dd>
-                    <div className="people-list">
+                    <div className="list-group rounded-3">
                       {appointment.participants.map((participant) => (
-                        <div className="person-row" key={participant.id}>
+                        <div className="list-group-item d-flex flex-wrap align-items-center gap-3 p-3" key={participant.id}>
                           <ProfileAvatar
                             name={participant.name}
                             image={participant.image}
                           />
-                          <div className="person-info">
+                          <div className="d-flex flex-column gap-1 text-break me-auto">
                             <strong>{participant.name ?? 'Atleta'}</strong>
                             <span>
                               {participant.username
@@ -164,7 +164,7 @@ export function AppointmentCard({
                             </span>
                           </div>
                           {participant.holder && (
-                            <span className="team-role">Titular</span>
+                            <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">Titular</span>
                           )}
                         </div>
                       ))}

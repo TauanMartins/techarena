@@ -44,10 +44,10 @@ export function CommunityPage() {
 
   return <>
     <PageHeading eyebrow="CONEXÕES" title="Comunidade" description="Encontre atletas, construa amizades e combine o próximo jogo." />
-    {notice && <div className="inline-notice" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
+    {notice && <div className="alert alert-success d-flex align-items-center gap-2" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
     {error && <ErrorState message={error instanceof Error ? error.message : "Não foi possível carregar a comunidade."} />}
     {searchError && <ErrorState message={searchError} />}
-    <Card className="content-card mb-4"><Card.Body><div className="section-title-row"><div><span className="eyebrow">NOVAS CONEXÕES</span><h2>Encontrar atletas</h2></div></div>
+    <Card className="border rounded-4 shadow-sm bg-body mb-4"><Card.Body><div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3"><div><span className="d-block small fw-semibold text-body-secondary mb-1">NOVAS CONEXÕES</span><h2>Encontrar atletas</h2></div></div>
       <AthleteDirectory people={people} friends={friendIds} requested={requestedIds} search={search} onSearchChange={setSearch} onSearch={submitSearch} onDetails={setSelectedPerson} onRequest={(id) => void requestFriend(id)} busy={mutations.request.isPending} />
       {directoryQuery.isFetching && <LoadingState label="Buscando atletas..." />}
       {!directoryQuery.isFetching && !people.length && <EmptyState icon="bi-person-search" title={search.trim().length >= 2 ? "Nenhum atleta encontrado" : "Busque atletas da comunidade"} description={search.trim().length >= 2 ? "Experimente buscar por outro nome ou usuário." : "Digite pelo menos 2 caracteres para encontrar pessoas."} />}
