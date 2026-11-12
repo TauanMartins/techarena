@@ -2,13 +2,13 @@ import type { FieldErrors, UseFormRegister } from "react-hook-form";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Image from "react-bootstrap/Image";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import type { Profile } from "../types/settings.types";
 import type { ProfileFormInput } from "../schemas/profile.schema";
 
 export function ProfileForm({ profile, email, today, register, errors, busy, onSubmit }: {
   profile: Profile | null; email: string; today: string; register: UseFormRegister<ProfileFormInput>;
-  errors: FieldErrors<ProfileFormInput>; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  errors: FieldErrors<ProfileFormInput>; busy: boolean; onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
 }) {
   return <Form onSubmit={onSubmit} noValidate>
     <div className="settings-profile-photo mb-4"><div className="settings-profile-avatar">{profile?.image ? <Image src={profile.image} alt="Foto de perfil" roundedCircle /> : (profile?.name ?? profile?.username ?? "A").slice(0, 1).toUpperCase()}</div><div><strong>Foto de perfil</strong><p className="mb-0">A foto vinculada à sua conta é exibida aqui e não pode ser alterada nesta tela.</p></div></div>

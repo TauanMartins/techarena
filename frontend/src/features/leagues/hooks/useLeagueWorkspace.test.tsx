@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestQueryClient, createTestWrapper } from "../../../test/test-utils";
 import { leaguesApi } from "../api/leagues.api";
@@ -26,7 +26,7 @@ function mockWorkspace(withDetails = true) {
   } as never);
 }
 
-function eventFor(values: Record<string, string> = {}): FormEvent<HTMLFormElement> {
+function eventFor(values: Record<string, string> = {}): SubmitEvent<HTMLFormElement> {
   const form = document.createElement("form");
   for (const [name, value] of Object.entries(values)) {
     const input = document.createElement("input");
@@ -34,7 +34,7 @@ function eventFor(values: Record<string, string> = {}): FormEvent<HTMLFormElemen
     input.value = value;
     form.append(input);
   }
-  return { preventDefault: vi.fn(), currentTarget: form } as unknown as FormEvent<HTMLFormElement>;
+  return { preventDefault: vi.fn(), currentTarget: form } as unknown as SubmitEvent<HTMLFormElement>;
 }
 
 describe("useLeagueWorkspace", () => {

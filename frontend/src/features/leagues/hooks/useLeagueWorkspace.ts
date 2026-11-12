@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { leaguesApi } from "../api/leagues.api";
 import { useLeaguesData } from "./useLeaguesData";
@@ -66,14 +66,14 @@ export function useLeagueWorkspace(token: string, userId: string) {
   async function refresh() {
     await Promise.all([client.invalidateQueries({ queryKey: queryKeys.leagues(userId) }), leagueId ? client.invalidateQueries({ queryKey: queryKeys.leagueDetails(userId, leagueId) }) : Promise.resolve()]);
   }
-  async function createLeague(event: FormEvent<HTMLFormElement>) {
+  async function createLeague(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault(); const form = new FormData(event.currentTarget);
     const parsed = leagueCreateFormSchema.safeParse({ name: form.get("name"), description: form.get("description") ?? "", sportId: form.get("sportId"), tournamentFormat: form.get("tournamentFormat") ?? "round_robin", groupCount: form.get("groupCount") ?? 2, qualifiersPerGroup: form.get("qualifiersPerGroup") ?? 2 });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message ?? "Confira os dados da liga."); return; }
     const created = await run<LeagueSummary>({ kind: "create", payload: parsed.data }, "Liga criada. Inscreva equipes e organize as partidas.");
     if (created) { setShowCreate(false); setSelectedLeagueId(created.id); await client.invalidateQueries({ queryKey: queryKeys.leagues(userId) }); }
   }
-  async function updateLeague(event: FormEvent<HTMLFormElement>) {
+  async function updateLeague(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault(); const details = data.details; if (!details) return;
     const form = new FormData(event.currentTarget);
     const parsed = leagueUpdateFormSchema.safeParse({ name: form.get("name"), description: form.get("description") ?? "", tournamentFormat: form.get("tournamentFormat") ?? details.league.tournamentFormat, groupCount: form.get("groupCount") ?? details.league.groupCount, qualifiersPerGroup: form.get("qualifiersPerGroup") ?? details.league.qualifiersPerGroup });
@@ -86,17 +86,17 @@ export function useLeagueWorkspace(token: string, userId: string) {
     if (!window.confirm(prompt)) return;
     const updated = await run({ kind: "status", leagueId: details.league.id, status }, status === "completed" ? "Liga encerrada." : "Liga cancelada."); if (updated) await refresh();
   }
-  async function generateFixtures(event: FormEvent<HTMLFormElement>, nextRound = false) {
+  async function generateFixtures(event: SubmitEvent<HTMLFormElement>, nextRound = false) {
     event.preventDefault(); const details = data.details; if (!details) return;
     const form = new FormData(event.currentTarget);
     const generated = await run({ kind: "generate", leagueId: details.league.id, nextRound, payload: { arenaId: data.selectedArenaId, scheduleId: String(form.get("scheduleId") ?? ""), date: matchDate, daysBetweenMatches: Number(form.get("daysBetweenMatches") ?? 1) } }, nextRound ? "Próxima fase agendada." : "Calendário gerado."); if (generated) await refresh();
   }
-  async function registerTeam(event: FormEvent<HTMLFormElement>) {
+  async function registerTeam(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault(); if (!data.details || !teamId) return;
     const registered = await run({ kind: "register", leagueId: data.details.league.id, teamId }, "Equipe inscrita na liga."); if (registered) await refresh();
   }
-  function searchTeams(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(null); setSubmittedTeamSearch(teamSearch.trim()); setTeamSearchPerformed(true); setInviteTeamId(""); }
-  async function inviteTeam(event: FormEvent<HTMLFormElement>) {
+  function searchTeams(event: SubmitEvent<HTMLFormElement>) { event.preventDefault(); setError(null); setSubmittedTeamSearch(teamSearch.trim()); setTeamSearchPerformed(true); setInviteTeamId(""); }
+  async function inviteTeam(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault(); if (!data.details || !inviteTeamId) return;
     const done = await run({ kind: "invite", leagueId: data.details.league.id, teamId: inviteTeamId }, "Convite enviado ao capitão da equipe.");
     if (done) { setTeamSearchPerformed(false); setSubmittedTeamSearch(""); setInviteTeamId(""); await refresh(); }
@@ -105,7 +105,7 @@ export function useLeagueWorkspace(token: string, userId: string) {
     const done = await run({ kind: "respondInvitation", invitationId, action }, action === "accept" ? "Convite aceito. A equipe está inscrita na liga." : "Convite recusado."); if (done) await refresh();
   }
   async function removeTeam(teamIdToRemove: string) { if (!data.details) return; const removed = await run({ kind: "remove", leagueId: data.details.league.id, teamId: teamIdToRemove }, "Equipe removida da liga."); if (removed) await refresh(); }
-  async function scheduleMatch(event: FormEvent<HTMLFormElement>) {
+  async function scheduleMatch(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault(); if (!data.details) return; const form = new FormData(event.currentTarget);
     const created = await run({ kind: "createMatch", leagueId: data.details.league.id, payload: { homeTeamId: String(form.get("homeTeamId") ?? ""), awayTeamId: String(form.get("awayTeamId") ?? ""), arenaId: data.selectedArenaId, scheduleId: String(form.get("scheduleId") ?? ""), date: matchDate } }, "Partida agendada."); if (created) await refresh();
   }
@@ -116,7 +116,7 @@ export function useLeagueWorkspace(token: string, userId: string) {
     const saved = await run({ kind: "result", leagueId: data.details.league.id, matchId: match.id, payload: parsed.data }, "Resultado registrado e classificação atualizada."); if (saved) await refresh();
   }
   async function cancelMatch(matchId: string) { if (!data.details || !window.confirm("Cancelar esta partida?")) return; const canceled = await run({ kind: "cancelMatch", leagueId: data.details.league.id, matchId }, "Partida cancelada."); if (canceled) await refresh(); }
-  async function rescheduleMatch(event: FormEvent<HTMLFormElement>, match: LeagueMatch) {
+  async function rescheduleMatch(event: SubmitEvent<HTMLFormElement>, match: LeagueMatch) {
     event.preventDefault(); if (!data.details) return; const form = new FormData(event.currentTarget);
     const done = await run({ kind: "reschedule", leagueId: data.details.league.id, matchId: match.id, payload: { homeTeamId: match.homeTeam.id, awayTeamId: match.awayTeam.id, arenaId: data.selectedArenaId, scheduleId: String(form.get("scheduleId") ?? ""), date: matchDate } }, "Partida reagendada.");
     if (done) { setReschedulingId(""); await refresh(); }

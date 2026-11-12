@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import { useAuth } from "../auth/useAuth";
@@ -30,7 +30,7 @@ export function CommunityPage() {
   const requestedIds = new Set(groups?.requestedFriends.items.map((friend) => friend.user.id) ?? []);
   const error = groupsQuery.error ?? directoryQuery.error ?? mutations.request.error ?? mutations.decide.error;
 
-  function submitSearch(event: FormEvent<HTMLFormElement>) {
+  function submitSearch(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (search.trim().length < 2) { setSearchError("Digite pelo menos 2 caracteres para buscar atletas."); return; }
     setSearchError(null); setSubmittedSearch(search.trim());

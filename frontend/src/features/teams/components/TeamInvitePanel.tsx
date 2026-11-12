@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import type { MembershipRequest, TeamMember, UserCard } from "../types/teams.types";
@@ -6,7 +6,7 @@ import { ProfileAvatar } from "../../../components/ui/ProfileAvatar";
 
 export function TeamInvitePanel({ members, requests, candidates, search, invitingUserId, onSearchChange, onSearchSubmit, onInvite, onDecideRequest }: {
   members: TeamMember[]; requests: MembershipRequest[]; candidates: UserCard[]; search: string; invitingUserId: string | null;
-  onSearchChange: (value: string) => void; onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSearchChange: (value: string) => void; onSearchSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onInvite: (user: UserCard) => void; onDecideRequest: (request: MembershipRequest, action: "accept" | "decline") => void;
 }) {
   const pendingRequests = requests.filter((request) => request.kind === "request" && request.status === "pending");

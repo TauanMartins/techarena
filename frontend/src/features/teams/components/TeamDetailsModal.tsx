@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Button from "react-bootstrap/Button";
 import Image from "react-bootstrap/Image";
 import Modal from "react-bootstrap/Modal";
@@ -10,7 +10,7 @@ export type { TeamOverview } from "../types/teams.types";
 interface TeamDetailsModalProps {
   team: TeamOverview | TeamMembership | null; members: TeamMember[]; requests: MembershipRequest[]; candidates: UserCard[];
   loading: boolean; search: string; invitingUserId: string | null; joined: boolean; requestPending: boolean;
-  onClose: () => void; onSearchChange: (value: string) => void; onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onClose: () => void; onSearchChange: (value: string) => void; onSearchSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onInvite: (candidate: UserCard) => void; onDecideRequest: (request: MembershipRequest, action: "accept" | "decline") => void;
   onRequestJoin: (team: TeamOverview) => void; onOpenChat: (teamId: string) => void;
 }

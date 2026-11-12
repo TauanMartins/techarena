@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
@@ -10,8 +10,8 @@ interface ScheduleProps {
   league: LeagueSummary; teams: LeagueTeam[]; matchesCount: number; arenas: LeagueArena[]; arenaId: string;
   date: string; schedules: Schedule[]; saving: boolean;
   onDateChange: (date: string) => void; onArenaChange: (id: string) => void;
-  onGenerate: (event: FormEvent<HTMLFormElement>, nextRound?: boolean) => void;
-  onSchedule: (event: FormEvent<HTMLFormElement>) => void;
+  onGenerate: (event: SubmitEvent<HTMLFormElement>, nextRound?: boolean) => void;
+  onSchedule: (event: SubmitEvent<HTMLFormElement>) => void;
 }
 
 function MatchTimeFields({ arenas, arenaId, date, schedules, onDateChange, onArenaChange, prefix }: Pick<ScheduleProps, "arenas" | "arenaId" | "date" | "schedules" | "onDateChange" | "onArenaChange"> & { prefix: string }) {

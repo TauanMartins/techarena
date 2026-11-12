@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import type { ComponentProps, FormEvent } from 'react';
+import type { ComponentProps, SubmitEvent } from 'react';
 import type { LeagueMatch } from '../types/leagues.types';
 import { LeagueMatchCard } from './LeagueMatchCard';
 
@@ -29,7 +29,7 @@ describe('LeagueMatchCard', () => {
     const user = userEvent.setup();
     const onSaveResult = vi.fn();
     const onCancel = vi.fn();
-    const onReschedule = vi.fn((event: FormEvent<HTMLFormElement>) => event.preventDefault());
+    const onReschedule = vi.fn((event: SubmitEvent<HTMLFormElement>) => event.preventDefault());
     const onToggleReschedule = vi.fn();
     const componentProps = props({ onSaveResult, onCancel, onReschedule, onToggleReschedule });
     const { rerender } = render(<LeagueMatchCard {...componentProps} />);

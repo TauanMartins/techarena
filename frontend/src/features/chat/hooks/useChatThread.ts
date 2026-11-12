@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type SubmitEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { conversationTopic } from "./realtime";
 import { mergeChatMessages, type ChatMessage } from "../api/message-mapper";
@@ -110,7 +110,7 @@ export function useChatThread({
     }
   }
 
-  async function sendMessage(event: FormEvent<HTMLFormElement>) {
+  async function sendMessage(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const messageText = currentDraft.text.trim();
     if (!selectedTopic || !supabase || !messageText || realtime.connection !== "connected") return;
