@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
@@ -12,7 +12,7 @@ interface LeagueMatchCardProps {
   arenas: LeagueArena[]; arenaId: string; availability: Schedule[]; scores: { home: string; away: string }; saving: boolean;
   onScoreChange: (side: "home" | "away", value: string) => void; onSaveResult: () => void; onCancel: () => void;
   onToggleReschedule: () => void; onDateChange: (date: string) => void; onArenaChange: (id: string) => void;
-  onReschedule: (event: FormEvent<HTMLFormElement>) => void;
+  onReschedule: (event: SubmitEvent<HTMLFormElement>) => void;
 }
 
 export function LeagueMatchCard(props: LeagueMatchCardProps) {

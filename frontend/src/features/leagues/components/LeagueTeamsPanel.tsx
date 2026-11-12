@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
@@ -9,8 +9,8 @@ import type { TeamMembership, Team } from "../../../shared/types";
 export function LeagueTeamsPanel({ league, details, eligibleTeams, teamSearch, searchPerformed, inviteTeamId, teamId, teamSearchResults, invitableTeams, searching, saving, onRegister, onTeamChange, onInviteTeamChange, onSearchChange, onSearch, onInvite, onRemove }: {
   league: LeagueSummary; details: LeagueDetails; eligibleTeams: TeamMembership[]; teamSearch: string; searchPerformed: boolean; inviteTeamId: string; teamId: string;
   teamSearchResults: Team[]; invitableTeams: Team[]; searching: boolean; saving: boolean;
-  onRegister: (event: FormEvent<HTMLFormElement>) => void; onTeamChange: (value: string) => void; onInviteTeamChange: (value: string) => void; onSearchChange: (value: string) => void;
-  onSearch: (event: FormEvent<HTMLFormElement>) => void; onInvite: (event: FormEvent<HTMLFormElement>) => void;
+  onRegister: (event: SubmitEvent<HTMLFormElement>) => void; onTeamChange: (value: string) => void; onInviteTeamChange: (value: string) => void; onSearchChange: (value: string) => void;
+  onSearch: (event: SubmitEvent<HTMLFormElement>) => void; onInvite: (event: SubmitEvent<HTMLFormElement>) => void;
   onRemove: (teamId: string) => void;
 }) {
   return <Card className="content-card mb-4"><Card.Body><h3 className="h4">Equipes inscritas</h3>

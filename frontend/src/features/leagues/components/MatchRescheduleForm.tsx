@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import type { LeagueArena } from "../types/leagues.types";
@@ -7,7 +7,7 @@ import { localDate } from "../date";
 
 export function MatchRescheduleForm({ matchId, date, arenaId, arenas, schedules, saving, onDateChange, onArenaChange, onSubmit, onCancel }: {
   matchId: string; date: string; arenaId: string; arenas: LeagueArena[]; schedules: Schedule[]; saving: boolean;
-  onDateChange: (value: string) => void; onArenaChange: (value: string) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void;
+  onDateChange: (value: string) => void; onArenaChange: (value: string) => void; onSubmit: (event: SubmitEvent<HTMLFormElement>) => void; onCancel: () => void;
 }) {
   return <Form className="row g-2 mt-2" onSubmit={onSubmit}>
     <Form.Group className="col-md-4" controlId={`reschedule-date-${matchId}`}><Form.Label className="small">Nova data</Form.Label><Form.Control type="date" min={localDate()} value={date} onChange={(event) => onDateChange(event.target.value)} required /></Form.Group>

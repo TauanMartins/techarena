@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Button from "react-bootstrap/Button";
@@ -42,13 +42,13 @@ export function TeamsPage() {
     setSubmittedInviteSearch("");
     actions.setError(null);
   }
-  function searchCandidates(event: FormEvent<HTMLFormElement>) {
+  function searchCandidates(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (inviteSearch.trim().length < 2) { actions.setError("Digite pelo menos 2 caracteres para buscar atletas."); return; }
     actions.setError(null);
     setSubmittedInviteSearch(inviteSearch.trim());
   }
-  function searchTeams(event: FormEvent<HTMLFormElement>) {
+  function searchTeams(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setCatalogSearch(search);
   }

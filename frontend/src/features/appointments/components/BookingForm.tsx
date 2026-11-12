@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
@@ -31,7 +31,7 @@ export function BookingForm({ titlePrefix = "Partida de", onCreated }: { titlePr
   const availableArenas = arenas.filter((arena) => !values.sportId || arena.sportIds.includes(values.sportId));
   const slots = availabilityQuery.data?.items ?? [];
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const parsed = bookingFormSchema.safeParse(values);
     if (!parsed.success) {

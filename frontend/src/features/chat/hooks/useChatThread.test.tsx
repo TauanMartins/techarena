@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { FormEvent } from "react";
+import type { SubmitEvent } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestWrapper } from "../../../test/test-utils";
 import { createChatMessage, loadLatestMessages, loadOlderMessages } from "../api/message-data";
@@ -30,7 +30,7 @@ const conversation = { id: "team-1", kind: "team" as const, label: "Equipe" };
 const initialMessage = {
   id: "message-1", userId: "other-user", name: "Bia", text: "Olá", createdAt: "2026-01-01T00:00:00Z",
 };
-const submitEvent = { preventDefault: vi.fn() } as unknown as FormEvent<HTMLFormElement>;
+const submitEvent = { preventDefault: vi.fn() } as unknown as SubmitEvent<HTMLFormElement>;
 
 describe("useChatThread", () => {
   beforeEach(() => {
