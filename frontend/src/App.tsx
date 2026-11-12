@@ -48,18 +48,26 @@ const TeamsPage = lazy(() =>
 function ApplicationRoutes() {
   const { session, profile, loading, profileLoading, profileError } = useAuth();
   if (loading) {
-    return <main className="login-loading"><LoadingState label="Restaurando sua sessão..." /></main>;
+    return (
+      <main className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-4">
+        <LoadingState label="Restaurando sua sessão..." />
+      </main>
+    );
   }
   if (!session) return <LoginPage />;
   if (profileLoading) {
-    return <main className="login-loading"><LoadingState label="Carregando seu perfil..." /></main>;
+    return (
+      <main className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-4">
+        <LoadingState label="Carregando seu perfil..." />
+      </main>
+    );
   }
   if (profileError || !profile) return <AppShell />;
 
   return (
     <Suspense
       fallback={
-        <main className="login-loading">
+        <main className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary p-4">
           <LoadingState label="Carregando página..." />
         </main>
       }

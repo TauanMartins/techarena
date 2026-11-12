@@ -68,3 +68,31 @@ Componentes de tela extensos devem ser divididos por fluxo de usuario e nao apen
 ## Testes
 
 Os testes cobrem a inclusao do access token e a propagacao de erros da API, a validacao de topicos de conversa e a conversao/ordenacao de mensagens persistidas.
+
+## Base visual e temas
+
+O núcleo visual usa Bootstrap 5.3 e React-Bootstrap, com Bootstrap Icons para ícones.
+O `ThemeProvider` aplica a preferência existente (`light`, `dark` ou `system`) em
+`data-bs-theme` no elemento `html`; cores e estados dos componentes vêm do Bootstrap.
+
+- Superfície principal: `bg-body`; fundo da aplicação: `bg-body-tertiary`.
+- Texto: `text-body` e `text-body-secondary`; destaque: `text-primary-emphasis`.
+- Ações principais: `primary`; feedback: variantes nativas `success`, `warning` e `danger`.
+- Layout: `Container`, `Row`, `Col` e utilitários responsivos; cartões: `border`, `rounded-4`, `shadow-sm`.
+- Não adicionar estilos inline, CSS Modules ou sobrescritas globais dos componentes Bootstrap.
+
+O frontend não importa CSS próprio: apenas Bootstrap e Bootstrap Icons em `main.tsx`.
+Não criar `index.css`, classes específicas de componentes ou folhas de estilo alternativas.
+Use `Container` para limitar a largura, `Row`/`Col` para grades responsivas e `Stack`
+ou utilitários flex para alinhamentos simples. Classes Bootstrap em elementos semânticos
+(`main`, `section`, `header`) são igualmente válidas e evitam contêineres desnecessários.
+
+O login possui uma composição própria com cartão de acesso e apresentação da comunidade.
+As demais funcionalidades tiveram suas dependências de CSS substituídas por utilitários
+nativos; seu refinamento visual por área permanece para as próximas etapas.
+
+Avatares usam o componente compartilhado `Avatar`: 40 px em listas/cabeçalhos e
+80 px em detalhes, sempre com proporção quadrada, recorte circular e borda nativa
+de 1 px. Sem foto, os símbolos Bootstrap Icons acompanham o tema. Não adicionar
+padding ou classes de tamanho nos consumidores. `SportIcon` apresenta um pequeno
+marcador de cor semântica, acompanhado do nome da modalidade, sem fundos próprios.

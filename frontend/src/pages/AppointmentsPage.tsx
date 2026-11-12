@@ -26,7 +26,7 @@ export function AppointmentsPage() {
         description="Encontre uma partida na sua modalidade e participe."
         action={<Button onClick={() => setShowBooking(true)}><i className="bi bi-plus-lg me-2" />Criar agendamento</Button>}
       />
-      {notice && <div className="inline-notice" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
+      {notice && <div className="alert alert-success d-flex align-items-center gap-2" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
       {appointmentsQuery.isPending && <LoadingState label="Carregando agendamentos..." />}
       {appointmentsQuery.error && (
         <ErrorState

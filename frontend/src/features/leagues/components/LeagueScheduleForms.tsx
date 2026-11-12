@@ -23,7 +23,7 @@ function MatchTimeFields({ arenas, arenaId, date, schedules, onDateChange, onAre
 }
 
 function FixtureForm({ title, nextRound = false, ...props }: ScheduleProps & { title: string; nextRound?: boolean }) {
-  return <Card className="content-card mb-4"><Card.Body><h3 className="h4">{title}</h3>{!props.arenas.length ? <p className="text-secondary mb-0">Ainda não há arenas disponíveis para esta modalidade.</p> : <Form onSubmit={(event) => props.onGenerate(event, nextRound)}>
+  return <Card className="border rounded-4 shadow-sm bg-body mb-4"><Card.Body><h3 className="h4">{title}</h3>{!props.arenas.length ? <p className="text-secondary mb-0">Ainda não há arenas disponíveis para esta modalidade.</p> : <Form onSubmit={(event) => props.onGenerate(event, nextRound)}>
     <MatchTimeFields {...props} prefix={nextRound ? "next-round" : "fixtures"} />
     <Form.Group className="col-md-4 mt-3" controlId={`${nextRound ? "next-round" : "fixtures"}-interval`}><Form.Label>Intervalo entre partidas (dias)</Form.Label><Form.Control name="daysBetweenMatches" type="number" min={1} max={30} defaultValue={1} required /></Form.Group>
     {!nextRound && <p className="small text-secondary mt-2">O calendário agenda uma partida por data, no mesmo horário e arena.</p>}
@@ -38,7 +38,7 @@ export function LeagueScheduleForms(props: ScheduleProps) {
   return <>
     {canGenerate && <FixtureForm {...props} title="Gerar calendário" />}
     {canAdvance && <><p className="text-secondary">A próxima fase só poderá ser criada após registrar todos os resultados da fase atual.</p><FixtureForm {...props} title="Avançar torneio" nextRound /></>}
-    {canSchedule && <Card className="content-card mb-4"><Card.Body><h3 className="h4">Agendar partida</h3>{!props.arenas.length ? <p className="text-secondary mb-0">Ainda não há arenas disponíveis para esta modalidade.</p> : <Form onSubmit={props.onSchedule}>
+    {canSchedule && <Card className="border rounded-4 shadow-sm bg-body mb-4"><Card.Body><h3 className="h4">Agendar partida</h3>{!props.arenas.length ? <p className="text-secondary mb-0">Ainda não há arenas disponíveis para esta modalidade.</p> : <Form onSubmit={props.onSchedule}>
       <div className="row g-3"><Form.Group className="col-md-6" controlId="league-home-team"><Form.Label>Equipe da casa</Form.Label><Form.Select name="homeTeamId" required defaultValue=""><option value="" disabled>Selecione</option>{props.teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</Form.Select></Form.Group>
       <Form.Group className="col-md-6" controlId="league-away-team"><Form.Label>Equipe visitante</Form.Label><Form.Select name="awayTeamId" required defaultValue=""><option value="" disabled>Selecione</option>{props.teams.map((team) => <option key={team.id} value={team.id}>{team.name}</option>)}</Form.Select></Form.Group>
       <Form.Group className="col-md-4" controlId="league-match-date"><Form.Label>Data</Form.Label><Form.Control type="date" min={localDate()} value={props.date} onChange={(event) => props.onDateChange(event.target.value)} required /></Form.Group>

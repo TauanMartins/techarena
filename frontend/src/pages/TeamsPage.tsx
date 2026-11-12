@@ -67,7 +67,7 @@ export function TeamsPage() {
 
   return <>
     <PageHeading eyebrow="JOGUE EM EQUIPE" title="Equipes" description="Descubra grupos, solicite participação ou crie sua própria equipe." action={<Button onClick={() => { reset(); setShowCreate(true); }}><i className="bi bi-plus-lg me-2" />Criar equipe</Button>} />
-    {actions.notice && <div className="inline-notice" role="status"><i className="bi bi-check-circle-fill" />{actions.notice}</div>}
+    {actions.notice && <div className="alert alert-success d-flex align-items-center gap-2" role="status"><i className="bi bi-check-circle-fill" />{actions.notice}</div>}
     {(actions.error || data.error) && <ErrorState message={actions.error ?? data.error ?? "Não foi possível carregar equipes."} />}
     <TeamSearchBar value={search} onChange={setSearch} onSubmit={searchTeams} />
     <TeamInvitations invitations={invitations} onRespond={(id, action) => void respondToInvitation(id, action)} />

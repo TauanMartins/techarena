@@ -5,10 +5,10 @@ import type { Conversation } from "../types/conversation.types";
 
 export function ConversationDetailsModal({ conversation, show, onHide }: { conversation?: Conversation; show: boolean; onHide: () => void }) {
   return <Modal show={show && Boolean(conversation)} onHide={onHide} centered><Modal.Header closeButton><Modal.Title>Detalhes da conversa</Modal.Title></Modal.Header><Modal.Body>
-    {conversation && <div className="conversation-details">
-      <span className="eyebrow">{conversation.kind === "direct" ? "CONVERSA PRIVADA" : conversation.kind === "team" ? "CONVERSA DE EQUIPE" : "CONVERSA DO AGENDAMENTO"}</span>
-      {conversation.image && conversation.kind !== "direct" && <Image className="conversation-detail-image" src={conversation.image} alt={`Imagem de ${conversation.label}`} rounded />}
-      {conversation.kind === "direct" && <ProfileAvatar name={conversation.label} image={conversation.image ?? null} className="profile-detail-avatar" />}
+    {conversation && <div className="d-flex flex-column align-items-center gap-2 text-center text-break">
+      <span className="d-block small fw-semibold text-body-secondary mb-1">{conversation.kind === "direct" ? "CONVERSA PRIVADA" : conversation.kind === "team" ? "CONVERSA DE EQUIPE" : "CONVERSA DO AGENDAMENTO"}</span>
+      {conversation.image && conversation.kind !== "direct" && <Image height={220} className="w-100 object-fit-contain rounded-3" src={conversation.image} alt={`Imagem de ${conversation.label}`} rounded />}
+      {conversation.kind === "direct" && <ProfileAvatar name={conversation.label} image={conversation.image ?? null} size={80} />}
       <h3>{conversation.label}</h3>
       {conversation.kind === "direct" && <p>{conversation.username ? `@${conversation.username}` : "Atleta da sua rede"}</p>}
       {conversation.kind === "team" && <><p>{conversation.description || "Esta equipe ainda não tem uma descrição."}</p>{conversation.role && <p>Seu papel: {conversation.role}</p>}</>}

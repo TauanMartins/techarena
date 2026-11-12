@@ -1,21 +1,30 @@
-import Image from 'react-bootstrap/Image';
+import { Avatar } from './Avatar';
 
 export function ProfileAvatar({
   name,
   image,
-  className = 'person-avatar',
+  size = 40,
+  className = '',
 }: {
   name: string | null;
   image: string | null;
+  size?: 40 | 80;
   className?: string;
 }) {
   return (
-    <div className={className}>
-      {image ? (
-        <Image src={image} alt={name ? `Foto de ${name}` : 'Foto de perfil'} roundedCircle />
-      ) : (
-        name?.slice(0, 1).toUpperCase() ?? <i className="bi bi-person" />
-      )}
-    </div>
+    <Avatar
+      image={image}
+      size={size}
+      className={className}
+      label={
+        image
+          ? name
+            ? `Foto de ${name}`
+            : 'Foto de perfil'
+          : name
+            ? `Avatar padrão de ${name}`
+            : 'Avatar padrão'
+      }
+    />
   );
 }
