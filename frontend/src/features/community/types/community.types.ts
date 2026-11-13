@@ -1,1 +1,1 @@
-export type { Friend, FriendGroups, UserCard } from "../../../shared/types";
+export type { Friend, FriendGroups, UserCard } from '../../../shared/types';

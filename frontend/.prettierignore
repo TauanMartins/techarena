@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+public/
+src/assets/
+package-lock.json
+*.tsbuildinfo

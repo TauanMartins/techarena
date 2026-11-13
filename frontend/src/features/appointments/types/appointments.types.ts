@@ -6,15 +6,15 @@ export type {
   FavoriteSports,
   Schedule,
   Sport,
-} from "../../../shared/types";
+} from '../../../shared/types';
 
 export interface AppointmentListParams {
   page?: number;
   limit?: number;
   sportId?: string;
   arenaId?: string;
-  orderByTime?: "recent" | "future";
-  distance?: "near" | "far";
+  orderByTime?: 'recent' | 'future';
+  distance?: 'near' | 'far';
   preferSports?: boolean;
   lat?: number;
   longitude?: number;

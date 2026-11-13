@@ -28,8 +28,14 @@ export function LoginPage() {
 
   return (
     <main className="min-vh-100 bg-body-tertiary d-flex flex-column">
-      <Container as="header" className="py-4">
-        <Stack direction="horizontal" gap={2}>
+      <Container
+        as="header"
+        className="py-4"
+      >
+        <Stack
+          direction="horizontal"
+          gap={2}
+        >
           <img
             src={logo}
             width={40}
@@ -46,14 +52,20 @@ export function LoginPage() {
 
       <Container className="flex-grow-1 d-flex align-items-center py-3 py-lg-5">
         <Row className="g-4 g-lg-5 align-items-center w-100 m-0">
-          <Col lg={7} className="px-0 pe-lg-5">
+          <Col
+            lg={7}
+            className="px-0 pe-lg-5"
+          >
             <Badge
               bg="primary-subtle"
               text="primary-emphasis"
               pill
               className="px-3 py-2 mb-4 fw-semibold"
             >
-              <i className="bi bi-dribbble me-2" aria-hidden="true" />
+              <i
+                className="bi bi-dribbble me-2"
+                aria-hidden="true"
+              />
               SEU ESPORTE. SUA COMUNIDADE.
             </Badge>
             <h1 className="display-3 fw-bold mb-3">
@@ -68,7 +80,10 @@ export function LoginPage() {
             </p>
             <Row className="g-3 mt-lg-4 d-none d-lg-flex">
               <Col xs={12}>
-                <Stack direction="horizontal" gap={3}>
+                <Stack
+                  direction="horizontal"
+                  gap={3}
+                >
                   <span className="bg-primary-subtle text-primary-emphasis p-3 rounded-4">
                     <i
                       className="bi bi-calendar2-event fs-4"
@@ -86,9 +101,15 @@ export function LoginPage() {
                 </Stack>
               </Col>
               <Col xs={12}>
-                <Stack direction="horizontal" gap={3}>
+                <Stack
+                  direction="horizontal"
+                  gap={3}
+                >
                   <span className="bg-primary-subtle text-primary-emphasis p-3 rounded-4">
-                    <i className="bi bi-people fs-4" aria-hidden="true" />
+                    <i
+                      className="bi bi-people fs-4"
+                      aria-hidden="true"
+                    />
                   </span>
                   <div>
                     <h2 className="h6 fw-bold mb-1">
@@ -101,9 +122,15 @@ export function LoginPage() {
                 </Stack>
               </Col>
               <Col xs={12}>
-                <Stack direction="horizontal" gap={3}>
+                <Stack
+                  direction="horizontal"
+                  gap={3}
+                >
                   <span className="bg-primary-subtle text-primary-emphasis p-3 rounded-4">
-                    <i className="bi bi-trophy fs-4" aria-hidden="true" />
+                    <i
+                      className="bi bi-trophy fs-4"
+                      aria-hidden="true"
+                    />
                   </span>
                   <div>
                     <h2 className="h6 fw-bold mb-1">Entre na disputa</h2>
@@ -116,7 +143,10 @@ export function LoginPage() {
             </Row>
           </Col>
 
-          <Col lg={5} className="px-0">
+          <Col
+            lg={5}
+            className="px-0"
+          >
             <Card
               as="section"
               aria-labelledby="login-title"
@@ -129,14 +159,20 @@ export function LoginPage() {
                     aria-hidden="true"
                   />
                 </span>
-                <h2 id="login-title" className="h3 fw-bold mb-2">
+                <h2
+                  id="login-title"
+                  className="h3 fw-bold mb-2"
+                >
                   Entre para o jogo
                 </h2>
                 <p className="text-body-secondary mb-4">
                   Use sua conta Google para acessar a comunidade TechArena.
                 </p>
                 {(error || authError) && (
-                  <Alert variant="danger" role="alert">
+                  <Alert
+                    variant="danger"
+                    role="alert"
+                  >
                     {error ?? authError}
                   </Alert>
                 )}
@@ -152,7 +188,10 @@ export function LoginPage() {
                   onClick={() => void handleLogin()}
                   disabled={!configured || loading}
                 >
-                  <i className="bi bi-google" aria-hidden="true" />
+                  <i
+                    className="bi bi-google"
+                    aria-hidden="true"
+                  />
                   {loading ? 'Conectando...' : 'Continuar com Google'}
                 </Button>
                 <Stack
@@ -160,7 +199,10 @@ export function LoginPage() {
                   gap={2}
                   className="justify-content-center text-body-secondary small mt-3"
                 >
-                  <i className="bi bi-shield-check" aria-hidden="true" />
+                  <i
+                    className="bi bi-shield-check"
+                    aria-hidden="true"
+                  />
                   <span>Autenticação com sua conta Google</span>
                 </Stack>
                 <hr className="my-4" />
@@ -173,7 +215,10 @@ export function LoginPage() {
           </Col>
         </Row>
       </Container>
-      <Container as="footer" className="py-4 small text-body-secondary">
+      <Container
+        as="footer"
+        className="py-4 small text-body-secondary"
+      >
         TechArena · Conectando pessoas pelo esporte.
       </Container>
     </main>

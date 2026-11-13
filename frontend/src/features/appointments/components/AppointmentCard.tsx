@@ -26,7 +26,8 @@ export function AppointmentCard({
       <Card.Body>
         {appointment.arenaImage && (
           <Card.Img
-            height={170} className="w-100 object-fit-cover rounded-3 mb-3"
+            height={170}
+            className="w-100 object-fit-cover rounded-3 mb-3"
             variant="top"
             src={appointment.arenaImage}
             alt={`Arena de ${appointment.title}`}
@@ -101,7 +102,11 @@ export function AppointmentCard({
         )}
       </Card.Body>
       {!onDetails && (
-        <Modal show={showDetails} onHide={() => setShowDetails(false)} centered>
+        <Modal
+          show={showDetails}
+          onHide={() => setShowDetails(false)}
+          centered
+        >
           <Modal.Header closeButton>
             <Modal.Title>{appointment.title}</Modal.Title>
           </Modal.Header>
@@ -148,7 +153,10 @@ export function AppointmentCard({
                   <dd>
                     <div className="list-group rounded-3">
                       {appointment.participants.map((participant) => (
-                        <div className="list-group-item d-flex flex-wrap align-items-center gap-3 p-3" key={participant.id}>
+                        <div
+                          className="list-group-item d-flex flex-wrap align-items-center gap-3 p-3"
+                          key={participant.id}
+                        >
                           <ProfileAvatar
                             name={participant.name}
                             image={participant.image}
@@ -164,7 +172,9 @@ export function AppointmentCard({
                             </span>
                           </div>
                           {participant.holder && (
-                            <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">Titular</span>
+                            <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">
+                              Titular
+                            </span>
                           )}
                         </div>
                       ))}
@@ -175,7 +185,10 @@ export function AppointmentCard({
             </dl>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowDetails(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDetails(false)}
+            >
               Fechar
             </Button>
           </Modal.Footer>

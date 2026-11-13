@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -80,7 +86,9 @@ describe('SettingsPage profile settings', () => {
       'src',
       'https://example.com/avatar.png',
     );
-    expect(screen.queryByLabelText('URL da imagem de perfil')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('URL da imagem de perfil'),
+    ).not.toBeInTheDocument();
 
     await user.clear(screen.getByLabelText('Nome'));
     await user.type(screen.getByLabelText('Nome'), 'Atleta Exemplo');
@@ -140,12 +148,18 @@ describe('SettingsPage profile settings', () => {
 
   it('shows a backend failure and re-enables the profile submit button', async () => {
     const user = userEvent.setup();
-    apiMock.updateProfile.mockRejectedValueOnce(new Error('Falha no servidor (500)'));
+    apiMock.updateProfile.mockRejectedValueOnce(
+      new Error('Falha no servidor (500)'),
+    );
     renderSettings();
-    fireEvent.change(screen.getByLabelText('Data de nascimento'), { target: { value: '1990-05-12' } });
+    fireEvent.change(screen.getByLabelText('Data de nascimento'), {
+      target: { value: '1990-05-12' },
+    });
     await user.click(screen.getByRole('button', { name: 'Salvar perfil' }));
 
-    expect(await screen.findByText('Falha no servidor (500)')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Falha no servidor (500)'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Salvar perfil' })).toBeEnabled();
   });
 });

@@ -4,8 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingForm';
-import { EmptyState, ErrorState, LoadingState, PageHeading } from '../components/ui/Feedback';
-import { useAppointments, useJoinAppointment } from '../features/appointments/api/appointments.api';
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeading,
+} from '../components/ui/Feedback';
+import {
+  useAppointments,
+  useJoinAppointment,
+} from '../features/appointments/api/appointments.api';
 
 export function AppointmentsPage() {
   const { session } = useAuth();
@@ -14,9 +22,16 @@ export function AppointmentsPage() {
   const userId = session!.user.id;
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
-  const appointmentsQuery = useAppointments(token, userId, { page: 1, limit: 30, orderByTime: 'future', preferSports: false });
+  const appointmentsQuery = useAppointments(token, userId, {
+    page: 1,
+    limit: 30,
+    orderByTime: 'future',
+    preferSports: false,
+  });
   const appointments = appointmentsQuery.data?.items ?? [];
-  const joinMutation = useJoinAppointment(token, userId, () => setNotice('Você entrou no agendamento.'));
+  const joinMutation = useJoinAppointment(token, userId, () =>
+    setNotice('Você entrou no agendamento.'),
+  );
 
   return (
     <>
@@ -24,10 +39,25 @@ export function AppointmentsPage() {
         eyebrow="PARTIDAS ABERTAS"
         title="Agendamentos"
         description="Encontre uma partida na sua modalidade e participe."
-        action={<Button onClick={() => setShowBooking(true)}><i className="bi bi-plus-lg me-2" />Criar agendamento</Button>}
+        action={
+          <Button onClick={() => setShowBooking(true)}>
+            <i className="bi bi-plus-lg me-2" />
+            Criar agendamento
+          </Button>
+        }
       />
-      {notice && <div className="alert alert-success d-flex align-items-center gap-2" role="status"><i className="bi bi-check-circle-fill" />{notice}</div>}
-      {appointmentsQuery.isPending && <LoadingState label="Carregando agendamentos..." />}
+      {notice && (
+        <div
+          className="alert alert-success d-flex align-items-center gap-2"
+          role="status"
+        >
+          <i className="bi bi-check-circle-fill" />
+          {notice}
+        </div>
+      )}
+      {appointmentsQuery.isPending && (
+        <LoadingState label="Carregando agendamentos..." />
+      )}
       {appointmentsQuery.error && (
         <ErrorState
           message={
@@ -46,31 +76,56 @@ export function AppointmentsPage() {
           }
         />
       )}
-      {!appointmentsQuery.isPending && !appointmentsQuery.error && appointments.length === 0 && (
-        <EmptyState icon="bi-calendar2-x" title="Nenhum agendamento encontrado" description="Seja a primeira pessoa a organizar uma partida." />
-      )}
+      {!appointmentsQuery.isPending &&
+        !appointmentsQuery.error &&
+        appointments.length === 0 && (
+          <EmptyState
+            icon="bi-calendar2-x"
+            title="Nenhum agendamento encontrado"
+            description="Seja a primeira pessoa a organizar uma partida."
+          />
+        )}
       {!appointmentsQuery.isPending && appointments.length > 0 && (
         <div className="row g-3">
           {appointments.map((appointment) => {
             const isOrganizer = appointment.organizerId === session?.user.id;
             return (
-              <div className="col-md-6 col-xl-4" key={appointment.id}>
+              <div
+                className="col-md-6 col-xl-4"
+                key={appointment.id}
+              >
                 <AppointmentCard
                   appointment={appointment}
-                  action={isOrganizer || appointment.isInside
-                    ? () => navigate(`/chat/appointment/${appointment.id}`)
-                    : () => joinMutation.mutate(appointment.id)}
-                  actionLabel={isOrganizer || appointment.isInside
-                    ? 'Ir para conversa'
-                    : joinMutation.isPending && joinMutation.variables === appointment.id ? 'Entrando...' : 'Participar'}
-                  disabled={!isOrganizer && !appointment.isInside && joinMutation.isPending && joinMutation.variables === appointment.id}
+                  action={
+                    isOrganizer || appointment.isInside
+                      ? () => navigate(`/chat/appointment/${appointment.id}`)
+                      : () => joinMutation.mutate(appointment.id)
+                  }
+                  actionLabel={
+                    isOrganizer || appointment.isInside
+                      ? 'Ir para conversa'
+                      : joinMutation.isPending &&
+                          joinMutation.variables === appointment.id
+                        ? 'Entrando...'
+                        : 'Participar'
+                  }
+                  disabled={
+                    !isOrganizer &&
+                    !appointment.isInside &&
+                    joinMutation.isPending &&
+                    joinMutation.variables === appointment.id
+                  }
                 />
               </div>
             );
           })}
         </div>
       )}
-      <BookingModal show={showBooking} onHide={() => setShowBooking(false)} onCreated={() => void appointmentsQuery.refetch()} />
+      <BookingModal
+        show={showBooking}
+        onHide={() => setShowBooking(false)}
+        onCreated={() => void appointmentsQuery.refetch()}
+      />
     </>
   );
 }

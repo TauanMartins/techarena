@@ -26,9 +26,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const theme = themeQuery.data?.theme ?? 'system';
   const refetchTheme = themeQuery.refetch;
   const themeError = themeQuery.error;
-  const saveTheme = useCallback(async (nextTheme: ThemePreference) => {
-    await mutateTheme(nextTheme);
-  }, [mutateTheme]);
+  const saveTheme = useCallback(
+    async (nextTheme: ThemePreference) => {
+      await mutateTheme(nextTheme);
+    },
+    [mutateTheme],
+  );
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');

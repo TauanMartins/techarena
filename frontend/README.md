@@ -96,3 +96,46 @@ Avatares usam o componente compartilhado `Avatar`: 40 px em listas/cabeçalhos e
 de 1 px. Sem foto, os símbolos Bootstrap Icons acompanham o tema. Não adicionar
 padding ou classes de tamanho nos consumidores. `SportIcon` apresenta um pequeno
 marcador de cor semântica, acompanhado do nome da modalidade, sem fundos próprios.
+
+Padrões compartilhados: `NavigationLink` mantém o espaçamento e o estado ativo dos
+links; `IconButton` padroniza ações somente com ícone e seu nome acessível;
+`SectionHeading` reúne título, contexto e ação de seção; `PersonListItem` organiza
+avatar, identificação e ações sem incorporar regras de amizades ou equipes.
+A navegação lateral usa `Nav` com `navbar={false}` dentro de `Navbar.Collapse`: isso
+preserva o estilo `pills` sem herdar as cores e o padding próprios de uma navbar.
+Grades existentes com `row`/`col-*` são válidas; prefira `Row`/`Col` quando suas
+props tornarem a estrutura mais clara. Use `Stack` ou flex para alinhamentos
+unidimensionais, sem adicionar grades apenas para reduzir a lista de classes.
+
+## Formatação do código
+
+A formatação é definida em `.prettierrc.json` e aplicada pelo Prettier, também
+integrado ao ESLint pelo preset `eslint-plugin-prettier/recommended`. O Oxlint
+continua responsável pelas regras de qualidade e hooks. Não adicionar regras
+de estilo concorrentes ao ESLint.
+
+O padrão usa dois espaços, aspas simples no TypeScript, aspas duplas no JSX,
+ponto e vírgula, vírgulas finais e atributos JSX separados por linha. A largura
+alvo é de 80 caracteres; strings e classes longas podem ultrapassá-la para não
+alterar seu conteúdo. Elementos e expressões são distribuídos conforme a árvore
+do código, sem modificar lógica, callbacks ou a ordem das propriedades.
+
+Execute dentro de `frontend`:
+
+```bash
+npm run format        # Formata fontes, testes, configurações e documentação
+npm run format:check  # Verifica a formatação sem modificar arquivos
+npm run lint          # Executa Oxlint e ESLint, incluindo erros de formatação
+npm run lint:fix      # Corrige a formatação de JS, TS e JSX pelo ESLint
+```
+
+`node_modules`, builds, cobertura, imagens, arquivos públicos e o lockfile são
+ignorados pelo formatador. O `.editorconfig` padroniza indentação e finais de
+linha; editores com integração Prettier podem usar a configuração local para
+formatar ao salvar. As versões das ferramentas de formatação estão fixadas no
+`package.json` e no lockfile para manter resultados consistentes entre máquinas.
+
+O parser Babel é usado somente pelo ESLint para ler TS/TSX. Isso evita a
+incompatibilidade atual do `@typescript-eslint/parser` com o TypeScript 7
+instalado, sem trocar o compilador do projeto. A verificação de tipos continua
+no `tsc` durante o build.

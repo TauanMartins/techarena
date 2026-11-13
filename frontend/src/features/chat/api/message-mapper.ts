@@ -7,14 +7,14 @@ export interface ChatMessage {
 }
 
 export function chatMessageFromRow(value: unknown): ChatMessage | null {
-  if (typeof value !== "object" || value === null) return null;
+  if (typeof value !== 'object' || value === null) return null;
   const row = value as Record<string, unknown>;
   if (
-    typeof row.id !== "string" ||
-    typeof row.sender_id !== "string" ||
-    typeof row.sender_name !== "string" ||
-    typeof row.body !== "string" ||
-    typeof row.created_at !== "string"
+    typeof row.id !== 'string' ||
+    typeof row.sender_id !== 'string' ||
+    typeof row.sender_name !== 'string' ||
+    typeof row.body !== 'string' ||
+    typeof row.created_at !== 'string'
   ) {
     return null;
   }

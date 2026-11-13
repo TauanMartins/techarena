@@ -1,5 +1,5 @@
 import ListGroup from 'react-bootstrap/ListGroup';
-import Button from 'react-bootstrap/Button';
+import { IconButton } from '../../../components/ui/IconButton';
 import { LoadingState } from '../../../components/ui/Feedback';
 import type { Conversation } from '../types/conversation.types';
 import { ConversationAvatar } from './ConversationAvatar';
@@ -29,14 +29,11 @@ export function ConversationList({
             </small>
           )}
         </div>
-        <Button
-          size="sm"
-          variant="light"
+        <IconButton
+          icon="bi-arrow-clockwise"
+          label="Atualizar conversas"
           onClick={onRefresh}
-          aria-label="Atualizar conversas"
-        >
-          <i className="bi bi-arrow-clockwise" />
-        </Button>
+        />
       </div>
       {loading && <LoadingState label="Carregando..." />}
       {!loading && !conversations.length && (
@@ -61,9 +58,7 @@ export function ConversationList({
             <ConversationAvatar conversation={conversation} />
             <span className="d-flex flex-column overflow-hidden text-start">
               <strong className="text-truncate">{conversation.label}</strong>
-              <small className="text-body-secondary">
-                {conversation.detail}
-              </small>
+              <small>{conversation.detail}</small>
             </span>
           </ListGroup.Item>
         ))}

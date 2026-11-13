@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { leaguesApi } from "../api/leagues.api";
-import { queryKeys } from "../../../lib/query-client";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { leaguesApi } from '../api/leagues.api';
+import { queryKeys } from '../../../lib/query-client';
 const EMPTY_ITEMS: never[] = [];
 
 export function useLeaguesData({
@@ -37,7 +37,7 @@ export function useLeaguesData({
     queryKey: queryKeys.leagueInvitations(userId),
     queryFn: () => leaguesApi.invitations(token),
   });
-  const resolvedLeagueId = leagueId || leaguesQuery.data?.items[0]?.id || "";
+  const resolvedLeagueId = leagueId || leaguesQuery.data?.items[0]?.id || '';
   const detailsQuery = useQuery({
     queryKey: queryKeys.leagueDetails(userId, resolvedLeagueId),
     queryFn: async () => {
@@ -53,7 +53,7 @@ export function useLeaguesData({
     (arena) => arena.id === arenaId,
   )
     ? arenaId
-    : (detailsQuery.data?.arenas[0]?.id ?? "");
+    : (detailsQuery.data?.arenas[0]?.id ?? '');
   const availabilityQuery = useQuery({
     queryKey: queryKeys.leagueAvailability(
       userId,

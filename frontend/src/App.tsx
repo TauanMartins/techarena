@@ -74,14 +74,43 @@ function ApplicationRoutes() {
     >
       <Routes>
         <Route element={<AppShell />}>
-          <Route index element={<HomePage />} />
-          <Route path="agendamentos" element={<AppointmentsPage />} />
-          <Route path="ligas" element={<LeaguePage />} />
-          <Route path="equipes" element={<TeamsPage />} />
-          <Route path="social" element={<CommunityPage />} />
-          <Route path="chat/:kind?/:id?" element={<ChatPage />} />
-          <Route path="configuracoes" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            index
+            element={<HomePage />}
+          />
+          <Route
+            path="agendamentos"
+            element={<AppointmentsPage />}
+          />
+          <Route
+            path="ligas"
+            element={<LeaguePage />}
+          />
+          <Route
+            path="equipes"
+            element={<TeamsPage />}
+          />
+          <Route
+            path="social"
+            element={<CommunityPage />}
+          />
+          <Route
+            path="chat/:kind?/:id?"
+            element={<ChatPage />}
+          />
+          <Route
+            path="configuracoes"
+            element={<SettingsPage />}
+          />
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to="/"
+                replace
+              />
+            }
+          />
         </Route>
       </Routes>
     </Suspense>

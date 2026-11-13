@@ -1,4 +1,5 @@
 import Button from 'react-bootstrap/Button';
+import { IconButton } from '../../../components/ui/IconButton';
 import type { Conversation } from '../types/conversation.types';
 import type { useChatThread } from '../hooks/useChatThread';
 import { ConversationAvatar } from './ConversationAvatar';
@@ -39,15 +40,12 @@ export function ConversationHeader({
           : 'Sua conexão: desconectada';
   return (
     <header className="d-flex flex-wrap flex-sm-nowrap align-items-center gap-2 p-3 border-bottom">
-      <Button
-        size="sm"
-        variant="outline-secondary"
+      <IconButton
+        icon="bi-arrow-left"
+        label="Voltar para conversas"
         className="d-md-none"
         onClick={onBack}
-        aria-label="Voltar para conversas"
-      >
-        <i className="bi bi-arrow-left" aria-hidden="true" />
-      </Button>
+      />
       <ConversationAvatar conversation={conversation} />
       <div className="d-flex flex-column flex-grow-1 overflow-hidden">
         <strong className="text-truncate">{conversation.label}</strong>
@@ -65,18 +63,18 @@ export function ConversationHeader({
         onClick={onDetails}
         aria-label="Detalhes da conversa"
       >
-        <i className="bi bi-info-circle" aria-hidden="true" />
+        <i
+          className="bi bi-info-circle"
+          aria-hidden="true"
+        />
         <span className="d-none d-lg-inline ms-2">Detalhes</span>
       </Button>
       {thread.connection === 'error' && (
-        <Button
-          size="sm"
-          variant="outline-secondary"
+        <IconButton
+          icon="bi-arrow-clockwise"
+          label="Reconectar conversa"
           onClick={thread.retry}
-          aria-label="Reconectar conversa"
-        >
-          <i className="bi bi-arrow-clockwise" />
-        </Button>
+        />
       )}
     </header>
   );

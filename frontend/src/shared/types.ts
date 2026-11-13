@@ -29,7 +29,7 @@ export interface Sport {
 export interface FavoriteSports {
   maxFavorites: number;
   remainingSlots: number;
-  items: Pick<Sport, "id" | "name">[];
+  items: Pick<Sport, 'id' | 'name'>[];
 }
 
 export interface Arena {
@@ -53,7 +53,7 @@ export interface Appointment {
   title: string;
   description: string | null;
   scheduledAt: string;
-  status: "scheduled" | "in_progress" | "finished" | "canceled";
+  status: 'scheduled' | 'in_progress' | 'finished' | 'canceled';
   organizerId: string;
   arenaId: string | null;
   sportId: string | null;
@@ -82,7 +82,7 @@ export interface AppointmentMembership {
   title: string;
   description: string | null;
   scheduledAt: string;
-  status: "scheduled" | "in_progress" | "finished" | "canceled";
+  status: 'scheduled' | 'in_progress' | 'finished' | 'canceled';
   organizerId: string;
   isOrganizer: boolean;
   maxPlayers: number | null;
@@ -111,7 +111,7 @@ export interface TeamMember {
   name: string | null;
   username: string | null;
   image: string | null;
-  role: "captain" | "member";
+  role: 'captain' | 'member';
   joinedAt: string | null;
 }
 
@@ -124,7 +124,7 @@ export interface UserCard {
 
 export interface Friend {
   id: string;
-  status: "pending" | "accepted" | "blocked";
+  status: 'pending' | 'accepted' | 'blocked';
   user: UserCard;
 }
 
@@ -141,8 +141,8 @@ export interface MembershipRequest {
   userId: string;
   userName: string | null;
   createdBy: string;
-  kind: "invitation" | "request";
-  status: "pending" | "accepted" | "declined";
+  kind: 'invitation' | 'request';
+  status: 'pending' | 'accepted' | 'declined';
   createdAt: string;
 }
 
@@ -155,8 +155,8 @@ export interface LeagueSummary {
   ownerName: string | null;
   sportId: string | null;
   sportName: string | null;
-  tournamentFormat: "round_robin" | "knockout" | "groups_knockout";
-  status: "open" | "active" | "completed" | "canceled";
+  tournamentFormat: 'round_robin' | 'knockout' | 'groups_knockout';
+  status: 'open' | 'active' | 'completed' | 'canceled';
   groupCount: number;
   qualifiersPerGroup: number;
   createdAt: string;
@@ -188,9 +188,9 @@ export interface LeagueMatch {
   appointmentId: string;
   matchNumber: number;
   scheduledAt: string;
-  status: Appointment["status"];
+  status: Appointment['status'];
   resultAllowed: boolean;
-  phase: "manual" | "group" | "knockout";
+  phase: 'manual' | 'group' | 'knockout';
   roundNumber: number;
   groupNumber: number | null;
   arenaAddress: string | null;

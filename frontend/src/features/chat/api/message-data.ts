@@ -1,11 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  chatMessageFromRow,
-  type ChatMessage,
-} from "./message-mapper";
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { chatMessageFromRow, type ChatMessage } from './message-mapper';
 
 const HISTORY_PAGE_SIZE = 50;
-const MESSAGE_COLUMNS = "id, sender_id, sender_name, body, created_at";
+const MESSAGE_COLUMNS = 'id, sender_id, sender_name, body, created_at';
 
 export interface MessagePage {
   messages: ChatMessage[];
@@ -24,11 +21,11 @@ export async function loadLatestMessages(
   topic: string,
 ): Promise<MessagePage> {
   const { data, error } = await client
-    .from("chat_messages")
+    .from('chat_messages')
     .select(MESSAGE_COLUMNS)
-    .eq("topic", topic)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
+    .eq('topic', topic)
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(HISTORY_PAGE_SIZE);
   if (error) throw error;
 
@@ -41,16 +38,16 @@ export async function loadLatestMessages(
 export async function loadOlderMessages(
   client: SupabaseClient,
   topic: string,
-  oldest: Pick<ChatMessage, "createdAt" | "id">,
+  oldest: Pick<ChatMessage, 'createdAt' | 'id'>,
 ): Promise<MessagePage> {
   const cursor = `created_at.lt.${oldest.createdAt},and(created_at.eq.${oldest.createdAt},id.lt.${oldest.id})`;
   const { data, error } = await client
-    .from("chat_messages")
+    .from('chat_messages')
     .select(MESSAGE_COLUMNS)
-    .eq("topic", topic)
+    .eq('topic', topic)
     .or(cursor)
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false })
+    .order('created_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(HISTORY_PAGE_SIZE);
   if (error) throw error;
 
@@ -67,7 +64,7 @@ export async function createChatMessage(
   text: string,
 ): Promise<ChatMessage> {
   const { data, error } = await client
-    .from("chat_messages")
+    .from('chat_messages')
     .insert({
       topic,
       sender_id: userId,
@@ -78,6 +75,6 @@ export async function createChatMessage(
   if (error) throw error;
 
   const message = chatMessageFromRow(data);
-  if (!message) throw new Error("A mensagem não pôde ser carregada.");
+  if (!message) throw new Error('A mensagem não pôde ser carregada.');
   return message;
 }
