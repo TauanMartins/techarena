@@ -1,5 +1,5 @@
 import Button from 'react-bootstrap/Button';
-import { NavLink } from 'react-router-dom';
+import { NavigationLink } from './NavigationLink';
 import { communityNavigation } from './CommunityNavigation.data';
 
 export function CommunityNavigation({
@@ -21,7 +21,10 @@ export function CommunityNavigation({
         aria-controls="sidebar-community-links"
         onClick={onToggle}
       >
-        <i className="bi bi-people-fill" aria-hidden="true" />
+        <i
+          className="bi bi-people-fill"
+          aria-hidden="true"
+        />
         Comunidades
         <i
           className={`bi ${open ? 'bi-chevron-up' : 'bi-chevron-down'} ms-auto`}
@@ -29,30 +32,27 @@ export function CommunityNavigation({
         />
       </Button>
       <div
-        className="ms-3 ps-2 border-start"
+        className="ms-3 ps-2 border-start small"
         id="sidebar-community-links"
         hidden={!open}
       >
         {communityNavigation.map((item) => (
-          <NavLink
+          <NavigationLink
             key={item.to}
             to={item.to}
+            label={item.label}
+            icon={item.icon}
             end={item.end}
-            className={({ isActive }) =>
-              `nav-link d-flex align-items-center gap-2 rounded-3 small my-1${isActive ? ' active' : ' text-body'}`
-            }
           >
-            <i className={`bi ${item.icon}`} aria-hidden="true" />
-            {item.label}
             {item.to === '/chat' && (
               <span
-                className="ms-auto text-warning-emphasis"
+                className="ms-auto"
                 aria-label="Mensagens em tempo real"
               >
                 <i className="bi bi-lightning-charge-fill" />
               </span>
             )}
-          </NavLink>
+          </NavigationLink>
         ))}
       </div>
     </div>

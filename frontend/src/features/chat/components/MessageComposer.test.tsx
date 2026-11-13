@@ -5,25 +5,71 @@ import { MessageComposer } from './MessageComposer';
 
 describe('MessageComposer', () => {
   it('blocks empty and whitespace-only messages, then enables send only when connected', () => {
-    const onSubmit = vi.fn((event: SubmitEvent<HTMLFormElement>) => event.preventDefault());
+    const onSubmit = vi.fn((event: SubmitEvent<HTMLFormElement>) =>
+      event.preventDefault(),
+    );
     const onTextChange = vi.fn();
-    const { rerender } = render(<MessageComposer text="" onTextChange={onTextChange} onSubmit={onSubmit} sending={false} connected />);
+    const { rerender } = render(
+      <MessageComposer
+        text=""
+        onTextChange={onTextChange}
+        onSubmit={onSubmit}
+        sending={false}
+        connected
+      />,
+    );
     const send = screen.getByRole('button', { name: 'Enviar mensagem' });
     expect(send).toBeDisabled();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Mensagem' }), { target: { value: '   ' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Mensagem' }), {
+      target: { value: '   ' },
+    });
     expect(onTextChange).toHaveBeenCalledWith('   ');
-    rerender(<MessageComposer text="   " onTextChange={onTextChange} onSubmit={onSubmit} sending={false} connected />);
+    rerender(
+      <MessageComposer
+        text="   "
+        onTextChange={onTextChange}
+        onSubmit={onSubmit}
+        sending={false}
+        connected
+      />,
+    );
     expect(send).toBeDisabled();
-    rerender(<MessageComposer text="Olá" onTextChange={onTextChange} onSubmit={onSubmit} sending={false} connected={false} />);
+    rerender(
+      <MessageComposer
+        text="Olá"
+        onTextChange={onTextChange}
+        onSubmit={onSubmit}
+        sending={false}
+        connected={false}
+      />,
+    );
     expect(send).toBeDisabled();
     expect(screen.getByRole('textbox', { name: 'Mensagem' })).toBeDisabled();
-    rerender(<MessageComposer text="Olá" onTextChange={onTextChange} onSubmit={onSubmit} sending connected />);
+    rerender(
+      <MessageComposer
+        text="Olá"
+        onTextChange={onTextChange}
+        onSubmit={onSubmit}
+        sending
+        connected
+      />,
+    );
     expect(send).toBeDisabled();
   });
 
   it('submits a non-empty message when ready', () => {
-    const onSubmit = vi.fn((event: SubmitEvent<HTMLFormElement>) => event.preventDefault());
-    render(<MessageComposer text="Olá" onTextChange={vi.fn()} onSubmit={onSubmit} sending={false} connected />);
+    const onSubmit = vi.fn((event: SubmitEvent<HTMLFormElement>) =>
+      event.preventDefault(),
+    );
+    render(
+      <MessageComposer
+        text="Olá"
+        onTextChange={vi.fn()}
+        onSubmit={onSubmit}
+        sending={false}
+        connected
+      />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Enviar mensagem' }));
     expect(onSubmit).toHaveBeenCalledOnce();
   });

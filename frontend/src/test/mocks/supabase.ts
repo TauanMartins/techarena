@@ -6,7 +6,10 @@ type Handler = (...args: any[]) => void;
 export function createSupabaseMock() {
   const handlers = new Map<string, Handler>();
   const presence = vi.fn(() => ({}));
-  let queryResult: { data: unknown; error: Error | null } = { data: [], error: null };
+  let queryResult: { data: unknown; error: Error | null } = {
+    data: [],
+    error: null,
+  };
   const query = {
     select: vi.fn(() => query),
     eq: vi.fn(() => query),
@@ -31,8 +34,14 @@ export function createSupabaseMock() {
   };
   const client = {
     auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'test-user' } }, error: null }),
-      getSession: vi.fn().mockResolvedValue({ data: { session: { access_token: 'test-token' } }, error: null }),
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'test-user' } },
+        error: null,
+      }),
+      getSession: vi.fn().mockResolvedValue({
+        data: { session: { access_token: 'test-token' } },
+        error: null,
+      }),
     },
     channel: vi.fn(() => channel),
     from: vi.fn(() => query),

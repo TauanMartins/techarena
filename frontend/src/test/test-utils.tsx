@@ -17,7 +17,10 @@ export function createTestQueryClient() {
   });
 }
 
-export function createTestWrapper(queryClient = createTestQueryClient(), initialEntries: MemoryRouterProps['initialEntries'] = ['/']) {
+export function createTestWrapper(
+  queryClient = createTestQueryClient(),
+  initialEntries: MemoryRouterProps['initialEntries'] = ['/'],
+) {
   return function TestWrapper({ children }: { children: ReactNode }) {
     return createElement(
       QueryClientProvider,
@@ -29,8 +32,17 @@ export function createTestWrapper(queryClient = createTestQueryClient(), initial
 
 export function renderWithProviders(
   ui: ReactElement,
-  { queryClient = createTestQueryClient(), initialEntries = ['/'], ...options }: TestProviderOptions = {},
+  {
+    queryClient = createTestQueryClient(),
+    initialEntries = ['/'],
+    ...options
+  }: TestProviderOptions = {},
 ) {
-  return { ...render(ui, { wrapper: createTestWrapper(queryClient, initialEntries), ...options }), queryClient };
+  return {
+    ...render(ui, {
+      wrapper: createTestWrapper(queryClient, initialEntries),
+      ...options,
+    }),
+    queryClient,
+  };
 }
-

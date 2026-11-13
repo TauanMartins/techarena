@@ -20,8 +20,7 @@ export const queryKeys = {
   appointments: (userId: string, params: object) =>
     ['appointments', userId, params] as const,
   myAppointments: (userId: string) => ['myAppointments', userId] as const,
-  teams: (userId: string, search: string) =>
-    ['teams', userId, search] as const,
+  teams: (userId: string, search: string) => ['teams', userId, search] as const,
   myTeams: (userId: string) => ['myTeams', userId] as const,
   teamRequests: (userId: string) => ['teamRequests', userId] as const,
   teamDetails: (userId: string, teamId: string) =>
@@ -40,8 +39,12 @@ export const queryKeys = {
   arenas: (userId: string) => ['arenas', userId] as const,
   leagueArenas: (userId: string, leagueId: string) =>
     ['leagueArenas', userId, leagueId] as const,
-  availability: (userId: string, arenaId: string, sportId: string, date: string) =>
-    ['availability', userId, arenaId, sportId, date] as const,
+  availability: (
+    userId: string,
+    arenaId: string,
+    sportId: string,
+    date: string,
+  ) => ['availability', userId, arenaId, sportId, date] as const,
   leagueAvailability: (
     userId: string,
     leagueId: string,

@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { teamsApi } from "../api/teams.api";
-import { queryKeys } from "../../../lib/query-client";
-import type { TeamOverview } from "../components/TeamDetailsModal";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { teamsApi } from '../api/teams.api';
+import { queryKeys } from '../../../lib/query-client';
+import type { TeamOverview } from '../components/TeamDetailsModal';
 
 export function useTeamsData({
   token,
@@ -30,11 +30,11 @@ export function useTeamsData({
     queryFn: () => teamsApi.listRequests(token),
   });
   const teamDetailsQuery = useQuery({
-    queryKey: queryKeys.teamDetails(userId, selectedTeam?.id ?? ""),
+    queryKey: queryKeys.teamDetails(userId, selectedTeam?.id ?? ''),
     queryFn: async () => {
       const [members, teamRequests] = await Promise.all([
         teamsApi.listMembers(token, selectedTeam!.id),
-        selectedTeam?.role === "captain"
+        selectedTeam?.role === 'captain'
           ? teamsApi.listTeamRequests(token, selectedTeam.id)
           : Promise.resolve(null),
       ]);
@@ -45,7 +45,7 @@ export function useTeamsData({
   const inviteCandidatesQuery = useQuery({
     queryKey: queryKeys.directory(userId, `team:${inviteSearch}`),
     queryFn: () => teamsApi.searchUsers(token, inviteSearch),
-    enabled: inviteSearch.length >= 2 && selectedTeam?.role === "captain",
+    enabled: inviteSearch.length >= 2 && selectedTeam?.role === 'captain',
   });
   const queryError = [
     teamsQuery.error,
@@ -68,7 +68,7 @@ export function useTeamsData({
     error: queryError?.message ?? null,
     invalidateTeamLists: () =>
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["teams", userId] }),
+        queryClient.invalidateQueries({ queryKey: ['teams', userId] }),
         queryClient.invalidateQueries({ queryKey: queryKeys.myTeams(userId) }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.teamRequests(userId),

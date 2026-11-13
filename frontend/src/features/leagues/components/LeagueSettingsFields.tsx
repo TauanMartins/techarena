@@ -34,14 +34,27 @@ export function LeagueSettingsFields({
         />
       </Form.Group>
       {sports && (
-        <Form.Group className="col-md-4" controlId={`${prefix}-sport`}>
+        <Form.Group
+          className="col-md-4"
+          controlId={`${prefix}-sport`}
+        >
           <Form.Label>Modalidade</Form.Label>
-          <Form.Select name="sportId" required defaultValue="">
-            <option value="" disabled>
+          <Form.Select
+            name="sportId"
+            required
+            defaultValue=""
+          >
+            <option
+              value=""
+              disabled
+            >
               Selecione o esporte
             </option>
             {sports.map((sport) => (
-              <option key={sport.id} value={sport.id}>
+              <option
+                key={sport.id}
+                value={sport.id}
+              >
                 {sport.name}
               </option>
             ))}
@@ -60,7 +73,10 @@ export function LeagueSettingsFields({
           placeholder={sports ? 'Opcional' : undefined}
         />
       </Form.Group>
-      <Form.Group className="col-md-4" controlId={`${prefix}-format`}>
+      <Form.Group
+        className="col-md-4"
+        controlId={`${prefix}-format`}
+      >
         <Form.Label>Formato</Form.Label>
         <Form.Select
           name="tournamentFormat"
@@ -72,7 +88,10 @@ export function LeagueSettingsFields({
           <option value="groups_knockout">Grupos + mata-mata</option>
         </Form.Select>
       </Form.Group>
-      <Form.Group className="col-md-4" controlId={`${prefix}-groups`}>
+      <Form.Group
+        className="col-md-4"
+        controlId={`${prefix}-groups`}
+      >
         <Form.Label>Grupos</Form.Label>
         <Form.Control
           name="groupCount"
@@ -83,7 +102,10 @@ export function LeagueSettingsFields({
           disabled={lockedFormat}
         />
       </Form.Group>
-      <Form.Group className="col-md-4" controlId={`${prefix}-qualifiers`}>
+      <Form.Group
+        className="col-md-4"
+        controlId={`${prefix}-qualifiers`}
+      >
         <Form.Label>Classificados por grupo</Form.Label>
         <Form.Control
           name="qualifiersPerGroup"

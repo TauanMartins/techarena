@@ -1,7 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api } from "../../../lib/api-client";
-import { queryKeys } from "../../../lib/query-client";
-import type { CreateAppointmentInput, AppointmentListParams } from "../types/appointments.types";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../../lib/api-client';
+import { queryKeys } from '../../../lib/query-client';
+import type {
+  CreateAppointmentInput,
+  AppointmentListParams,
+} from '../types/appointments.types';
 
 export const appointmentApi = {
   list: api.listAppointments,
@@ -14,43 +17,71 @@ export const appointmentApi = {
   favorites: api.getFavoriteSports,
 };
 
-export function useAppointments(token: string, userId: string, params: AppointmentListParams = {}) {
+export function useAppointments(
+  token: string,
+  userId: string,
+  params: AppointmentListParams = {},
+) {
   return useQuery({
     queryKey: queryKeys.appointments(userId, params),
     queryFn: () => appointmentApi.list(token, params),
   });
 }
 
-export function useJoinAppointment(token: string, userId: string, onJoined?: () => void) {
+export function useJoinAppointment(
+  token: string,
+  userId: string,
+  onJoined?: () => void,
+) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (appointmentId: string) => appointmentApi.join(token, appointmentId),
-    onSuccess: () => { onJoined?.(); return client.invalidateQueries({ queryKey: ["appointments", userId] }); },
+    mutationFn: (appointmentId: string) =>
+      appointmentApi.join(token, appointmentId),
+    onSuccess: () => {
+      onJoined?.();
+      return client.invalidateQueries({ queryKey: ['appointments', userId] });
+    },
   });
 }
 
 export function useCreateAppointment(token: string, userId: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateAppointmentInput) => appointmentApi.create(token, input),
-    onSuccess: async () => Promise.all([
-      client.invalidateQueries({ queryKey: ["appointments", userId] }),
-      client.invalidateQueries({ queryKey: queryKeys.myAppointments(userId) }),
-    ]),
+    mutationFn: (input: CreateAppointmentInput) =>
+      appointmentApi.create(token, input),
+    onSuccess: async () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['appointments', userId] }),
+        client.invalidateQueries({
+          queryKey: queryKeys.myAppointments(userId),
+        }),
+      ]),
   });
 }
 
 export function useBookingOptions(token: string, userId: string) {
   return useQuery({
-    queryKey: ["bookingOptions", userId],
+    queryKey: ['bookingOptions', userId],
     queryFn: async () => {
-      const [sports, arenas] = await Promise.all([appointmentApi.sports(token), appointmentApi.arenas(token)]);
-      return { sports: sports.items, arenas: arenas.items.filter((arena) => !arena.isLeagueOnly) };
+      const [sports, arenas] = await Promise.all([
+        appointmentApi.sports(token),
+        appointmentApi.arenas(token),
+      ]);
+      return {
+        sports: sports.items,
+        arenas: arenas.items.filter((arena) => !arena.isLeagueOnly),
+      };
     },
   });
 }
 
-export function useAppointmentAvailability(token: string, userId: string, arenaId: string, sportId: string, date: string) {
+export function useAppointmentAvailability(
+  token: string,
+  userId: string,
+  arenaId: string,
+  sportId: string,
+  date: string,
+) {
   return useQuery({
     queryKey: queryKeys.availability(userId, arenaId, sportId, date),
     queryFn: () => appointmentApi.availability(token, arenaId, sportId, date),
@@ -59,7 +90,12 @@ export function useAppointmentAvailability(token: string, userId: string, arenaI
 }
 
 export function useHomeDashboard(token: string, userId: string) {
-  const params = { page: 1, limit: 6, orderByTime: "future" as const, preferSports: true };
+  const params = {
+    page: 1,
+    limit: 6,
+    orderByTime: 'future' as const,
+    preferSports: true,
+  };
   return useQuery({
     queryKey: queryKeys.appointments(userId, params),
     queryFn: async () => {

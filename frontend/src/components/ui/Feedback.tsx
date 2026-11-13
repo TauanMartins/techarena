@@ -8,7 +8,11 @@ export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
       className="d-flex align-items-center justify-content-center text-body-secondary p-4"
       role="status"
     >
-      <Spinner animation="border" size="sm" className="me-2" />
+      <Spinner
+        animation="border"
+        size="sm"
+        className="me-2"
+      />
       {label}
     </div>
   );
@@ -16,8 +20,15 @@ export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <Alert variant="danger" role="alert" className="mb-0">
-      <i className="bi bi-exclamation-circle me-2" aria-hidden="true" />
+    <Alert
+      variant="danger"
+      role="alert"
+      className="mb-0"
+    >
+      <i
+        className="bi bi-exclamation-circle me-2"
+        aria-hidden="true"
+      />
       {message}
     </Alert>
   );

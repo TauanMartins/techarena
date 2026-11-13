@@ -1,3 +1,4 @@
+import { SectionHeading } from '../components/ui/SectionHeading';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -164,17 +165,16 @@ export function SettingsPage() {
         <LoadingState label="Carregando preferências..." />
       )}
       <Row className="g-4">
-        <Col xs={12} xl={6}>
+        <Col
+          xs={12}
+          xl={6}
+        >
           <Card className="border rounded-4 shadow-sm bg-body h-100">
             <Card.Body className="p-4">
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                <div>
-                  <span className="d-block small fw-semibold text-body-secondary mb-1">
-                    DADOS DA CONTA
-                  </span>
-                  <h2 className="h5 fw-bold mb-0">Meu perfil</h2>
-                </div>
-              </div>
+              <SectionHeading
+                eyebrow="DADOS DA CONTA"
+                title="Meu perfil"
+              />
               <ProfileForm
                 profile={profile}
                 email={profile?.email ?? session?.user.email ?? ''}
@@ -187,17 +187,16 @@ export function SettingsPage() {
             </Card.Body>
           </Card>
         </Col>
-        <Col xs={12} xl={6}>
+        <Col
+          xs={12}
+          xl={6}
+        >
           <Card className="border rounded-4 shadow-sm bg-body h-100">
             <Card.Body className="p-4">
-              <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-                <div>
-                  <span className="d-block small fw-semibold text-body-secondary mb-1">
-                    PERSONALIZAÇÃO
-                  </span>
-                  <h2 className="h5 fw-bold mb-0">Preferências</h2>
-                </div>
-              </div>
+              <SectionHeading
+                eyebrow="PERSONALIZAÇÃO"
+                title="Preferências"
+              />
               <PreferencesForm
                 sports={sports}
                 selectedSportIds={selectedSportIds}
@@ -220,7 +219,10 @@ export function SettingsPage() {
             <h3 className="h5 fw-bold mt-3 mb-2">Encerrar sessão</h3>
             <p>Saia da sua conta neste dispositivo.</p>
           </div>
-          <Button variant="outline-danger" onClick={() => void signOut()}>
+          <Button
+            variant="outline-danger"
+            onClick={() => void signOut()}
+          >
             Sair da conta <i className="bi bi-box-arrow-right ms-2" />
           </Button>
         </Card.Body>

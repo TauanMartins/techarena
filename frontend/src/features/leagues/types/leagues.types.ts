@@ -6,4 +6,4 @@ export type {
   LeagueSummary,
   LeagueTeam,
   LeagueTeamInvitation,
-} from "../../../shared/types";
+} from '../../../shared/types';

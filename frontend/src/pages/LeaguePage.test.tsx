@@ -4,22 +4,22 @@ import {
   render,
   screen,
   waitFor,
-} from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { LeaguePage } from "./LeaguePage";
-import { api } from "../lib/api-client";
+} from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LeaguePage } from './LeaguePage';
+import { api } from '../lib/api-client';
 
-vi.mock("../auth/useAuth", () => ({
+vi.mock('../auth/useAuth', () => ({
   useAuth: () => ({
     session: {
-      access_token: "test-token",
-      user: { id: "test-user" },
+      access_token: 'test-token',
+      user: { id: 'test-user' },
     },
   }),
 }));
 
-vi.mock("../lib/api-client", () => ({
+vi.mock('../lib/api-client', () => ({
   api: {
     listLeagues: vi.fn(),
     getSports: vi.fn(),
@@ -38,26 +38,26 @@ vi.mock("../lib/api-client", () => ({
 }));
 
 const league = {
-  id: "1",
-  name: "Liga de teste",
-  description: "Descrição",
+  id: '1',
+  name: 'Liga de teste',
+  description: 'Descrição',
   image: null,
-  ownerId: "owner-1",
-  ownerName: "Organizador",
-  sportId: "2",
-  sportName: "Futebol",
-  tournamentFormat: "round_robin" as const,
-  status: "open" as const,
+  ownerId: 'owner-1',
+  ownerName: 'Organizador',
+  sportId: '2',
+  sportName: 'Futebol',
+  tournamentFormat: 'round_robin' as const,
+  status: 'open' as const,
   groupCount: 2,
   qualifiersPerGroup: 2,
-  createdAt: "2026-10-29T00:00:00.000Z",
+  createdAt: '2026-10-29T00:00:00.000Z',
   teamCount: 0,
   matchCount: 0,
   completedMatchCount: 0,
   isOwner: true,
 };
 
-describe("LeaguePage", () => {
+describe('LeaguePage', () => {
   afterEach(cleanup);
 
   function renderLeaguePage() {
@@ -118,55 +118,77 @@ describe("LeaguePage", () => {
     });
   });
 
-  it("reloads details when the already selected league is clicked", async () => {
+  it('reloads details when the already selected league is clicked', async () => {
     renderLeaguePage();
 
-    await screen.findByRole("button", { name: "Ver liga" });
+    await screen.findByRole('button', { name: 'Ver liga' });
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(1));
 
-    fireEvent.click(screen.getByRole("button", { name: "Ver liga" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver liga' }));
 
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
     expect(
-      screen.getAllByRole("heading", { name: "Liga de teste" }),
+      screen.getAllByRole('heading', { name: 'Liga de teste' }),
     ).toHaveLength(2);
   });
 
-  it("opens and closes the league creation form and surfaces validation errors", async () => {
+  it('opens and closes the league creation form and surfaces validation errors', async () => {
     renderLeaguePage();
-    await screen.findByRole("button", { name: "Ver liga" });
-    fireEvent.click(screen.getByRole("button", { name: "Criar liga" }));
-    expect(await screen.findByRole("heading", { name: "Nova liga" })).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "Criar liga" }).at(-1)!);
-    expect(await screen.findByText(/Informe o nome da liga/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
-    expect(screen.queryByRole("heading", { name: "Nova liga" })).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: 'Ver liga' });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar liga' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Nova liga' }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Criar liga' }).at(-1)!,
+    );
+    expect(
+      await screen.findByText(/Informe o nome da liga/),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
+    expect(
+      screen.queryByRole('heading', { name: 'Nova liga' }),
+    ).not.toBeInTheDocument();
   });
 
-  it("updates league settings and confirms an owner status change", async () => {
+  it('updates league settings and confirms an owner status change', async () => {
     vi.mocked(api.updateLeague).mockResolvedValue({ success: true });
     vi.mocked(api.setLeagueStatus).mockResolvedValue({ success: true });
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
     renderLeaguePage();
-    await screen.findByRole("button", { name: "Salvar configurações" });
-    fireEvent.click(screen.getByRole("button", { name: "Salvar configurações" }));
-    await waitFor(() => expect(api.updateLeague).toHaveBeenCalledWith("test-token", "1", expect.objectContaining({ name: "Liga de teste" })));
-    fireEvent.click(screen.getByRole("button", { name: "Cancelar liga" }));
-    await waitFor(() => expect(api.setLeagueStatus).toHaveBeenCalledWith("test-token", "1", "canceled"));
-    fireEvent.click(screen.getByRole("button", { name: "Close alert" }));
-    expect(screen.queryByText("Liga cancelada.")).not.toBeInTheDocument();
+    await screen.findByRole('button', { name: 'Salvar configurações' });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Salvar configurações' }),
+    );
+    await waitFor(() =>
+      expect(api.updateLeague).toHaveBeenCalledWith(
+        'test-token',
+        '1',
+        expect.objectContaining({ name: 'Liga de teste' }),
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar liga' }));
+    await waitFor(() =>
+      expect(api.setLeagueStatus).toHaveBeenCalledWith(
+        'test-token',
+        '1',
+        'canceled',
+      ),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Close alert' }));
+    expect(screen.queryByText('Liga cancelada.')).not.toBeInTheDocument();
   });
 
-  it("lets a league organizer search for and invite another team", async () => {
+  it('lets a league organizer search for and invite another team', async () => {
     vi.mocked(api.listTeams).mockResolvedValue({
       items: [
         {
-          id: "team-2",
-          name: "Equipe visitante",
+          id: 'team-2',
+          name: 'Equipe visitante',
           description: null,
           image: null,
-          createdAt: "2026-10-29T00:00:00.000Z",
+          createdAt: '2026-10-29T00:00:00.000Z',
         },
       ],
       total: 1,
@@ -178,46 +200,46 @@ describe("LeaguePage", () => {
     });
     renderLeaguePage();
 
-    await screen.findByRole("heading", { name: "Convidar outra equipe" });
-    fireEvent.change(screen.getByLabelText("Buscar equipe para convidar"), {
-      target: { value: "visitante" },
+    await screen.findByRole('heading', { name: 'Convidar outra equipe' });
+    fireEvent.change(screen.getByLabelText('Buscar equipe para convidar'), {
+      target: { value: 'visitante' },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Buscar" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
 
-    await screen.findByRole("option", { name: "Equipe visitante" });
-    fireEvent.change(screen.getByLabelText("Equipe para convidar"), {
-      target: { value: "team-2" },
+    await screen.findByRole('option', { name: 'Equipe visitante' });
+    fireEvent.change(screen.getByLabelText('Equipe para convidar'), {
+      target: { value: 'team-2' },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Convidar" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Convidar' }));
 
     await waitFor(() =>
       expect(api.inviteLeagueTeam).toHaveBeenCalledWith(
-        "test-token",
-        "1",
-        "team-2",
+        'test-token',
+        '1',
+        'team-2',
       ),
     );
     expect(
-      await screen.findByText("Convite enviado ao capitão da equipe."),
+      await screen.findByText('Convite enviado ao capitão da equipe.'),
     ).toBeInTheDocument();
   });
 
-  it("allows an organizer to schedule a match between registered teams", async () => {
+  it('allows an organizer to schedule a match between registered teams', async () => {
     vi.mocked(api.getLeague).mockResolvedValue({
       league: { ...league, teamCount: 2 },
       teams: [
         {
-          id: "team-1",
-          name: "Equipe da casa",
+          id: 'team-1',
+          name: 'Equipe da casa',
           image: null,
-          captainName: "Capitão 1",
+          captainName: 'Capitão 1',
           groupNumber: null,
         },
         {
-          id: "team-2",
-          name: "Equipe visitante",
+          id: 'team-2',
+          name: 'Equipe visitante',
           image: null,
-          captainName: "Capitão 2",
+          captainName: 'Capitão 2',
           groupNumber: null,
         },
       ],
@@ -227,67 +249,67 @@ describe("LeaguePage", () => {
       myCaptainTeamIds: [],
     });
     vi.mocked(api.getLeagueArenas).mockResolvedValue({
-      items: [{ id: "arena-1", address: "Arena Central", image: null }],
+      items: [{ id: 'arena-1', address: 'Arena Central', image: null }],
     });
     vi.mocked(api.getLeagueAvailability).mockResolvedValue({
-      items: [{ id: "schedule-1", horary: "20:00:00" }],
+      items: [{ id: 'schedule-1', horary: '20:00:00' }],
     });
     renderLeaguePage();
 
-    await screen.findByRole("heading", { name: "Agendar partida" });
-    await screen.findAllByRole("option", { name: "20:00" });
-    fireEvent.change(screen.getByLabelText("Equipe da casa"), {
-      target: { value: "team-1" },
+    await screen.findByRole('heading', { name: 'Agendar partida' });
+    await screen.findAllByRole('option', { name: '20:00' });
+    fireEvent.change(screen.getByLabelText('Equipe da casa'), {
+      target: { value: 'team-1' },
     });
-    fireEvent.change(screen.getByLabelText("Equipe visitante"), {
-      target: { value: "team-2" },
+    fireEvent.change(screen.getByLabelText('Equipe visitante'), {
+      target: { value: 'team-2' },
     });
-    fireEvent.change(screen.getByLabelText("Horário da partida"), {
-      target: { value: "schedule-1" },
+    fireEvent.change(screen.getByLabelText('Horário da partida'), {
+      target: { value: 'schedule-1' },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Agendar partida" }));
+    fireEvent.click(screen.getByRole('button', { name: 'Agendar partida' }));
 
     await waitFor(() =>
       expect(api.createLeagueMatch).toHaveBeenCalledWith(
-        "test-token",
-        "1",
+        'test-token',
+        '1',
         expect.objectContaining({
-          homeTeamId: "team-1",
-          awayTeamId: "team-2",
-          arenaId: "arena-1",
-          scheduleId: "schedule-1",
+          homeTeamId: 'team-1',
+          awayTeamId: 'team-2',
+          arenaId: 'arena-1',
+          scheduleId: 'schedule-1',
         }),
       ),
     );
   });
 
-  it("lets a team captain accept a league invitation", async () => {
+  it('lets a team captain accept a league invitation', async () => {
     vi.mocked(api.listLeagueTeamInvitations).mockResolvedValue({
       items: [
         {
-          id: "invitation-1",
-          leagueId: "1",
-          leagueName: "Liga de teste",
-          teamId: "team-2",
-          teamName: "Equipe visitante",
-          invitedAt: "2026-10-29T00:00:00.000Z",
+          id: 'invitation-1',
+          leagueId: '1',
+          leagueName: 'Liga de teste',
+          teamId: 'team-2',
+          teamName: 'Equipe visitante',
+          invitedAt: '2026-10-29T00:00:00.000Z',
         },
       ],
     });
     renderLeaguePage();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Aceitar" }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Aceitar' }));
 
     await waitFor(() =>
       expect(api.respondToLeagueTeamInvitation).toHaveBeenCalledWith(
-        "test-token",
-        "invitation-1",
-        "accept",
+        'test-token',
+        'invitation-1',
+        'accept',
       ),
     );
     expect(
       await screen.findByText(
-        "Convite aceito. A equipe está inscrita na liga.",
+        'Convite aceito. A equipe está inscrita na liga.',
       ),
     ).toBeInTheDocument();
   });

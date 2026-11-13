@@ -5,7 +5,9 @@ import { ThemeProvider } from './ThemeProvider';
 
 const { themeApi } = vi.hoisted(() => ({ themeApi: vi.fn() }));
 vi.mock('../../auth/useAuth', () => ({
-  useAuth: () => ({ session: { user: { id: 'athlete' }, access_token: 'token' } }),
+  useAuth: () => ({
+    session: { user: { id: 'athlete' }, access_token: 'token' },
+  }),
 }));
 vi.mock('../settings/api/settings.api', () => ({
   settingsApi: { theme: themeApi },
@@ -17,24 +19,42 @@ afterEach(() => {
 });
 
 describe('Bootstrap theme integration', () => {
-  it.each(['light', 'dark'])('applies the saved %s preference to Bootstrap', async (theme) => {
-    themeApi.mockResolvedValue({ theme });
-    renderWithProviders(<ThemeProvider><span>Application</span></ThemeProvider>);
-    await waitFor(() => {
-      expect(document.documentElement).toHaveAttribute('data-bs-theme', theme);
-    });
-  });
+  it.each(['light', 'dark'])(
+    'applies the saved %s preference to Bootstrap',
+    async (theme) => {
+      themeApi.mockResolvedValue({ theme });
+      renderWithProviders(
+        <ThemeProvider>
+          <span>Application</span>
+        </ThemeProvider>,
+      );
+      await waitFor(() => {
+        expect(document.documentElement).toHaveAttribute(
+          'data-bs-theme',
+          theme,
+        );
+      });
+    },
+  );
 
   it('follows system changes and releases the media listener on unmount', async () => {
     let onChange: (() => void) | undefined;
     const media = {
       matches: true,
-      addEventListener: vi.fn((_event: string, listener: () => void) => { onChange = listener; }),
+      addEventListener: vi.fn((_event: string, listener: () => void) => {
+        onChange = listener;
+      }),
       removeEventListener: vi.fn(),
     };
-    vi.spyOn(window, 'matchMedia').mockReturnValue(media as unknown as MediaQueryList);
+    vi.spyOn(window, 'matchMedia').mockReturnValue(
+      media as unknown as MediaQueryList,
+    );
     themeApi.mockResolvedValue({ theme: 'system' });
-    const { unmount } = renderWithProviders(<ThemeProvider><span>Application</span></ThemeProvider>);
+    const { unmount } = renderWithProviders(
+      <ThemeProvider>
+        <span>Application</span>
+      </ThemeProvider>,
+    );
     await waitFor(() => {
       expect(document.documentElement).toHaveAttribute('data-bs-theme', 'dark');
     });

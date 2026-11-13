@@ -17,18 +17,18 @@ import type {
   TeamMember,
   TeamMembership,
   UserCard,
-} from "../shared/types";
+} from '../shared/types';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:3000";
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ??
+  'http://localhost:3000';
 
 export class ApiError extends Error {
   readonly status: number;
 
   constructor(message: string, status: number) {
     super(message);
-    this.name = "ApiError";
+    this.name = 'ApiError';
     this.status = status;
   }
 }
@@ -39,10 +39,10 @@ export async function apiRequest<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
-  headers.set("Authorization", `Bearer ${accessToken}`);
-  if (init.body && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
+  headers.set('Accept', 'application/json');
+  headers.set('Authorization', `Bearer ${accessToken}`);
+  if (init.body && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
@@ -52,19 +52,19 @@ export async function apiRequest<T>(
   } catch {
     throw new ApiError(
       response.ok
-        ? "Não foi possível processar a resposta."
-        : "Não foi possível concluir a solicitação. Tente novamente.",
+        ? 'Não foi possível processar a resposta.'
+        : 'Não foi possível concluir a solicitação. Tente novamente.',
       response.status,
     );
   }
   if (!response.ok) {
     const message =
-      typeof body === "object" &&
+      typeof body === 'object' &&
       body !== null &&
-      "message" in body &&
-      typeof body.message === "string"
+      'message' in body &&
+      typeof body.message === 'string'
         ? body.message
-        : "Não foi possível concluir a solicitação. Tente novamente.";
+        : 'Não foi possível concluir a solicitação. Tente novamente.';
     throw new ApiError(message, response.status);
   }
   return body as T;
@@ -75,31 +75,31 @@ function queryString(
 ) {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== "") query.set(key, String(value));
+    if (value !== undefined && value !== '') query.set(key, String(value));
   }
   const encoded = query.toString();
-  return encoded ? `?${encoded}` : "";
+  return encoded ? `?${encoded}` : '';
 }
 
 export const api = {
-  getProfile: (token: string) => apiRequest<Profile>("/users/me", token),
+  getProfile: (token: string) => apiRequest<Profile>('/users/me', token),
   ensureChatAccess: (token: string, topic: string) =>
-    apiRequest<{ topic: string; kind: "direct" | "team" | "appointment" }>(
-      "/chat/access",
+    apiRequest<{ topic: string; kind: 'direct' | 'team' | 'appointment' }>(
+      '/chat/access',
       token,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ topic }),
       },
     ),
   updateProfile: (
     token: string,
     payload: Partial<
-      Pick<Profile, "name" | "username" | "birthDate" | "gender" | "image">
+      Pick<Profile, 'name' | 'username' | 'birthDate' | 'gender' | 'image'>
     >,
   ) =>
-    apiRequest<Profile>("/users/me", token, {
-      method: "PATCH",
+    apiRequest<Profile>('/users/me', token, {
+      method: 'PATCH',
       body: JSON.stringify(payload),
     }),
 
@@ -109,23 +109,23 @@ export const api = {
       token,
     ),
   getFavoriteSports: (token: string) =>
-    apiRequest<FavoriteSports>("/users/me/sports", token),
+    apiRequest<FavoriteSports>('/users/me/sports', token),
   replaceFavoriteSports: (token: string, sportIds: string[]) =>
-    apiRequest<FavoriteSports>("/users/me/sports", token, {
-      method: "PUT",
+    apiRequest<FavoriteSports>('/users/me/sports', token, {
+      method: 'PUT',
       body: JSON.stringify({ sportIds }),
     }),
   getTheme: (token: string) =>
-    apiRequest<{ theme: "light" | "dark" | "system" }>(
-      "/users/me/theme",
+    apiRequest<{ theme: 'light' | 'dark' | 'system' }>(
+      '/users/me/theme',
       token,
     ),
-  setTheme: (token: string, theme: "light" | "dark" | "system") =>
-    apiRequest<{ theme: "light" | "dark" | "system" }>(
-      "/users/me/theme",
+  setTheme: (token: string, theme: 'light' | 'dark' | 'system') =>
+    apiRequest<{ theme: 'light' | 'dark' | 'system' }>(
+      '/users/me/theme',
       token,
       {
-        method: "PUT",
+        method: 'PUT',
         body: JSON.stringify({ theme }),
       },
     ),
@@ -137,20 +137,20 @@ export const api = {
       limit?: number;
       sportId?: string;
       arenaId?: string;
-      orderByTime?: "recent" | "future";
-      distance?: "near" | "far";
+      orderByTime?: 'recent' | 'future';
+      distance?: 'near' | 'far';
       preferSports?: boolean;
       lat?: number;
       longitude?: number;
     } = {},
   ) =>
     apiRequest<Page<Appointment>>(
-      `/appointments${queryString({ page: 1, limit: 20, orderByTime: "future", ...params })}`,
+      `/appointments${queryString({ page: 1, limit: 20, orderByTime: 'future', ...params })}`,
       token,
     ),
   listMyAppointments: (token: string, page = 1) =>
     apiRequest<Page<AppointmentMembership>>(
-      `/users/me/appointments${queryString({ page, limit: 20, from: new Date().toISOString(), sortOrder: "asc" })}`,
+      `/users/me/appointments${queryString({ page, limit: 20, from: new Date().toISOString(), sortOrder: 'asc' })}`,
       token,
     ),
   joinAppointment: (token: string, appointmentId: string) =>
@@ -158,7 +158,7 @@ export const api = {
       `/users/me/appointments/${appointmentId}`,
       token,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ holder: true }),
       },
     ),
@@ -185,8 +185,8 @@ export const api = {
       maxPlayers?: number;
     },
   ) =>
-    apiRequest<Appointment>("/appointments", token, {
-      method: "POST",
+    apiRequest<Appointment>('/appointments', token, {
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
   listArenas: (token: string, sportId?: string) =>
@@ -195,36 +195,36 @@ export const api = {
       token,
     ),
 
-  listTeams: (token: string, search = "") =>
+  listTeams: (token: string, search = '') =>
     apiRequest<Page<Team>>(
       `/team${queryString({ page: 1, limit: 20, search: search || undefined })}`,
       token,
     ),
   listMyTeams: (token: string) =>
-    apiRequest<Page<TeamMembership>>("/users/me/teams?page=1&limit=50", token),
+    apiRequest<Page<TeamMembership>>('/users/me/teams?page=1&limit=50', token),
   createTeam: (token: string, name: string, description?: string) =>
-    apiRequest<Team>("/team", token, {
-      method: "POST",
+    apiRequest<Team>('/team', token, {
+      method: 'POST',
       body: JSON.stringify({ name, description }),
     }),
   requestToJoinTeam: (token: string, teamId: string) =>
-    apiRequest<MembershipRequest>("/users/me/team-requests", token, {
-      method: "POST",
+    apiRequest<MembershipRequest>('/users/me/team-requests', token, {
+      method: 'POST',
       body: JSON.stringify({ teamId }),
     }),
   inviteToTeam: (token: string, teamId: string, userId: string) =>
-    apiRequest<MembershipRequest>("/team/user", token, {
-      method: "POST",
+    apiRequest<MembershipRequest>('/team/user', token, {
+      method: 'POST',
       body: JSON.stringify({ teamId, userId }),
     }),
   decideTeamRequest: (
     token: string,
     teamId: string,
     userId: string,
-    action: "accept" | "decline",
+    action: 'accept' | 'decline',
   ) =>
-    apiRequest<MembershipRequest>("/team/user", token, {
-      method: "PUT",
+    apiRequest<MembershipRequest>('/team/user', token, {
+      method: 'PUT',
       body: JSON.stringify({ teamId, userId, action }),
     }),
   listTeamRequests: (token: string, teamId: string) =>
@@ -240,24 +240,24 @@ export const api = {
   respondToTeamInvitation: (
     token: string,
     requestId: string,
-    action: "accept" | "decline",
+    action: 'accept' | 'decline',
   ) =>
     apiRequest<MembershipRequest>(
       `/users/me/team-invitations/${requestId}`,
       token,
       {
-        method: "PUT",
+        method: 'PUT',
         body: JSON.stringify({ action }),
       },
     ),
   listMyTeamRequests: (token: string) =>
     apiRequest<Page<MembershipRequest>>(
-      "/users/me/team-requests?page=1&limit=50",
+      '/users/me/team-requests?page=1&limit=50',
       token,
     ),
 
   listLeagues: (token: string) =>
-    apiRequest<{ items: LeagueSummary[] }>("/leagues", token),
+    apiRequest<{ items: LeagueSummary[] }>('/leagues', token),
   getLeague: (token: string, leagueId: string) =>
     apiRequest<LeagueDetails>(`/leagues/${leagueId}`, token),
   createLeague: (
@@ -266,13 +266,13 @@ export const api = {
       name: string;
       description?: string;
       sportId: string;
-      tournamentFormat: LeagueSummary["tournamentFormat"];
+      tournamentFormat: LeagueSummary['tournamentFormat'];
       groupCount?: number;
       qualifiersPerGroup?: number;
     },
   ) =>
-    apiRequest<LeagueSummary>("/leagues", token, {
-      method: "POST",
+    apiRequest<LeagueSummary>('/leagues', token, {
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
   updateLeague: (
@@ -282,22 +282,22 @@ export const api = {
       name?: string;
       description?: string | null;
       sportId?: string;
-      tournamentFormat?: LeagueSummary["tournamentFormat"];
+      tournamentFormat?: LeagueSummary['tournamentFormat'];
       groupCount?: number;
       qualifiersPerGroup?: number;
     },
   ) =>
     apiRequest<{ success: boolean }>(`/leagues/${leagueId}`, token, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify(payload),
     }),
   setLeagueStatus: (
     token: string,
     leagueId: string,
-    status: "completed" | "canceled",
+    status: 'completed' | 'canceled',
   ) =>
     apiRequest<{ success: boolean }>(`/leagues/${leagueId}/status`, token, {
-      method: "PUT",
+      method: 'PUT',
       body: JSON.stringify({ status }),
     }),
   generateLeagueFixtures: (
@@ -311,7 +311,7 @@ export const api = {
     },
   ) =>
     apiRequest<{ success: boolean }>(`/leagues/${leagueId}/fixtures`, token, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
   generateLeagueNextRound: (
@@ -327,7 +327,7 @@ export const api = {
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/rounds/next`,
       token,
-      { method: "POST", body: JSON.stringify(payload) },
+      { method: 'POST', body: JSON.stringify(payload) },
     ),
   rescheduleLeagueMatch: (
     token: string,
@@ -344,45 +344,45 @@ export const api = {
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/matches/${matchId}`,
       token,
-      { method: "PUT", body: JSON.stringify(payload) },
+      { method: 'PUT', body: JSON.stringify(payload) },
     ),
   cancelLeagueMatch: (token: string, leagueId: string, matchId: string) =>
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/matches/${matchId}`,
       token,
-      { method: "DELETE" },
+      { method: 'DELETE' },
     ),
   registerLeagueTeam: (token: string, leagueId: string, teamId: string) =>
     apiRequest<{ success: boolean }>(`/leagues/${leagueId}/teams`, token, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify({ teamId }),
     }),
   removeLeagueTeam: (token: string, leagueId: string, teamId: string) =>
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/teams/${teamId}`,
       token,
-      { method: "DELETE" },
+      { method: 'DELETE' },
     ),
   inviteLeagueTeam: (token: string, leagueId: string, teamId: string) =>
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/team-invitations`,
       token,
-      { method: "POST", body: JSON.stringify({ teamId }) },
+      { method: 'POST', body: JSON.stringify({ teamId }) },
     ),
   listLeagueTeamInvitations: (token: string) =>
     apiRequest<{ items: LeagueTeamInvitation[] }>(
-      "/leagues/team-invitations",
+      '/leagues/team-invitations',
       token,
     ),
   respondToLeagueTeamInvitation: (
     token: string,
     invitationId: string,
-    action: "accept" | "decline",
+    action: 'accept' | 'decline',
   ) =>
     apiRequest<{ success: boolean }>(
       `/leagues/team-invitations/${invitationId}`,
       token,
-      { method: "PUT", body: JSON.stringify({ action }) },
+      { method: 'PUT', body: JSON.stringify({ action }) },
     ),
   getLeagueArenas: (token: string, leagueId: string) =>
     apiRequest<{ items: LeagueArena[] }>(`/leagues/${leagueId}/arenas`, token),
@@ -408,7 +408,7 @@ export const api = {
     },
   ) =>
     apiRequest<{ success: boolean }>(`/leagues/${leagueId}/matches`, token, {
-      method: "POST",
+      method: 'POST',
       body: JSON.stringify(payload),
     }),
   recordLeagueResult: (
@@ -420,7 +420,7 @@ export const api = {
     apiRequest<{ success: boolean }>(
       `/leagues/${leagueId}/matches/${matchId}/result`,
       token,
-      { method: "PUT", body: JSON.stringify(payload) },
+      { method: 'PUT', body: JSON.stringify(payload) },
     ),
 
   searchUsers: (token: string, search: string) =>
@@ -429,15 +429,15 @@ export const api = {
       token,
     ),
   listFriends: (token: string) =>
-    apiRequest<FriendGroups>("/friend?page=1&limit=50", token),
+    apiRequest<FriendGroups>('/friend?page=1&limit=50', token),
   requestFriend: (token: string, userId: string) =>
-    apiRequest("/friend", token, {
-      method: "POST",
+    apiRequest('/friend', token, {
+      method: 'POST',
       body: JSON.stringify({ userId }),
     }),
-  decideFriend: (token: string, friendId: string, action: "accept" | "block") =>
-    apiRequest("/friend", token, {
-      method: "PUT",
+  decideFriend: (token: string, friendId: string, action: 'accept' | 'block') =>
+    apiRequest('/friend', token, {
+      method: 'PUT',
       body: JSON.stringify({ friendId, action }),
     }),
 };

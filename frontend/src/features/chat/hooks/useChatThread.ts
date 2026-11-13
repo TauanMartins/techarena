@@ -1,11 +1,22 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type SubmitEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { conversationTopic } from "./realtime";
-import { mergeChatMessages, type ChatMessage } from "../api/message-mapper";
-import type { Conversation } from "../types/conversation.types";
-import { createChatMessage, loadLatestMessages, loadOlderMessages as fetchOlderMessages } from "../api/message-data";
-import { supabase } from "../../../lib/supabase-client";
-import { useChatRealtime } from "./useChatRealtime";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SubmitEvent,
+} from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { conversationTopic } from './realtime';
+import { mergeChatMessages, type ChatMessage } from '../api/message-mapper';
+import type { Conversation } from '../types/conversation.types';
+import {
+  createChatMessage,
+  loadLatestMessages,
+  loadOlderMessages as fetchOlderMessages,
+} from '../api/message-data';
+import { supabase } from '../../../lib/supabase-client';
+import { useChatRealtime } from './useChatRealtime';
 
 interface ThreadDraft {
   key: string;
@@ -18,7 +29,15 @@ interface ThreadDraft {
 }
 
 function emptyDraft(key: string): ThreadDraft {
-  return { key, messages: [], text: "", loadingOlder: false, hasOlder: null, sending: false, error: null };
+  return {
+    key,
+    messages: [],
+    text: '',
+    loadingOlder: false,
+    hasOlder: null,
+    sending: false,
+    error: null,
+  };
 }
 
 export function useChatThread({
@@ -32,20 +51,34 @@ export function useChatThread({
   userId: string;
   displayName: string;
 }) {
-  const [draft, setDraft] = useState<ThreadDraft>(() => emptyDraft(""));
+  const [draft, setDraft] = useState<ThreadDraft>(() => emptyDraft(''));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const previousScrollHeightRef = useRef<number | null>(null);
   const generationRef = useRef(0);
-  const selectedTopic = useMemo(() => conversation
-    ? conversationTopic(conversation.kind, conversation.kind === "direct" ? userId : conversation.id, conversation.otherUserId)
-    : null, [conversation, userId]);
-  const draftKey = `${selectedTopic ?? ""}:${selectedTopic ? "active" : "idle"}`;
+  const selectedTopic = useMemo(
+    () =>
+      conversation
+        ? conversationTopic(
+            conversation.kind,
+            conversation.kind === 'direct' ? userId : conversation.id,
+            conversation.otherUserId,
+          )
+        : null,
+    [conversation, userId],
+  );
+  const draftKey = `${selectedTopic ?? ''}:${selectedTopic ? 'active' : 'idle'}`;
   const currentDraft = draft.key === draftKey ? draft : emptyDraft(draftKey);
-  const updateDraft = (update: Partial<ThreadDraft> | ((current: ThreadDraft) => Partial<ThreadDraft>)) => {
+  const updateDraft = (
+    update:
+      Partial<ThreadDraft> | ((current: ThreadDraft) => Partial<ThreadDraft>),
+  ) => {
     setDraft((previous) => {
       const base = previous.key === draftKey ? previous : emptyDraft(draftKey);
-      return { ...base, ...(typeof update === "function" ? update(base) : update) };
+      return {
+        ...base,
+        ...(typeof update === 'function' ? update(base) : update),
+      };
     });
   };
 
@@ -55,15 +88,21 @@ export function useChatThread({
     token,
     userId,
     displayName,
-    onMessage: (message) => updateDraft((current) => ({ messages: mergeChatMessages(current.messages, [message]) })),
+    onMessage: (message) =>
+      updateDraft((current) => ({
+        messages: mergeChatMessages(current.messages, [message]),
+      })),
   });
   const historyQuery = useQuery({
-    queryKey: ["chatHistory", userId, selectedTopic],
+    queryKey: ['chatHistory', userId, selectedTopic],
     queryFn: () => {
-      if (!supabase || !selectedTopic) throw new Error("Conversa indisponível.");
+      if (!supabase || !selectedTopic)
+        throw new Error('Conversa indisponível.');
       return loadLatestMessages(supabase, selectedTopic);
     },
-    enabled: Boolean(supabase && selectedTopic && realtime.connectedTopic === selectedTopic),
+    enabled: Boolean(
+      supabase && selectedTopic && realtime.connectedTopic === selectedTopic,
+    ),
   });
 
   useEffect(() => {
@@ -72,11 +111,21 @@ export function useChatThread({
   }, [draftKey, realtime.retryCount]);
 
   const messages = useMemo(
-    () => mergeChatMessages(historyQuery.data?.messages ?? [], currentDraft.messages),
+    () =>
+      mergeChatMessages(
+        historyQuery.data?.messages ?? [],
+        currentDraft.messages,
+      ),
     [currentDraft.messages, historyQuery.data?.messages],
   );
-  const hasOlderMessages = currentDraft.hasOlder ?? historyQuery.data?.hasOlderMessages ?? false;
-  const chatError = currentDraft.error ?? realtime.error ?? (historyQuery.error ? "Não foi possível carregar o histórico. Tente novamente." : null);
+  const hasOlderMessages =
+    currentDraft.hasOlder ?? historyQuery.data?.hasOlderMessages ?? false;
+  const chatError =
+    currentDraft.error ??
+    realtime.error ??
+    (historyQuery.error
+      ? 'Não foi possível carregar o histórico. Tente novamente.'
+      : null);
 
   useLayoutEffect(() => {
     const messageList = messageListRef.current;
@@ -87,41 +136,77 @@ export function useChatThread({
       previousScrollHeightRef.current = null;
       return;
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   async function loadOlderMessages() {
-    if (!supabase || !selectedTopic || currentDraft.loadingOlder || !messages.length) return;
+    if (
+      !supabase ||
+      !selectedTopic ||
+      currentDraft.loadingOlder ||
+      !messages.length
+    )
+      return;
     const generation = generationRef.current;
     updateDraft({ loadingOlder: true, error: null });
     try {
-      const page = await fetchOlderMessages(supabase, selectedTopic, messages[0]);
+      const page = await fetchOlderMessages(
+        supabase,
+        selectedTopic,
+        messages[0],
+      );
       if (generation !== generationRef.current) return;
       if (page.messages.length) {
-        if (messageListRef.current) previousScrollHeightRef.current = messageListRef.current.scrollHeight;
-        updateDraft((current) => ({ messages: mergeChatMessages(current.messages, page.messages), hasOlder: page.hasOlderMessages }));
+        if (messageListRef.current)
+          previousScrollHeightRef.current = messageListRef.current.scrollHeight;
+        updateDraft((current) => ({
+          messages: mergeChatMessages(current.messages, page.messages),
+          hasOlder: page.hasOlderMessages,
+        }));
       } else {
         updateDraft({ hasOlder: page.hasOlderMessages });
       }
     } catch {
-      if (generation === generationRef.current) updateDraft({ error: "Não foi possível carregar as mensagens anteriores. Tente novamente." });
+      if (generation === generationRef.current)
+        updateDraft({
+          error:
+            'Não foi possível carregar as mensagens anteriores. Tente novamente.',
+        });
     } finally {
-      if (generation === generationRef.current) updateDraft({ loadingOlder: false });
+      if (generation === generationRef.current)
+        updateDraft({ loadingOlder: false });
     }
   }
 
   async function sendMessage(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const messageText = currentDraft.text.trim();
-    if (!selectedTopic || !supabase || !messageText || realtime.connection !== "connected") return;
+    if (
+      !selectedTopic ||
+      !supabase ||
+      !messageText ||
+      realtime.connection !== 'connected'
+    )
+      return;
     const generation = generationRef.current;
     updateDraft({ sending: true, error: null });
     try {
-      const message = await createChatMessage(supabase, selectedTopic, userId, messageText);
+      const message = await createChatMessage(
+        supabase,
+        selectedTopic,
+        userId,
+        messageText,
+      );
       if (generation !== generationRef.current) return;
-      updateDraft((current) => ({ messages: mergeChatMessages(current.messages, [message]), text: "" }));
+      updateDraft((current) => ({
+        messages: mergeChatMessages(current.messages, [message]),
+        text: '',
+      }));
     } catch {
-      if (generation === generationRef.current) updateDraft({ error: "Não foi possível enviar a mensagem. Tente novamente." });
+      if (generation === generationRef.current)
+        updateDraft({
+          error: 'Não foi possível enviar a mensagem. Tente novamente.',
+        });
     } finally {
       if (generation === generationRef.current) updateDraft({ sending: false });
     }

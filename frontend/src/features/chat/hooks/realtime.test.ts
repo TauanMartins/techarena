@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  conversationTopic,
-  otherOnlineParticipantIds,
-} from './realtime';
+import { conversationTopic, otherOnlineParticipantIds } from './realtime';
 import { chatMessageFromRow, mergeChatMessages } from '../api/message-mapper';
 
 describe('conversationTopic', () => {

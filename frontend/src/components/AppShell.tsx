@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { ErrorState } from './ui/Feedback';
+import { NavigationLink } from './NavigationLink';
 import { CommunityNavigation } from './CommunityNavigation';
 import { communityNavigation } from './CommunityNavigation.data';
 import Button from 'react-bootstrap/Button';
@@ -81,7 +82,10 @@ export function AppShell() {
               </div>
             )}
             <div className="d-flex flex-wrap gap-2 mt-3">
-              <Button variant="primary" onClick={() => void refreshProfile()}>
+              <Button
+                variant="primary"
+                onClick={() => void refreshProfile()}
+              >
                 Tentar novamente
               </Button>
               <Button
@@ -116,7 +120,11 @@ export function AppShell() {
           xxl={2}
           className="bg-body border-end border-bottom flex-shrink-0 mh-100 overflow-auto p-3 p-lg-4"
         >
-          <Navbar expand="lg" className="d-block p-0" key={location.pathname}>
+          <Navbar
+            expand="lg"
+            className="d-block p-0"
+            key={location.pathname}
+          >
             <div className="d-flex align-items-center justify-content-between gap-2 mb-lg-4">
               <NavLink
                 to="/"
@@ -137,7 +145,10 @@ export function AppShell() {
                 label="Abrir ou fechar menu"
               />
             </div>
-            <Navbar.Collapse id="main-navigation" className="mt-3 mt-lg-0">
+            <Navbar.Collapse
+              id="main-navigation"
+              className="mt-3 mt-lg-0"
+            >
               <div className="w-100">
                 <div className="d-none d-lg-block small fw-semibold text-body-secondary mb-3">
                   MENU PRINCIPAL
@@ -145,21 +156,18 @@ export function AppShell() {
                 <Nav
                   as="nav"
                   variant="pills"
+                  navbar={false}
                   className="flex-column gap-2"
                   aria-label="Navegação principal"
                 >
                   {navigation.slice(0, 3).map((item) => (
-                    <NavLink
+                    <NavigationLink
                       key={item.to}
                       to={item.to}
+                      label={item.label}
+                      icon={item.icon}
                       end={'end' in item ? item.end : false}
-                      className={({ isActive }) =>
-                        `nav-link d-flex align-items-center gap-3 rounded-3 px-3 py-2${isActive ? ' active' : ' text-body'}`
-                      }
-                    >
-                      <i className={`bi ${item.icon}`} aria-hidden="true" />
-                      {item.label}
-                    </NavLink>
+                    />
                   ))}
                   <CommunityNavigation
                     open={communitiesOpen}
@@ -167,17 +175,13 @@ export function AppShell() {
                     onToggle={() => setCommunitiesOpen((open) => !open)}
                   />
                   {navigation.slice(3).map((item) => (
-                    <NavLink
+                    <NavigationLink
                       key={item.to}
                       to={item.to}
+                      label={item.label}
+                      icon={item.icon}
                       end={'end' in item ? item.end : false}
-                      className={({ isActive }) =>
-                        `nav-link d-flex align-items-center gap-3 rounded-3 px-3 py-2${isActive ? ' active' : ' text-body'}`
-                      }
-                    >
-                      <i className={`bi ${item.icon}`} aria-hidden="true" />
-                      {item.label}
-                    </NavLink>
+                    />
                   ))}
                 </Nav>
               </div>
