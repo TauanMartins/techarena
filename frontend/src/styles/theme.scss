@@ -1,0 +1,77 @@
+// Identidade TechArena: configure o Bootstrap aqui, sem estilos por tela.
+// As variantes, estados interativos e utilitários são gerados pelo framework.
+@use 'sass:map';
+
+// Paleta semântica. Primary é a marca; success/warning/danger indicam estados.
+$primary: #2459c4;
+$secondary: #52647a;
+$success: #16734b;
+$info: #087e96;
+$warning: #edb449;
+$danger: #c1374b;
+$light: #f3f6fb;
+$dark: #142033;
+
+// Neutros compartilhados pelos componentes e utilitários do Bootstrap.
+$gray-100: #f3f6fb;
+$gray-200: #e5ebf3;
+$gray-300: #d0dae7;
+$gray-400: #a9b8cb;
+$gray-500: #7c8fa8;
+$gray-600: #52647a;
+$gray-700: #394b62;
+$gray-800: #243349;
+$gray-900: #142033;
+
+// Superfícies e textos: claro.
+$body-bg: #ffffff;
+$body-color: $gray-900;
+$body-secondary-bg: $gray-200;
+$body-tertiary-bg: $gray-100;
+$body-secondary-color: $gray-600;
+$body-tertiary-color: $gray-600;
+$border-color: $gray-300;
+
+// Superfícies e textos: escuro, aplicado pelo data-bs-theme existente.
+$body-bg-dark: #101a29;
+$body-color-dark: #e5edf7;
+$body-secondary-bg-dark: $gray-800;
+$body-tertiary-bg-dark: #1b293d;
+$body-secondary-color-dark: #adbed3;
+$body-tertiary-color-dark: $body-secondary-color-dark;
+$border-color-dark: #40536d;
+
+// Tipografia: leitura nativa no corpo e identidade nos títulos.
+$font-family-sans-serif:
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  Roboto,
+  'Helvetica Neue',
+  Arial,
+  sans-serif;
+$headings-font-family: 'Sansation', $font-family-sans-serif;
+$headings-font-weight: 400;
+$display-font-family: $headings-font-family;
+$display-font-weight: 400;
+
+@font-face {
+  font-family: 'Sansation';
+  src: url('../assets/fonts/Sansation-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+// Bootstrap 5.3 usa @import para configurar variáveis antes da compilação.
+@import 'bootstrap/scss/bootstrap';
+
+// Variantes outline usam cores compiladas: adapte-as ao fundo escuro usando
+// o mixin nativo e as cores de ênfase já derivadas da paleta pelo Bootstrap.
+@include color-mode(dark) {
+  @each $color in (primary, secondary, success, info, warning, danger) {
+    .btn-outline-#{$color} {
+      @include button-outline-variant(map.get($theme-colors-text-dark, $color));
+    }
+  }
+}
