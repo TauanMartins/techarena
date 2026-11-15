@@ -13,13 +13,8 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Nav from 'react-bootstrap/Nav';
 import logo from '../assets/brand/logo-dark.png';
-
-const navigation = [
-  { to: '/', label: 'Início', icon: 'bi-grid-1x2-fill', end: true },
-  { to: '/agendamentos', label: 'Agendamentos', icon: 'bi-calendar2-event' },
-  { to: '/ligas', label: 'Ligas', icon: 'bi-trophy' },
-  { to: '/configuracoes', label: 'Configurações', icon: 'bi-gear' },
-];
+import { navigation } from './AppNavigation.data';
+import { MobileNavigation } from './MobileNavigation';
 
 export function AppShell() {
   const { profile, logout, session, profileError, refreshProfile } = useAuth();
@@ -104,7 +99,7 @@ export function AppShell() {
   return (
     <Container
       fluid
-      className="vh-100 d-flex flex-column bg-body-tertiary p-0 overflow-hidden"
+      className="vh-100 h-dvh d-flex flex-column bg-body-tertiary p-0 pt-safe-0 ps-safe-0 pe-safe-0 overflow-hidden"
     >
       <a
         href="#main-content"
@@ -112,13 +107,13 @@ export function AppShell() {
       >
         Pular para o conteúdo
       </a>
-      <Row className="g-0 h-100 flex-column flex-lg-row flex-nowrap overflow-hidden">
+      <Row className="g-0 flex-grow-1 min-h-0 flex-nowrap overflow-hidden">
         <Col
           as="aside"
           xs={12}
           lg={3}
           xxl={2}
-          className="bg-body border-end border-bottom flex-shrink-0 mh-100 overflow-auto p-3 p-lg-4"
+          className="d-none d-lg-block bg-body border-end border-bottom flex-shrink-0 mh-100 overflow-auto p-4"
         >
           <Navbar
             expand="lg"
@@ -193,9 +188,9 @@ export function AppShell() {
           xs={12}
           lg={9}
           xxl={10}
-          className="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden"
+          className="d-flex flex-column flex-grow-1 flex-shrink-1 min-h-0 overflow-hidden"
         >
-          <Navbar className="bg-body border-bottom px-3 px-md-4 py-3 gap-3">
+          <Navbar className="bg-body border-bottom px-3 px-md-4 py-2 py-lg-3 gap-3 flex-shrink-0">
             <div className="small text-body-secondary fw-semibold">
               {navigation.find((item) => item.to === location.pathname)
                 ?.label ??
@@ -226,20 +221,43 @@ export function AppShell() {
               </div>
             </div>
           </Navbar>
+          {isCommunityRoute && (
+            <Nav
+              as="nav"
+              variant="pills"
+              fill
+              className="d-lg-none flex-nowrap gap-1 p-2 bg-body border-bottom flex-shrink-0"
+              aria-label="Navegação social mobile"
+            >
+              {communityNavigation.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `nav-link touch-target d-flex align-items-center justify-content-center flex-fill small px-2 py-2${isActive ? ' active' : ' text-body-secondary'}`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </Nav>
+          )}
           <Container
             fluid
             as="main"
             id="main-content"
             tabIndex={-1}
-            className="flex-grow-1 overflow-auto p-3 p-md-4 p-xl-5"
+            className="flex-grow-1 min-h-0 overflow-auto p-3 p-md-4 p-xl-5"
           >
             <Outlet />
           </Container>
-          <footer className="small text-body-secondary px-3 px-md-4 pb-4">
+          <footer className="d-none d-lg-block small text-body-secondary px-3 px-md-4 pb-4 flex-shrink-0">
             TechArena · esporte é melhor em equipe
           </footer>
         </Col>
       </Row>
+      <MobileNavigation communityActive={isCommunityRoute} />
     </Container>
   );
 }

@@ -55,6 +55,18 @@ O tema é centralizado em [`src/styles/theme.scss`](src/styles/theme.scss), impo
 
 Nos componentes, continue usando variantes semânticas (`variant="primary"`) e classes do Bootstrap (`bg-body`, `text-body-secondary`, `text-primary-emphasis`). Evite cores literais, estilos inline e classes específicas de tela. Após alterar a paleta, valide contraste e estados de hover, foco e seleção nos dois temas; a compilação deriva as variantes, mas não substitui essa revisão.
 
+## Navegação responsiva
+
+A partir de `lg` (992 px), o `AppShell` mantém a navegação lateral. Abaixo desse breakpoint, `MobileNavigation` apresenta cinco destinos inferiores: Início, Agenda, Ligas, Social e Conta. Social agrupa Comunidade, Equipes e Conversas, com links secundários no topo e seleção preservada nas rotas de conversa.
+
+O conteúdo central rola independentemente; cabeçalho e navegação inferior ocupam espaço próprio no layout, evitando sobrepor ações no fim da página. `AppNavigation.data.ts` compartilha os destinos entre desktop e mobile.
+
+A largura mínima de referência para validação é **320 CSS px**, mantendo o layout fluido, sem impor `min-width` à aplicação. Valide a navegação em 320 px e 390 px, além do desktop, nos temas claro e escuro. Os links inferiores e os links sociais mobile usam `touch-target`, com área mínima de **44 × 44 CSS px**, definida por `$touch-target-size` em `_layout-utilities.scss`. A altura da aplicação permanece dinâmica, sem mínimo fixo, para acomodar orientação horizontal e mudanças na área visível.
+
+`src/styles/_layout-utilities.scss` estende a [Utility API do Bootstrap](https://getbootstrap.com/docs/5.3/utilities/api/) com utilitários genéricos de altura dinâmica (`h-dvh`), altura mínima (`min-h-0`) e áreas seguras (`pt-safe-0`, `pb-safe-0`, `ps-safe-0`, `pe-safe-0`). O viewport permite usar os recuos do dispositivo por `env(safe-area-inset-*)`; a altura acompanha as barras do navegador. O comportamento do teclado virtual e dos recuos ainda deve ser conferido em dispositivos iOS e Android reais.
+
+Esta etapa adapta a navegação. Manifesto, instalação e demais recursos PWA serão tratados separadamente.
+
 ## Assets e separação do legado
 
 - `src/assets/brand/` é a fonte oficial dos logos atuais: `logo-light.png` para fundo claro e `logo-dark.png` para fundo escuro. O HTML também referencia esses arquivos como favicon; o Vite resolve as URLs e gera os arquivos versionados no build, sem cópias em `public/`.
