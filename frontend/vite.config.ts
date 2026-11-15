@@ -3,6 +3,15 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // Bootstrap 5.3 ainda depende de @import e APIs Sass legadas.
+        quietDeps: true,
+        silenceDeprecations: ['import'],
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

@@ -45,6 +45,16 @@ npm run lint
 npm test
 ```
 
+## Identidade visual
+
+O tema é centralizado em [`src/styles/theme.scss`](src/styles/theme.scss), importado uma única vez por `main.tsx`. Esse arquivo configura as variáveis Sass antes de compilar o Bootstrap; não importe também o CSS pronto de `bootstrap/dist/css`.
+
+- **Paleta:** altere `$primary` para a cor da marca. `$secondary` e a escala `$gray-*` definem os neutros; `$success`, `$info`, `$warning` e `$danger` representam estados semânticos.
+- **Claro e escuro:** os grupos `$body-*` e `$body-*-dark` definem superfícies e textos. O `ThemeProvider` continua controlando `data-bs-theme`. As variantes outline no escuro usam o mixin do Bootstrap com as cores de ênfase derivadas da paleta.
+- **Fontes:** `$font-family-sans-serif` controla textos e formulários; `$headings-font-family` e `$display-font-family` controlam os títulos. Sansation Regular é servida localmente, com `font-display: swap`; os textos usam a fonte do sistema. Para adicionar outros pesos reais, registre os respectivos arquivos em `@font-face`.
+
+Nos componentes, continue usando variantes semânticas (`variant="primary"`) e classes do Bootstrap (`bg-body`, `text-body-secondary`, `text-primary-emphasis`). Evite cores literais, estilos inline e classes específicas de tela. Após alterar a paleta, valide contraste e estados de hover, foco e seleção nos dois temas; a compilação deriva as variantes, mas não substitui essa revisão.
+
 ## Arquitetura e formularios
 
 As paginas do roteador sao carregadas sob demanda com `lazy` e `Suspense`, mantendo o bundle inicial menor. Acesso ao contexto de autenticacao fica no hook `useAuth`, separado do provider; ele usa a API `use` do React 19 para ler o contexto.
