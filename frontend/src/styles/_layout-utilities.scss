@@ -1,0 +1,55 @@
+// Extensões genéricas da Utility API do Bootstrap para viewports móveis.
+// A altura dinâmica acompanha as barras do navegador; vh-100 é o fallback.
+$touch-target-size: 44px;
+
+$utilities: (
+  'touch-target': (
+    property: min-width min-height,
+    class: touch-target,
+    values: (
+      null: $touch-target-size,
+    ),
+  ),
+  'dynamic-viewport-height': (
+    property: height,
+    class: h,
+    values: (
+      dvh: 100dvh,
+    ),
+  ),
+  'minimum-height': (
+    property: min-height,
+    class: min-h,
+    values: (
+      0: 0,
+    ),
+  ),
+  'safe-area-top': (
+    property: padding-top,
+    class: pt-safe,
+    values: (
+      0: env(safe-area-inset-top, 0px),
+    ),
+  ),
+  'safe-area-bottom': (
+    property: padding-bottom,
+    class: pb-safe,
+    values: (
+      0: env(safe-area-inset-bottom, 0px),
+    ),
+  ),
+  'safe-area-start': (
+    property: padding-left,
+    class: ps-safe,
+    values: (
+      0: env(safe-area-inset-left, 0px),
+    ),
+  ),
+  'safe-area-end': (
+    property: padding-right,
+    class: pe-safe,
+    values: (
+      0: env(safe-area-inset-right, 0px),
+    ),
+  ),
+);

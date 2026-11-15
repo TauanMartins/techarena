@@ -1,6 +1,7 @@
 // Identidade TechArena: configure o Bootstrap aqui, sem estilos por tela.
 // As variantes, estados interativos e utilitários são gerados pelo framework.
 @use 'sass:map';
+@use 'layout-utilities';
 
 // Paleta semântica. Primary é a marca; success/warning/danger indicam estados.
 $primary: #2459c4;
@@ -64,6 +65,7 @@ $display-font-weight: 400;
 }
 
 // Bootstrap 5.3 usa @import para configurar variáveis antes da compilação.
+$utilities: layout-utilities.$utilities;
 @import 'bootstrap/scss/bootstrap';
 
 // Variantes outline usam cores compiladas: adapte-as ao fundo escuro usando
