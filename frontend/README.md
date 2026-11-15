@@ -55,6 +55,16 @@ O tema é centralizado em [`src/styles/theme.scss`](src/styles/theme.scss), impo
 
 Nos componentes, continue usando variantes semânticas (`variant="primary"`) e classes do Bootstrap (`bg-body`, `text-body-secondary`, `text-primary-emphasis`). Evite cores literais, estilos inline e classes específicas de tela. Após alterar a paleta, valide contraste e estados de hover, foco e seleção nos dois temas; a compilação deriva as variantes, mas não substitui essa revisão.
 
+## Assets e separação do legado
+
+- `src/assets/brand/` é a fonte oficial dos logos atuais: `logo-light.png` para fundo claro e `logo-dark.png` para fundo escuro. O HTML também referencia esses arquivos como favicon; o Vite resolve as URLs e gera os arquivos versionados no build, sem cópias em `public/`.
+- `src/assets/fonts/` contém somente fontes usadas pelo tema. Registre-as em `src/styles/theme.scss`.
+- Ícones de interface vêm de `bootstrap-icons`; modalidades usam `SportIcon`, e fotos/placeholders usam `Avatar`. Não reintroduza os PNGs antigos nesses componentes.
+- Reserve `public/` para arquivos que realmente precisam de uma URL fixa, sem processamento pelo Vite. Imagens importadas pelos componentes pertencem a `src/assets/`.
+- `../frontend.old` e `../backend.old` são arquivos históricos, fora do aplicativo atual. A migração de uma funcionalidade deve produzir código independente no projeto atual, preservando os contratos da API.
+
+Antes de remover assets, confira suas referências no código, HTML e estilos. Após reorganizá-los, execute build, lint, formatação e testes. Os arquivos históricos permanecem separados para consulta e não devem ser usados como dependências do frontend.
+
 ## Arquitetura e formularios
 
 As paginas do roteador sao carregadas sob demanda com `lazy` e `Suspense`, mantendo o bundle inicial menor. Acesso ao contexto de autenticacao fica no hook `useAuth`, separado do provider; ele usa a API `use` do React 19 para ler o contexto.
