@@ -100,7 +100,8 @@ describe('Users HTTP and PostgreSQL integration', () => {
 
   it('keeps health public, deletes the root and protects users by default', async () => {
     await client().get('/').expect(404);
-    await client().get('/health').expect(200, { status: 'ok', database: 'up' });
+    const health = await client().get('/health').expect(200);
+    expect(health.body).toMatchObject({ status: 'ok', database: 'up' });
     await client().get('/users/me').expect(401);
     await client()
       .get('/users/me')

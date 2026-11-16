@@ -15,10 +15,16 @@ it('projects only declared response properties', async () => {
   await expect(
     lastValueFrom(
       interceptor.intercept(context, {
-        handle: () => of({ status: 'ok', database: 'up', secret: 'hidden' }),
+        handle: () =>
+          of({
+            status: 'ok',
+            database: 'up',
+            version: '1.2.3',
+            secret: 'hidden',
+          }),
       }),
     ),
-  ).resolves.toEqual({ status: 'ok', database: 'up' });
+  ).resolves.toEqual({ status: 'ok', database: 'up', version: '1.2.3' });
 });
 it('rejects invalid response contracts', async () => {
   const interceptor = new ResponseValidationInterceptor(reflector);

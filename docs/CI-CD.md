@@ -88,6 +88,12 @@ recusa habilitar auto-merge se não encontrar `CI` entre os checks do ruleset.
 5. Integrar uma alteração real `fix` ou `feat`; acompanhar o PR automático de
    release, seus checks, tags e deploys.
 
+O frontend mostra sua versão no rodapé desktop e ao final de Configurações no
+celular. O Vite incorpora a versão do `frontend/package.json` no build, sem uma
+requisição extra e sem depender da versão de outro deploy em cache.
+O backend lê `backend/package.json` e expõe a mesma versão no campo `version`
+de `/health` e no Swagger. O Release Please mantém esses arquivos atualizados.
+
 O frontend gera `/version.json` com tag e SHA; a esteira confere esse arquivo
 após publicar. O backend é validado pelo SHA retornado pela API do Render e
 pela resposta de `/health`. Não são necessárias credenciais do banco no Actions.

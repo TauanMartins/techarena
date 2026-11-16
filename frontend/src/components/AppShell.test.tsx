@@ -28,6 +28,9 @@ describe('AppShell', () => {
       ).getByRole('link', { name: 'Início' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Ana Silva')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(`Versão do aplicativo ${__APP_VERSION__}`),
+    ).toHaveTextContent(`v${__APP_VERSION__}`);
     const communityToggle = screen.getByRole('button', { name: /Comunidades/ });
     expect(communityToggle).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(communityToggle);
