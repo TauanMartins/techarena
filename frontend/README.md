@@ -65,7 +65,46 @@ A largura mínima de referência para validação é **320 CSS px**, mantendo o 
 
 `src/styles/_layout-utilities.scss` estende a [Utility API do Bootstrap](https://getbootstrap.com/docs/5.3/utilities/api/) com utilitários genéricos de altura dinâmica (`h-dvh`), altura mínima (`min-h-0`) e áreas seguras (`pt-safe-0`, `pb-safe-0`, `ps-safe-0`, `pe-safe-0`). O viewport permite usar os recuos do dispositivo por `env(safe-area-inset-*)`; a altura acompanha as barras do navegador. O comportamento do teclado virtual e dos recuos ainda deve ser conferido em dispositivos iOS e Android reais.
 
-Esta etapa adapta a navegação. Manifesto, instalação e demais recursos PWA serão tratados separadamente.
+## Instalação no celular (PWA)
+
+O manifesto em `public/manifest.webmanifest` configura nome, identidade estável (`id`), início em `/`, escopo e abertura em modo `standalone`. O app continua dependendo de internet: não há service worker nem cache offline de páginas, respostas de API ou autenticação.
+
+O acesso à instalação aparece no login e em Configurações. No Android/Chrome, o botão **Instalar app** aparece quando o navegador disponibiliza `beforeinstallprompt`; a instalação só é solicitada após o toque do usuário. Na ausência do evento, **Como instalar** explica o caminho pelo menu. No iPhone/iPad, a orientação é abrir o Safari, usar Compartilhar → Adicionar à Tela de Início e manter Abrir como App ativado quando essa opção aparecer. A oferta é ocultada no modo standalone ou após `appinstalled`. Um cancelamento não reabre o diálogo automaticamente.
+
+### Ícones e build
+
+`npm run dev` e `npm run build` geram automaticamente os ícones por meio de `scripts/generate-pwa-assets.mjs` e Sharp. A fonte é `src/assets/brand/logo-light.png`; trocar esse arquivo e executar novamente o comando atualiza os derivados:
+
+- `public/pwa/icon-192.png` e `icon-512.png`: ícones Android.
+- `public/pwa/icon-maskable-512.png`: variante com margem segura para recortes do sistema.
+- `public/pwa/apple-touch-icon.png`: ícone de 180 px para iOS.
+
+`public/pwa/` é gerado e ignorado pelo Git. Não edite esses arquivos manualmente. `npm run generate:pwa-assets` permite regenerá-los isoladamente. Distribua o diretório `dist` completo, incluindo manifesto e ícones. Ao alterar a paleta, ajuste também as cores estáticas de inicialização no manifesto e no `index.html`.
+
+### Testar localmente
+
+No diretório `frontend`, configure primeiro `.env.local` conforme a seção de execução local e rode:
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173 --strictPort
+```
+
+Abra `http://localhost:4173` no Chrome ou Edge. Confira **Application → Manifest** no DevTools e teste o menu de instalação do navegador. O botão dentro do TechArena depende da disponibilidade do evento nativo; pode ser necessário interagir com a página e aguardar. A emulação de tela mobile ajuda a revisar o layout, mas não substitui a instalação em aparelho real.
+
+No Android, também é possível testar por USB: habilite a depuração do aparelho, conecte ao computador e configure o encaminhamento da porta **4173 → localhost:4173** pelo `chrome://inspect/#devices`. Abra `http://localhost:4173` no Chrome do celular. Se a API estiver em `localhost:3000`, encaminhe essa porta também. Consulte o [guia de encaminhamento de portas do Chrome](https://developer.chrome.com/docs/devtools/remote-debugging/local-server).
+
+Para iPhone/iPad, sirva o build por um endereço HTTPS acessível ao aparelho e com certificado confiável. Isso pode ser feito com HTTPS na rede local ou com um túnel HTTPS de desenvolvimento. Um túnel expõe o serviço local: configure apenas os serviços necessários e encerre-o após o teste. A API também precisa estar acessível pelo celular e, quando usada por uma página HTTPS, deve evitar conteúdo misto HTTP. Ajuste as origens de CORS e as URLs permitidas do Supabase para a origem utilizada e gere o build novamente se mudar variáveis `VITE_*`.
+
+### Publicação e validação
+
+- Publique em **HTTPS**. O endereço HTTP da rede local acessado pelo celular não equivale à exceção de desenvolvimento de `localhost`.
+- A hospedagem deve servir o manifesto e os PNGs como arquivos reais, e encaminhar as rotas da aplicação para `index.html`. Esta configuração pressupõe publicação na raiz do domínio.
+- Preserve a URL HTTPS pública nas URLs permitidas de redirecionamento do Supabase/Google. O fluxo OAuth existente continua usando a origem atual; valide o retorno do login dentro do app instalado em aparelhos reais.
+- Para conferir o build local: `npm run build` e `npm run preview`. No DevTools, verifique manifesto, ícones, `start_url` e `display`.
+- Em Android real: instale pelo Chrome, abra pelo ícone, teste login, navegação, teclado, fechamento e reabertura. Em iOS/iPadOS real: faça o mesmo após adicionar pelo Safari. Confira também cancelamento e ausência de oferta no modo app.
+
+O navegador controla a disponibilidade e o momento da oferta; no Chrome ela também pode depender de interação e tempo de uso. A instalação real nos aparelhos e o retorno OAuth precisam ser validados no ambiente HTTPS publicado. Referências: [critérios do Chrome](https://web.dev/articles/install-criteria), [evento de instalação](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeinstallprompt_event) e [instruções da Apple](https://support.apple.com/guide/iphone/iphea86e5236/ios).
 
 ## Assets e separação do legado
 

@@ -9,6 +9,7 @@ import Stack from 'react-bootstrap/Stack';
 import Badge from 'react-bootstrap/Badge';
 import logo from '../assets/brand/logo-light.png';
 import { useAuth } from '../auth/useAuth';
+import { InstallApp } from '../features/installation/InstallApp';
 
 export function LoginPage() {
   const { configured, loginWithGoogle, authError } = useAuth();
@@ -212,6 +213,7 @@ export function LoginPage() {
                 </p>
               </Card.Body>
             </Card>
+            <InstallApp />
           </Col>
         </Row>
       </Container>
