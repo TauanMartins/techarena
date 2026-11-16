@@ -229,6 +229,12 @@ export function SettingsPage() {
           </Button>
         </Card.Body>
       </Card>
+      <p className="d-lg-none small text-body-secondary text-center mt-4 mb-0">
+        TechArena ·{' '}
+        <span aria-label={`Versão do aplicativo ${__APP_VERSION__}`}>
+          v{__APP_VERSION__}
+        </span>
+      </p>
     </>
   );
 }

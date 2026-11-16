@@ -1,0 +1,222 @@
+name: Release and deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: 'Full SHA of a CI-approved release commit (retry deployment only)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  deployments: write
+
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      sha: ${{ steps.verify.outputs.sha }}
+      frontend_tag: ${{ steps.plan.outputs.frontend_tag }}
+      backend_tag: ${{ steps.plan.outputs.backend_tag }}
+    steps:
+      - name: Verify approved source commit
+        id: verify
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RETRY_SHA: ${{ inputs.release_sha }}
+        with:
+          script: |
+            const repo = context.repo;
+            if (context.eventName === 'workflow_dispatch' && context.ref !== 'refs/heads/main') {
+              throw new Error('Run recovery from main only');
+            }
+            const sha = context.eventName === 'workflow_dispatch'
+              ? process.env.RETRY_SHA : context.payload.workflow_run.head_sha;
+            if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Expected a full commit SHA');
+            const {data: main} = await github.rest.repos.getBranch({...repo, branch: 'main'});
+            const {data: comparison} = await github.rest.repos.compareCommitsWithBasehead({
+              ...repo, basehead: `${sha}...${main.commit.sha}`
+            });
+            if (!['ahead', 'identical'].includes(comparison.status)) throw new Error('Commit is not on main');
+            const {data: runs} = await github.rest.actions.listWorkflowRuns({
+              ...repo, workflow_id: 'ci.yml', head_sha: sha, event: 'push', status: 'success', per_page: 100
+            });
+            if (!runs.workflow_runs.some(run => run.head_branch === 'main' && run.head_repository.full_name === `${repo.owner}/${repo.repo}`)) {
+              throw new Error('No successful main CI run for this commit');
+            }
+            if (context.eventName !== 'workflow_dispatch' && main.commit.sha !== sha) {
+              throw new Error('main advanced; its CI will process releases. Use manual recovery for an existing release commit if needed.');
+            }
+            core.setOutput('sha', sha);
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.verify.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check release bot configuration
+        if: github.event_name != 'workflow_dispatch'
+        env:
+          APP_ID: ${{ vars.RELEASE_APP_ID }}
+          APP_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+        run: |
+          if [ -z "$APP_ID" ] || [ -z "$APP_KEY" ]; then
+            echo '::error::Configure repository variable RELEASE_APP_ID and secret RELEASE_APP_PRIVATE_KEY.'
+            exit 1
+          fi
+      - name: Create release bot token
+        if: github.event_name != 'workflow_dispatch'
+        id: app
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Update release PR and create component releases
+        if: github.event_name != 'workflow_dispatch'
+        id: release
+        uses: googleapis/release-please-action@8b8fd2cc23b2e18957157a9d923d75aa0c6f6ad5 # v4
+        with:
+          token: ${{ steps.app.outputs.token }}
+          target-branch: main
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - name: Enable protected auto-merge for release PRs
+        if: github.event_name != 'workflow_dispatch' && steps.release.outputs.prs_created == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_PRS: ${{ steps.release.outputs.prs }}
+        with:
+          github-token: ${{ steps.app.outputs.token }}
+          script: |
+            const {data: rules} = await github.request('GET /repos/{owner}/{repo}/rules/branches/main', context.repo);
+            if (!rules.some(rule => rule.type === 'required_status_checks' &&
+                rule.parameters.required_status_checks.some(check => check.context === 'CI'))) {
+              throw new Error('Require the CI status check in the main ruleset before enabling auto-merge.');
+            }
+            for (const pr of JSON.parse(process.env.RELEASE_PRS || '[]')) {
+              const {data: details} = await github.rest.pulls.get({...context.repo, pull_number: pr.number});
+              await github.graphql(`mutation($id: ID!) {
+                enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
+                  pullRequest { number }
+                }
+              }`, {id: details.node_id});
+            }
+      - name: Find component releases at the approved commit
+        id: plan
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_SHA: ${{ steps.verify.outputs.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            let count = 0;
+            for (const component of ['backend', 'frontend']) {
+              const version = JSON.parse(fs.readFileSync(`${component}/package.json`, 'utf8')).version;
+              if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Expected stable semantic version');
+              const tag = `${component}-v${version}`;
+              try {
+                const {data: release} = await github.rest.repos.getReleaseByTag({...context.repo, tag});
+                if (release.draft || release.prerelease) continue;
+                const {data: commit} = await github.rest.repos.getCommit({...context.repo, ref: tag});
+                if (commit.sha !== process.env.RELEASE_SHA) continue;
+                core.setOutput(`${component}_tag`, tag);
+                await core.summary.addRaw(`${component}: [${tag}](${release.html_url})\n\n`).write();
+                count++;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+            }
+            if (context.eventName === 'workflow_dispatch' && count === 0) throw new Error('No component release tags match this commit');
+            if (count === 0) await core.summary.addRaw('No release to deploy at this commit. A release PR may have been opened or updated.').write();
+
+  deploy:
+    needs: release
+    if: >-
+      vars.PRODUCTION_DEPLOY_ENABLED == 'true' &&
+      (needs.release.outputs.backend_tag != '' || needs.release.outputs.frontend_tag != '')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    environment:
+      name: production
+      url: ${{ vars.FRONTEND_URL }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.release.outputs.sha }}
+          persist-credentials: false
+      - name: Publish backend and wait for health
+        if: needs.release.outputs.backend_tag != ''
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+        run: python3 .github/scripts/render_deploy.py
+      - uses: actions/setup-node@v6
+        if: needs.release.outputs.frontend_tag != ''
+        with:
+          node-version-file: backend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build production frontend
+        if: needs.release.outputs.frontend_tag != ''
+        working-directory: frontend
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          RELEASE_TAG: ${{ needs.release.outputs.frontend_tag }}
+        run: |
+          test -n "$VITE_API_BASE_URL" && test -n "$VITE_SUPABASE_URL" && test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
+          npm ci --include=dev
+          npm run build
+          node -e 'require("fs").writeFileSync("dist/version.json", JSON.stringify({tag: process.env.RELEASE_TAG, sha: process.env.RELEASE_SHA}))'
+      - name: Publish frontend
+        if: needs.release.outputs.frontend_tag != ''
+        working-directory: frontend
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.135.0 deploy
+      - name: Verify frontend version
+        if: needs.release.outputs.frontend_tag != ''
+        env:
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          RELEASE_TAG: ${{ needs.release.outputs.frontend_tag }}
+        run: |
+          python3 - <<'PY'
+          import json, os, time, urllib.request
+          url = os.environ['FRONTEND_URL'].rstrip('/')
+          if not url.startswith('https://'): raise ValueError('FRONTEND_URL must use HTTPS')
+          for attempt in range(12):
+              try:
+                  with urllib.request.urlopen(f"{url}/version.json?sha={os.environ['RELEASE_SHA']}&attempt={attempt}", timeout=15) as response:
+                      version = json.load(response)
+                  if version == {'tag': os.environ['RELEASE_TAG'], 'sha': os.environ['RELEASE_SHA']}:
+                      break
+              except (OSError, ValueError):
+                  pass
+              time.sleep(10)
+          else:
+              raise RuntimeError('Published frontend version did not match the release')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write(f"\nFrontend verified: {os.environ['RELEASE_TAG']} at {url}\n")
+          PY

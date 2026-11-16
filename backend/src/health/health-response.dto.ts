@@ -1,7 +1,17 @@
 import { Expose } from 'class-transformer';
-import { Equals } from 'class-validator';
+import { Equals, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class HealthResponseDto {
+  /** Backend package version published by the release pipeline. */
+  @ApiProperty({
+    description: 'Versão do backend publicada.',
+    example: '1.2.3',
+  })
+  @Expose()
+  @IsString()
+  version!: string;
+
   /** Application and database are available. */
   @Expose()
   @Equals('ok')

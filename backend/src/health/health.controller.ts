@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 import { Public } from '../modules/auth/adapters/http/auth.decorators.js';
 import { ResponseContract } from '../common/http/response-contract.js';
 import { HealthResponseDto } from './health-response.dto.js';
+import { APPLICATION_VERSION } from '../config/application-version.js';
 
 @ApiTags('health')
 @Controller('health')
@@ -36,6 +37,6 @@ export class HealthController {
         'O banco de dados está indisponível ou possui migrações pendentes.',
       );
     }
-    return { status: 'ok', database: 'up' };
+    return { status: 'ok', database: 'up', version: APPLICATION_VERSION };
   }
 }

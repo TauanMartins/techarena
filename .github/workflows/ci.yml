@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title:
+    name: Conventional PR title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Validate the squash commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+
+          pattern = r"^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-zA-Z0-9_./-]+\))?!?: \S.*$"
+          if not re.fullmatch(pattern, os.environ["PR_TITLE"]):
+              print("::error::Use a Conventional Commit title, e.g. feat(frontend): add arena filters")
+              sys.exit(1)
+          PY
+
+  checks:
+    name: ${{ matrix.component }} / lint, test, build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: frontend
+            test-command: npm run test:coverage
+          - component: backend
+            test-command: npm run test:cov
+    defaults:
+      run:
+        working-directory: ${{ matrix.component }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: backend/.nvmrc
+          cache: npm
+          cache-dependency-path: ${{ matrix.component }}/package-lock.json
+      - name: Install npm and dependencies
+        run: |
+          npm install --global npm@11.20.0
+          npm ci --include=dev
+      - name: Lint
+        run: npm run lint
+      - name: Check formatting
+        if: matrix.component == 'frontend'
+        run: npm run format:check
+      - name: Tests and coverage
+        run: ${{ matrix.test-command }}
+      - name: Production build
+        run: npm run build
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.component }}
+          path: ${{ matrix.component }}/coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  integration:
+    name: Backend / integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgis/postgis:15-3.6-alpine
+        env:
+          POSTGRES_DB: techarena_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d techarena_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:ci-only-password@127.0.0.1:5432/techarena_test
+      CORS_ORIGINS: http://localhost:4200
+      SUPABASE_URL: https://project.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ''
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: backend/.nvmrc
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Install npm and dependencies
+        run: |
+          npm install --global npm@11.20.0
+          npm ci --include=dev
+      - name: Prepare disposable database
+        run: |
+          npm run db:migrate
+          npm run db:seed
+          npm run db:check
+      - name: Integration tests
+        run: npm run test:e2e
+
+  automation:
+    name: Automation / tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validate release configuration and deployment logic
+        run: |
+          python3 -m json.tool release-please-config.json > /dev/null
+          python3 -m json.tool .release-please-manifest.json > /dev/null
+          python3 -m unittest discover -s .github/tests -v
+
+  ci:
+    name: CI
+    if: always()
+    needs: [pr-title, checks, integration, automation]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Summarize and require successful checks
+        env:
+          TITLE_RESULT: ${{ needs.pr-title.result }}
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+          AUTOMATION_RESULT: ${{ needs.automation.result }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+
+          results = {
+              "Conventional PR title": os.environ["TITLE_RESULT"],
+              "Frontend/backend lint, tests and build": os.environ["CHECKS_RESULT"],
+              "Backend integration": os.environ["INTEGRATION_RESULT"],
+              "Release/deploy automation": os.environ["AUTOMATION_RESULT"],
+          }
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("| Check | Result |\n|---|---|\n")
+              for name, result in results.items():
+                  summary.write(f"| {name} | {result} |\n")
+          title_ok = os.environ["TITLE_RESULT"] == "success" or (
+              os.environ["EVENT_NAME"] != "pull_request" and os.environ["TITLE_RESULT"] == "skipped"
+          )
+          if not (title_ok and os.environ["CHECKS_RESULT"] == "success" and os.environ["INTEGRATION_RESULT"] == "success" and os.environ["AUTOMATION_RESULT"] == "success"):
+              sys.exit("Required CI checks did not pass.")
+          PY
