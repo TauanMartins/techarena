@@ -1,5 +1,5 @@
 import { DomainError } from '../../../common/domain/domain-error.js';
-import type { FixtureScheduleInput, TournamentFormat } from './leagues.port.js';
+import type { FixtureScheduleInput, TournamentFormat } from './league.js';
 
 export interface Fixture {
   homeTeamId: string;

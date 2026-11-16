@@ -3,8 +3,8 @@ import { DataSource } from 'typeorm';
 import { ProfileModule } from '../users/profile/profile.module.js';
 import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
 import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { TEAMS_REPOSITORY } from './domain/teams.port.js';
-import type { TeamsRepository } from './domain/teams.port.js';
+import { TEAMS_REPOSITORY } from './application/teams.port.js';
+import type { TeamsRepository } from './application/teams.port.js';
 import { TypeormTeamsRepository } from './adapters/persistence/typeorm-teams.repository.js';
 import {
   TeamCatalogApplication,

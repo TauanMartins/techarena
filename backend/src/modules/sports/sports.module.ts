@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { SportsApplication } from './application/sports.application.js';
-import { SPORTS_REPOSITORY } from './domain/sports.port.js';
-import type { SportsRepository } from './domain/sports.port.js';
+import { SPORTS_REPOSITORY } from './application/sports.port.js';
+import type { SportsRepository } from './application/sports.port.js';
 import { TypeormSportsRepository } from './adapters/persistence/typeorm-sports.repository.js';
 import { SportsController } from './adapters/http/sports.controller.js';
 @Module({

@@ -1,17 +1,5 @@
 import type { Page, PageRequest } from '../../../common/domain/pagination.js';
-export interface SportItem {
-  id: string;
-  name: string;
-  defaultPlayers: number;
-}
-export interface MaterialItem {
-  id: string;
-  description: string;
-  relatedToLocal: boolean;
-}
-export interface SportsQuery extends PageRequest {
-  search?: string;
-}
+import type { SportItem, MaterialItem, SportsQuery } from '../domain/sport.js';
 export const SPORTS_REPOSITORY = Symbol('SPORTS_REPOSITORY');
 export interface SportsRepository {
   list(query: SportsQuery): Promise<Page<SportItem>>;

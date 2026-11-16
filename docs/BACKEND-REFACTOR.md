@@ -66,7 +66,7 @@ Ligas/torneios não possuem rotas em A. Não remover essas funcionalidades nem i
 
 ## Validação e arquitetura verificáveis
 
-- Um schema Zod representa o contrato de transporte; formulários adaptam strings/controles antes de produzir esse contrato. Domínio não importa Nest, ORM ou schemas HTTP.
+- Decisão confirmada pelo usuário: manter class-validator/class-transformer e Swagger no backend. O frontend mantém Zod nos formulários. Não introduzir workspace de contratos nem integração própria com Zod nesta refatoração. Domínio não importa Nest, ORM ou DTOs HTTP.
 - Rejeitar campos desconhecidos em entradas; projetar explicitamente saídas, sem expor propriedades extras.
 - Comparar OpenAPI e respostas com os testes HTTP existentes, incluindo null/undefined/defaults e status de erro.
 - Casos de uso devem ser testáveis com portas em memória. Testes de integração verificam locks, rollback, constraints e consultas contra PostgreSQL descartável.

@@ -1,7 +1,10 @@
 import type { ChatKind } from '../domain/chat-topic.js';
 
 export interface ChatAccessPort {
-  ensureAccess(userId: string, topic: string): Promise<{ topic: string; kind: ChatKind }>;
+  ensureAccess(
+    userId: string,
+    topic: string,
+  ): Promise<{ topic: string; kind: ChatKind }>;
   revokeParticipant(topic: string, userId: string): Promise<void>;
 }
 

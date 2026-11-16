@@ -6,8 +6,8 @@ import type { ProfileAccess } from '../users/profile/application/profile-access.
 import { LeaguesApplication } from './application/leagues.application.js';
 import { LeaguesController } from './adapters/http/leagues.controller.js';
 import { TypeormLeaguesRepository } from './adapters/persistence/typeorm-leagues.repository.js';
-import { LEAGUES_REPOSITORY } from './domain/leagues.port.js';
-import type { LeaguesRepository } from './domain/leagues.port.js';
+import { LEAGUES_REPOSITORY } from './application/leagues.port.js';
+import type { LeaguesRepository } from './application/leagues.port.js';
 
 @Module({
   imports: [ProfileModule],

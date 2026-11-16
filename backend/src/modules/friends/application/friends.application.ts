@@ -1,8 +1,12 @@
+import {
+  assertCanRequestFriendship,
+  friendshipOutcome,
+} from '../domain/friend-policy.js';
 import { DomainError } from '../../../common/domain/domain-error.js';
 import { assertPageRequest } from '../../../common/domain/pagination.js';
 import type { PageRequest } from '../../../common/domain/pagination.js';
 import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
-import type { FriendsRepository } from '../domain/friends.port.js';
+import type { FriendsRepository } from '../application/friends.port.js';
 import type { ChatAccessPort } from '../../chat/application/chat-access.port.js';
 import { directChatTopic } from '../../chat/domain/chat-topic.js';
 export class FriendsApplication {
@@ -24,11 +28,23 @@ export class FriendsApplication {
         'SELF_FRIENDSHIP',
         'You cannot add yourself',
       );
-    return this.repository.request(actor, userId);
+    return this.repository.transaction(async (store) => {
+      assertCanRequestFriendship(
+        actor,
+        userId,
+        await store.userExists(userId),
+        await store.relationshipExists(actor, userId),
+      );
+      return store.present(await store.insert(actor, userId), actor);
+    });
   }
   async decide(actor: string, id: string, action: 'accept' | 'block') {
     await this.profiles.ensureExists(actor);
-    const result = await this.repository.decide(actor, id, action);
+    const result = await this.repository.transaction(async (store) => {
+      const status = friendshipOutcome(actor, await store.lock(id), action);
+      await store.setStatus(id, status);
+      return store.present(id, actor);
+    });
     if (action === 'block') {
       const topic = directChatTopic(actor, result.user.id);
       await Promise.all([

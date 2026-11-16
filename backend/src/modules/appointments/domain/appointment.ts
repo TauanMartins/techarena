@@ -1,5 +1,5 @@
 import type { GeoFilter } from '../../../common/domain/geo.js';
-import type { Page, PageRequest } from '../../../common/domain/pagination.js';
+import type { PageRequest } from '../../../common/domain/pagination.js';
 export interface AppointmentQuery extends PageRequest, GeoFilter {
   sportId?: string;
   arenaId?: string;
@@ -52,18 +52,4 @@ export interface AvailabilityQuery {
 export interface ScheduleItem {
   id: string;
   horary: string;
-}
-export const APPOINTMENTS_REPOSITORY = Symbol('APPOINTMENTS_REPOSITORY');
-export interface AppointmentsRepository {
-  list(
-    actor: string,
-    query: AppointmentQuery,
-    mine: boolean,
-  ): Promise<Page<BookingCard>>;
-  create(
-    actor: string,
-    input: CreateAppointment,
-    clock: () => Date,
-  ): Promise<BookingCard>;
-  available(query: AvailabilityQuery, now: Date): Promise<ScheduleItem[]>;
 }

@@ -8,19 +8,21 @@ import {
   SportArena,
   UserAppointment,
 } from '../../../../database/entities/index.js';
-import { DomainError } from '../../../../common/domain/domain-error.js';
 import { paginate } from '../../../../common/domain/pagination.js';
 import { databaseWrite } from '../../../../common/persistence/database-write.js';
 import { ARENA_DISTANCE_KM } from '../../../../common/persistence/queries.js';
+import type { AppointmentsRepository } from '../../application/appointments.port.js';
 import type {
   AppointmentQuery,
-  AppointmentsRepository,
   AvailabilityQuery,
   AppointmentParticipant,
   BookingCard,
-  CreateAppointment,
-} from '../../domain/appointments.port.js';
-import { assertFutureSlot } from '../../domain/booking-policy.js';
+} from '../../domain/appointment.js';
+import type {
+  BookingContext,
+  BookingDraft,
+} from '../../domain/booking-policy.js';
+import type { BookingTransaction } from '../../application/appointments.port.js';
 function card(
   a: Appointment,
   actor: string,
@@ -158,32 +160,47 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       query,
     );
   }
-  private async validateLink(manager: EntityManager, query: AvailabilityQuery) {
+  private async loadContext(
+    manager: EntityManager,
+    query: AvailabilityQuery,
+    scheduleId?: string,
+  ): Promise<BookingContext> {
     const arena = await manager
       .getRepository(Arena)
       .findOneBy({ id: query.arenaId });
-    if (!arena)
-      throw new DomainError('not_found', 'ARENA_NOT_FOUND', 'Arena not found');
-    if (arena.isLeagueOnly)
-      throw new DomainError(
-        'forbidden',
-        'LEAGUE_ARENA',
-        'This arena is restricted to league scheduling',
-      );
-    if (
-      !(await manager
-        .getRepository(SportArena)
-        .existsBy({ arenaId: query.arenaId, sportId: query.sportId }))
-    )
-      throw new DomainError(
-        'not_found',
-        'SPORT_ARENA_NOT_FOUND',
-        'This arena does not support the sport',
-      );
-    return arena;
+    const sport = await manager
+      .getRepository(Sport)
+      .findOneBy({ id: query.sportId });
+    const supportsSport = await manager
+      .getRepository(SportArena)
+      .existsBy({ arenaId: query.arenaId, sportId: query.sportId });
+    const schedule = scheduleId
+      ? await manager.getRepository(Schedule).findOneBy({ id: scheduleId })
+      : null;
+    return {
+      arena: arena
+        ? {
+            id: arena.id,
+            isLeagueOnly: arena.isLeagueOnly,
+            lat: Number(arena.lat),
+            longitude: Number(arena.longitude),
+          }
+        : null,
+      sport: sport
+        ? {
+            id: sport.id,
+            name: sport.name,
+            defaultPlayers: sport.defaultValuePlayerNumbers,
+          }
+        : null,
+      supportsSport,
+      schedule: schedule ? { id: schedule.id, horary: schedule.horary } : null,
+    };
+  }
+  context(query: AvailabilityQuery) {
+    return this.loadContext(this.source.manager, query);
   }
   async available(query: AvailabilityQuery, now: Date) {
-    await this.validateLink(this.source.manager, query);
     const rows = await this.source
       .getRepository(Schedule)
       .createQueryBuilder('schedule')
@@ -202,64 +219,51 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       .getMany();
     return rows.map((s) => ({ id: s.id, horary: s.horary }));
   }
-  async create(actor: string, input: CreateAppointment, clock: () => Date) {
+  transaction<T>(work: (store: BookingTransaction) => Promise<T>): Promise<T> {
     return databaseWrite(() =>
-      this.source.transaction(async (manager) => {
-        // The arena lock serializes catalog edits and bookings, even across sports.
-        await manager.getRepository(Arena).findOne({
-          where: { id: input.arenaId },
-          lock: { mode: 'pessimistic_write' },
-        });
-        const arena = await this.validateLink(manager, input);
-        const sport = await manager
-          .getRepository(Sport)
-          .findOneByOrFail({ id: input.sportId });
-        const schedule = await manager
-          .getRepository(Schedule)
-          .findOneBy({ id: input.scheduleId });
-        if (!schedule)
-          throw new DomainError(
-            'not_found',
-            'SCHEDULE_NOT_FOUND',
-            'Schedule not found',
-          );
-        const scheduledAt = new Date(`${input.date}T${schedule.horary}Z`);
-        assertFutureSlot(scheduledAt, clock());
-        const maxPlayers = input.maxPlayers ?? sport.defaultValuePlayerNumbers;
-        const row = await manager.getRepository(Appointment).save({
-          organizerId: actor,
-          title: input.title?.trim() || sport.name.slice(0, 100),
-          description: input.description ?? null,
-          scheduledAt,
-          status: 'scheduled',
-          arenaId: arena.id,
-          sportId: sport.id,
-          scheduleId: schedule.id,
-          maxPlayers,
-          location: {
-            type: 'Point',
-            coordinates: [Number(arena.longitude), Number(arena.lat)],
+      this.source.transaction((manager) =>
+        work({
+          context: async (query, scheduleId) => {
+            // Same lock order as arena catalog edits; business decisions run after acquisition.
+            await manager
+              .getRepository(Arena)
+              .findOne({
+                where: { id: query.arenaId },
+                lock: { mode: 'pessimistic_write' },
+              });
+            return this.loadContext(manager, query, scheduleId);
           },
-          createdAt: clock(),
-          updatedAt: clock(),
-        });
-        await manager.getRepository(UserAppointment).insert({
-          userId: actor,
-          appointmentId: row.id,
-          holder: input.holder,
-        });
-        row.arena = arena;
-        row.sport = sport;
-        return card(row, actor, 1, input.holder ? 1 : 0, true, null, [
-          {
-            id: actor,
-            name: null,
-            username: null,
-            image: null,
-            holder: input.holder,
-          },
-        ]);
-      }),
+          insert: (draft) => this.insert(manager, draft),
+        }),
+      ),
     );
+  }
+  private async insert(
+    manager: EntityManager,
+    draft: BookingDraft,
+  ): Promise<BookingCard> {
+    const { holder, lat, longitude, ...data } = draft;
+    const row = await manager.getRepository(Appointment).save({
+      ...data,
+      location: { type: 'Point', coordinates: [longitude, lat] },
+    });
+    await manager
+      .getRepository(UserAppointment)
+      .insert({ userId: draft.organizerId, appointmentId: row.id, holder });
+    const saved = await manager
+      .getRepository(Appointment)
+      .findOneOrFail({
+        where: { id: row.id },
+        relations: { arena: true, sport: true },
+      });
+    return card(saved, draft.organizerId, 1, holder ? 1 : 0, true, null, [
+      {
+        id: draft.organizerId,
+        name: null,
+        username: null,
+        image: null,
+        holder,
+      },
+    ]);
   }
 }

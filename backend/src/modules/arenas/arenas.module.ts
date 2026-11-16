@@ -3,8 +3,8 @@ import { DataSource } from 'typeorm';
 import { ProfileModule } from '../users/profile/profile.module.js';
 import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
 import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { ARENAS_REPOSITORY } from './domain/arenas.port.js';
-import type { ArenasRepository } from './domain/arenas.port.js';
+import { ARENAS_REPOSITORY } from './application/arenas.port.js';
+import type { ArenasRepository } from './application/arenas.port.js';
 import { TypeormArenasRepository } from './adapters/persistence/typeorm-arenas.repository.js';
 import {
   ArenaCatalogController,

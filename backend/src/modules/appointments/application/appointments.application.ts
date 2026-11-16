@@ -1,13 +1,17 @@
 import { assertPageRequest } from '../../../common/domain/pagination.js';
 import { assertGeo } from '../../../common/domain/geo.js';
 import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
+import type { AppointmentsRepository } from '../application/appointments.port.js';
 import type {
   AppointmentQuery,
-  AppointmentsRepository,
   AvailabilityQuery,
   CreateAppointment,
-} from '../domain/appointments.port.js';
-import { assertCalendarDate } from '../domain/booking-policy.js';
+} from '../domain/appointment.js';
+import {
+  assertCalendarDate,
+  assertBookingVenue,
+  planBooking,
+} from '../domain/booking-policy.js';
 export class AppointmentsApplication {
   constructor(
     private readonly repository: AppointmentsRepository,
@@ -23,7 +27,11 @@ export class AppointmentsApplication {
   async create(actor: string, input: CreateAppointment) {
     await this.profiles.ensureAdult(actor);
     assertCalendarDate(input.date);
-    return this.repository.create(actor, input, this.now);
+    return this.repository.transaction(async (store) => {
+      const context = await store.context(input, input.scheduleId);
+      const draft = planBooking(actor, input, context, this.now());
+      return store.insert(draft);
+    });
   }
 }
 export class AvailabilityApplication {
@@ -33,6 +41,7 @@ export class AvailabilityApplication {
   ) {}
   async available(query: AvailabilityQuery) {
     assertCalendarDate(query.date);
+    assertBookingVenue(await this.repository.context(query));
     return { items: await this.repository.available(query, this.now()) };
   }
 }

@@ -1,6 +1,14 @@
 import { DataSource } from 'typeorm';
 import { parseEnvironment } from '../../../../config/environment.js';
-import { ChatAccessService } from './chat-access.service.js';
+import { ChatAccessApplication } from '../../application/chat-access.application.js';
+import { TypeormChatAuthorization } from './typeorm-chat-authorization.js';
+import { SupabaseChatProvisioning } from '../supabase/supabase-chat-provisioning.js';
+function service(source: DataSource, config: typeof configuration) {
+  return new ChatAccessApplication(
+    new TypeormChatAuthorization(source),
+    new SupabaseChatProvisioning(config),
+  );
+}
 
 const userId = 'a0000000-0000-4000-8000-000000000000';
 const friendId = 'b0000000-0000-4000-8000-000000000000';
@@ -28,11 +36,13 @@ describe('ChatAccessService', () => {
       .mockResolvedValueOnce([{ allowed: true }])
       .mockResolvedValueOnce([{ display_name: 'Atleta' }])
       .mockResolvedValueOnce([{ allowed: true }]);
-    const fetchMock = vi.fn(async () => new Response(null, { status: 201 }));
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response(null, { status: 201 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
-    const service = new ChatAccessService(dataSource, configuration);
+    const application = service(dataSource, configuration);
 
-    await expect(service.ensureAccess(userId, topic)).resolves.toEqual({
+    await expect(application.ensureAccess(userId, topic)).resolves.toEqual({
       topic,
       kind: 'direct',
     });
@@ -60,16 +70,18 @@ describe('ChatAccessService', () => {
       .mockResolvedValueOnce([{ allowed: true }])
       .mockResolvedValueOnce([{ display_name: 'Atleta' }])
       .mockResolvedValueOnce([{ allowed: true }]);
-    const fetchMock = vi.fn(async () => new Response(null, { status: 201 }));
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response(null, { status: 201 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const modernConfiguration = parseEnvironment({
       DATABASE_URL: 'postgres://localhost:5432/techarena',
       SUPABASE_URL: 'https://project.supabase.co',
       SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_test-key',
     });
-    const service = new ChatAccessService(dataSource, modernConfiguration);
+    const application = service(dataSource, modernConfiguration);
 
-    await service.ensureAccess(userId, topic);
+    await application.ensureAccess(userId, topic);
 
     for (const [, request] of fetchMock.mock.calls) {
       expect(request?.headers).toMatchObject({
@@ -81,13 +93,17 @@ describe('ChatAccessService', () => {
 
   it('does not provision access if the current database denies membership', async () => {
     query.mockResolvedValueOnce([{ allowed: false }]);
-    const fetchMock = vi.fn(async () => new Response(null, { status: 204 }));
+    const fetchMock = vi.fn<typeof fetch>(
+      async () => new Response(null, { status: 204 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
-    const service = new ChatAccessService(dataSource, configuration);
+    const application = service(dataSource, configuration);
 
-    await expect(service.ensureAccess(userId, topic)).rejects.toMatchObject({
-      status: 403,
-    });
+    await expect(application.ensureAccess(userId, topic)).rejects.toMatchObject(
+      {
+        kind: 'forbidden',
+      },
+    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toContain('/rest/v1/chat_participants?');
   });

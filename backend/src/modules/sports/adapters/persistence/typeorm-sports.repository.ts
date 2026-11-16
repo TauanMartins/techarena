@@ -8,10 +8,8 @@ import {
 import { DomainError } from '../../../../common/domain/domain-error.js';
 import { paginate } from '../../../../common/domain/pagination.js';
 import type { PageRequest } from '../../../../common/domain/pagination.js';
-import type {
-  SportsQuery,
-  SportsRepository,
-} from '../../domain/sports.port.js';
+import type { SportsRepository } from '../../application/sports.port.js';
+import type { SportsQuery } from '../../domain/sport.js';
 export class TypeormSportsRepository implements SportsRepository {
   constructor(private readonly source: DataSource) {}
   async list(query: SportsQuery) {

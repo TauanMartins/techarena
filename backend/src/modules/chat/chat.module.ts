@@ -6,7 +6,9 @@ import {
 } from '../../config/configuration.module.js';
 import type { AppConfiguration } from '../../config/environment.js';
 import { CHAT_ACCESS } from './application/chat-access.port.js';
-import { ChatAccessService } from './adapters/persistence/chat-access.service.js';
+import { ChatAccessApplication } from './application/chat-access.application.js';
+import { TypeormChatAuthorization } from './adapters/persistence/typeorm-chat-authorization.js';
+import { SupabaseChatProvisioning } from './adapters/supabase/supabase-chat-provisioning.js';
 import { ChatAccessController } from './adapters/http/chat-access.controller.js';
 
 @Module({
@@ -17,7 +19,10 @@ import { ChatAccessController } from './adapters/http/chat-access.controller.js'
       provide: CHAT_ACCESS,
       inject: [DataSource, APP_CONFIGURATION],
       useFactory: (dataSource: DataSource, configuration: AppConfiguration) =>
-        new ChatAccessService(dataSource, configuration),
+        new ChatAccessApplication(
+          new TypeormChatAuthorization(dataSource),
+          new SupabaseChatProvisioning(configuration),
+        ),
     },
   ],
   exports: [CHAT_ACCESS],

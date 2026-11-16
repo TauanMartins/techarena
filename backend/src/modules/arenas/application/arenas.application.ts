@@ -1,12 +1,13 @@
-import { DomainError } from '../../../common/domain/domain-error.js';
+import {
+  normalizeArena,
+  assertArenaExists,
+  planArenaSports,
+} from '../domain/arena-policy.js';
 import { assertGeo } from '../../../common/domain/geo.js';
 import { assertPageRequest } from '../../../common/domain/pagination.js';
 import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
-import type {
-  ArenaInput,
-  ArenaQuery,
-  ArenasRepository,
-} from '../domain/arenas.port.js';
+import type { ArenasRepository } from '../application/arenas.port.js';
+import type { ArenaInput, ArenaQuery } from '../domain/arena.js';
 export class ArenaCatalogApplication {
   constructor(
     private readonly repository: ArenasRepository,
@@ -24,27 +25,29 @@ export class ArenaManagementApplication {
     private readonly repository: ArenasRepository,
     private readonly profiles: ProfileAccess,
   ) {}
-  private validate(input: ArenaInput) {
-    assertGeo(input);
-    if (
-      !input.address.trim() ||
-      input.address.trim().length > 150 ||
-      !input.sportIds.length ||
-      new Set(input.sportIds).size !== input.sportIds.length
-    )
-      throw new DomainError(
-        'invalid',
-        'INVALID_ARENA',
-        'Provide an address and distinct supported sports',
+  private persist(input: ArenaInput, id?: string) {
+    const prepared = normalizeArena(input);
+    return this.repository.transaction(async (store) => {
+      if (id) assertArenaExists(await store.lock(id));
+      const previous = id ? await store.existingSports(id) : [];
+      const changes = planArenaSports(
+        previous,
+        prepared.sportIds,
+        await store.countSports(prepared.sportIds),
       );
-    return { ...input, address: input.address.trim() };
+      const arenaId = await store.save(prepared, id);
+      if (changes.remove.length)
+        await store.removeSports(arenaId, changes.remove);
+      if (changes.add.length) await store.addSports(arenaId, changes.add);
+      return store.present(arenaId, prepared.sportIds);
+    });
   }
   async create(actor: string, input: ArenaInput) {
     await this.profiles.ensureAdmin(actor);
-    return this.repository.create(this.validate(input));
+    return this.persist(input);
   }
   async update(actor: string, id: string, input: ArenaInput) {
     await this.profiles.ensureAdmin(actor);
-    return this.repository.update(id, this.validate(input));
+    return this.persist(input, id);
   }
 }

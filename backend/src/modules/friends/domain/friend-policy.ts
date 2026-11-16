@@ -23,3 +23,39 @@ export function assertFriendDecision(
       'Friend request is not pending',
     );
 }
+
+export function assertCanRequestFriendship(
+  actor: string,
+  userId: string,
+  userExists: boolean,
+  relationshipExists: boolean,
+) {
+  if (actor === userId)
+    throw new DomainError(
+      'invalid',
+      'SELF_FRIENDSHIP',
+      'You cannot add yourself',
+    );
+  if (!userExists)
+    throw new DomainError('not_found', 'USER_NOT_FOUND', 'User not found');
+  if (relationshipExists)
+    throw new DomainError(
+      'conflict',
+      'RELATIONSHIP_EXISTS',
+      'A relationship already exists',
+    );
+}
+export function friendshipOutcome(
+  actor: string,
+  state: { requesterId: string; addresseeId: string; status: string } | null,
+  action: 'accept' | 'block',
+) {
+  if (!state)
+    throw new DomainError(
+      'not_found',
+      'FRIEND_NOT_FOUND',
+      'Friend relationship not found',
+    );
+  assertFriendDecision(actor, state, action);
+  return action === 'accept' ? ('accepted' as const) : ('blocked' as const);
+}

@@ -6,16 +6,8 @@ import {
   assertTournamentOptions,
   assertValidScores,
 } from '../domain/league-policy.js';
-import type {
-  LeagueAvailabilityQuery,
-  LeagueInput,
-  LeagueMatchInput,
-  LeagueResultInput,
-  LeagueUpdateInput,
-  LeagueTeamInvitationView,
-  FixtureScheduleInput,
-  LeaguesRepository,
-} from '../domain/leagues.port.js';
+import type { LeaguesRepository } from '../application/leagues.port.js';
+import type { LeagueAvailabilityQuery, LeagueInput, LeagueMatchInput, LeagueResultInput, LeagueUpdateInput, LeagueTeamInvitationView, FixtureScheduleInput } from '../domain/league.js';
 import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
 
 export class LeaguesApplication {

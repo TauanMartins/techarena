@@ -9,22 +9,8 @@ import {
   assertTournamentOptions,
 } from '../../domain/league-policy.js';
 import type { Fixture } from '../../domain/league-policy.js';
-import type {
-  LeagueArena,
-  LeagueAvailabilityQuery,
-  LeagueDetails,
-  LeagueInput,
-  LeagueMatchInput,
-  LeagueMatchView,
-  LeagueResultInput,
-  LeagueStanding,
-  LeagueSummary,
-  LeagueTeamView,
-  LeagueTeamInvitationView,
-  LeagueUpdateInput,
-  FixtureScheduleInput,
-  LeaguesRepository,
-} from '../../domain/leagues.port.js';
+import type { LeaguesRepository } from '../../application/leagues.port.js';
+import type { LeagueArena, LeagueAvailabilityQuery, LeagueDetails, LeagueInput, LeagueMatchInput, LeagueMatchView, LeagueResultInput, LeagueStanding, LeagueSummary, LeagueTeamView, LeagueTeamInvitationView, LeagueUpdateInput, FixtureScheduleInput } from '../../domain/league.js';
 
 type SummaryRow = LeagueSummary & {
   teamCount: number | string;

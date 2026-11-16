@@ -3,8 +3,8 @@ import { DataSource } from 'typeorm';
 import { ProfileModule } from '../users/profile/profile.module.js';
 import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
 import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { APPOINTMENTS_REPOSITORY } from './domain/appointments.port.js';
-import type { AppointmentsRepository } from './domain/appointments.port.js';
+import { APPOINTMENTS_REPOSITORY } from './application/appointments.port.js';
+import type { AppointmentsRepository } from './application/appointments.port.js';
 import { TypeormAppointmentsRepository } from './adapters/persistence/typeorm-appointments.repository.js';
 import {
   AppointmentsApplication,
