@@ -1,6 +1,9 @@
 import {
+  Check,
   Column,
   Entity,
+  Generated,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -11,6 +14,21 @@ import type { Sport } from './sport.entity.js';
 
 @Entity({ name: 'league', schema: 'public' })
 @Unique('league_league_number_key', ['leagueNumber'])
+@Index('league_owner_id_index', ['ownerId'])
+@Index('league_sport_id_index', ['sportId'])
+@Check(
+  'league_tournament_format_check',
+  "tournament_format IN ('round_robin', 'knockout', 'groups_knockout')",
+)
+@Check(
+  'league_tournament_status_check',
+  "status IN ('open', 'active', 'completed', 'canceled')",
+)
+@Check('league_group_count_check', 'group_count BETWEEN 2 AND 16')
+@Check(
+  'league_qualifiers_per_group_check',
+  'qualifiers_per_group BETWEEN 1 AND 8',
+)
 export class League {
   @PrimaryGeneratedColumn('identity', {
     name: 'id',
@@ -44,13 +62,13 @@ export class League {
     nullable: false,
     comment: 'Número identificador da liga.',
   })
+  @Generated('increment')
   leagueNumber!: string;
 
   @Column({
     name: 'owner_id',
     type: 'uuid',
     nullable: true,
-    comment: 'Organizador responsável pela liga.',
   })
   ownerId!: string | null;
 
@@ -58,7 +76,6 @@ export class League {
     name: 'sport_id',
     type: 'bigint',
     nullable: true,
-    comment: 'Modalidade esportiva da liga.',
   })
   sportId!: string | null;
 
@@ -67,7 +84,6 @@ export class League {
     type: 'timestamptz',
     nullable: false,
     default: () => 'now()',
-    comment: 'Data de criação da liga.',
   })
   createdAt!: Date;
 

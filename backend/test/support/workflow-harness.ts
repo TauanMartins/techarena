@@ -7,6 +7,7 @@ import { configureHttp } from '../../src/bootstrap/configure-http.js';
 import { loadConfiguration } from '../../src/config/environment.js';
 import { ACCESS_TOKEN_VERIFIER } from '../../src/modules/auth/domain/access-token-verifier.port.js';
 import { SupabaseTokenVerifier } from '../../src/modules/auth/adapters/supabase/supabase-token-verifier.js';
+import { CHAT_ACCESS } from '../../src/modules/chat/application/chat-access.port.js';
 import {
   Arena,
   Permission,
@@ -32,9 +33,19 @@ export async function workflowHarness() {
     'https://project.supabase.co',
     createLocalJWKSet({ keys: [jwk] }),
   );
+  const chatAccess = {
+    ensureAccess: vi
+      .fn()
+      .mockRejectedValue(
+        new Error('Chat access is not configured in this harness'),
+      ),
+    revokeParticipant: vi.fn().mockResolvedValue(undefined),
+  };
   const module = await Test.createTestingModule({ imports: [AppModule] })
     .overrideProvider(ACCESS_TOKEN_VERIFIER)
     .useValue(verifier)
+    .overrideProvider(CHAT_ACCESS)
+    .useValue(chatAccess)
     .compile();
   const app = module.createNestApplication();
   configureHttp(app, configuration);
@@ -52,6 +63,7 @@ export async function workflowHarness() {
       .sign(keys.privateKey);
   const raw = () => request(app.getHttpServer());
   return {
+    chatAccess,
     db,
     app,
     raw,
@@ -62,6 +74,7 @@ export async function workflowHarness() {
     put: (path: string, actor: Actor = 'alice') =>
       raw().put(path).auth(tokens[actor], { type: 'bearer' }),
     async reset() {
+      chatAccess.revokeParticipant.mockClear();
       await db.query(
         'TRUNCATE public.users,public.team,public.arena RESTART IDENTITY CASCADE',
       );
@@ -72,25 +85,21 @@ export async function workflowHarness() {
         .getRepository(Permission)
         .findOneByOrFail({ slug: 'admin' });
       for (const [name, id] of Object.entries(actors))
-        await db
-          .getRepository(User)
-          .insert({
-            id,
-            name,
-            username: name,
-            email: `${name}@example.test`,
-            dtBirth: '1990-01-01',
-            permissionId: name === 'admin' ? admin.id : user.id,
-          });
-      const arena = await db
-        .getRepository(Arena)
-        .save({
-          address: 'Test court',
-          lat: '-15.768232',
-          longitude: '-47.8797558',
-          image: null,
-          isLeagueOnly: false,
+        await db.getRepository(User).insert({
+          id,
+          name,
+          username: name,
+          email: `${name}@example.test`,
+          dtBirth: '1990-01-01',
+          permissionId: name === 'admin' ? admin.id : user.id,
         });
+      const arena = await db.getRepository(Arena).save({
+        address: 'Test court',
+        lat: '-15.768232',
+        longitude: '-47.8797558',
+        image: null,
+        isLeagueOnly: false,
+      });
       await db.getRepository(SportArena).insert([
         { arenaId: arena.id, sportId: '1' },
         { arenaId: arena.id, sportId: '2' },

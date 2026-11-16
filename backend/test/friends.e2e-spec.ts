@@ -1,4 +1,5 @@
 import { Friend } from '../src/database/entities/index.js';
+import { directChatTopic } from '../src/modules/chat/domain/chat-topic.js';
 import { actors, workflowHarness } from './support/workflow-harness.js';
 
 describe('friends migration workflows', () => {
@@ -38,6 +39,16 @@ describe('friends migration workflows', () => {
       .put('/friend', 'bob')
       .send({ friendId: pending.body.id, action: 'block' })
       .expect(200);
+    const topic = directChatTopic(actors.alice, actors.bob);
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledTimes(2);
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledWith(
+      topic,
+      actors.alice,
+    );
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledWith(
+      topic,
+      actors.bob,
+    );
     expect((await h.get('/friend')).body.friends.total).toBe(0);
     await h.post('/friend').send({ userId: actors.bob }).expect(409);
   });

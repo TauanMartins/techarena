@@ -27,10 +27,8 @@ describe('Database readiness against real PostgreSQL', () => {
   it('refuses startup and reports unhealthy with a pending workflow migration', async () => {
     await source.undoLastMigration();
     try {
-      // Reproduces the reported error before testing the protection against it.
-      await expect(
-        source.query('SELECT arena_id FROM public.appointment LIMIT 0'),
-      ).rejects.toMatchObject({ driverError: { code: '42703' } });
+      // Any unapplied migration must block startup, regardless of its tables.
+      expect(await source.showMigrations()).toBe(true);
       const module = await Test.createTestingModule({
         providers: [
           DatabaseReadinessService,
