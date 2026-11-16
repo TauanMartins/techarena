@@ -131,10 +131,24 @@ jobs:
       - name: Integration tests
         run: npm run test:e2e
 
+  automation:
+    name: Automation / tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validate release configuration and deployment logic
+        run: |
+          python3 -m json.tool release-please-config.json > /dev/null
+          python3 -m json.tool .release-please-manifest.json > /dev/null
+          python3 -m unittest discover -s .github/tests -v
+
   ci:
     name: CI
     if: always()
-    needs: [pr-title, checks, integration]
+    needs: [pr-title, checks, integration, automation]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
@@ -143,6 +157,7 @@ jobs:
           TITLE_RESULT: ${{ needs.pr-title.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
           INTEGRATION_RESULT: ${{ needs.integration.result }}
+          AUTOMATION_RESULT: ${{ needs.automation.result }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
@@ -153,6 +168,7 @@ jobs:
               "Conventional PR title": os.environ["TITLE_RESULT"],
               "Frontend/backend lint, tests and build": os.environ["CHECKS_RESULT"],
               "Backend integration": os.environ["INTEGRATION_RESULT"],
+              "Release/deploy automation": os.environ["AUTOMATION_RESULT"],
           }
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
               summary.write("| Check | Result |\n|---|---|\n")
@@ -161,6 +177,6 @@ jobs:
           title_ok = os.environ["TITLE_RESULT"] == "success" or (
               os.environ["EVENT_NAME"] != "pull_request" and os.environ["TITLE_RESULT"] == "skipped"
           )
-          if not (title_ok and os.environ["CHECKS_RESULT"] == "success" and os.environ["INTEGRATION_RESULT"] == "success"):
+          if not (title_ok and os.environ["CHECKS_RESULT"] == "success" and os.environ["INTEGRATION_RESULT"] == "success" and os.environ["AUTOMATION_RESULT"] == "success"):
               sys.exit("Required CI checks did not pass.")
           PY
