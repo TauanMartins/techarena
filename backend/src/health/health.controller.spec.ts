@@ -11,6 +11,7 @@ it('checks PostgreSQL before reporting healthy', async () => {
   await expect(controller.check()).resolves.toEqual({
     status: 'ok',
     database: 'up',
+    version: APPLICATION_VERSION,
   });
   expect(dataSource.query).toHaveBeenCalledWith('SELECT 1');
 });
@@ -33,3 +34,4 @@ it('reports 503 when PostgreSQL is reachable but migrations are pending', async 
     new HealthController(dataSource as unknown as DataSource).check(),
   ).rejects.toBeInstanceOf(ServiceUnavailableException);
 });
+import { APPLICATION_VERSION } from '../config/application-version.js';

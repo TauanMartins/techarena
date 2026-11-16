@@ -3,6 +3,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { createValidationPipe } from '../common/validation.js';
 import { DomainErrorFilter } from '../common/http/domain-error.filter.js';
 import type { AppConfiguration } from '../config/environment.js';
+import { APPLICATION_VERSION } from '../config/application-version.js';
 
 /** Share the real HTTP pipeline with end-to-end tests. */
 export function configureHttp(
@@ -21,7 +22,7 @@ export function configureHttp(
     .setTitle('TechArena API')
     .setDescription('Documentação da API do backend TechArena.')
     .addBearerAuth()
-    .setVersion('1.0.0')
+    .setVersion(APPLICATION_VERSION)
     .build();
   SwaggerModule.setup('api', app, () =>
     SwaggerModule.createDocument(app, config),

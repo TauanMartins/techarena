@@ -252,8 +252,11 @@ export function AppShell() {
           >
             <Outlet />
           </Container>
-          <footer className="d-none d-lg-block small text-body-secondary px-3 px-md-4 pb-4 flex-shrink-0">
-            TechArena · esporte é melhor em equipe
+          <footer className="d-none d-lg-flex align-items-center justify-content-between gap-3 small text-body-secondary px-3 px-md-4 pb-4 flex-shrink-0">
+            <span>TechArena · esporte é melhor em equipe</span>
+            <small aria-label={`Versão do aplicativo ${__APP_VERSION__}`}>
+              v{__APP_VERSION__}
+            </small>
           </footer>
         </Col>
       </Row>
