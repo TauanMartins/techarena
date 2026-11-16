@@ -27,6 +27,7 @@ import {
 } from '../features/settings/api/settings.api';
 import { useThemePreference } from '../features/preferences/hooks/useThemePreference';
 import type { ThemePreference } from '../features/preferences/ThemeContext';
+import { InstallApp } from '../features/installation/InstallApp';
 
 function dateInputToday() {
   const date = new Date();
@@ -213,6 +214,7 @@ export function SettingsPage() {
           </Card>
         </Col>
       </Row>
+      <InstallApp />
       <Card className="border rounded-4 shadow-sm bg-body mt-4">
         <Card.Body className="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 p-4">
           <div>
