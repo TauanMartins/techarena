@@ -208,12 +208,17 @@ jobs:
           if not url.startswith('https://'): raise ValueError('FRONTEND_URL must use HTTPS')
           for attempt in range(12):
               try:
-                  with urllib.request.urlopen(f"{url}/version.json?sha={os.environ['RELEASE_SHA']}&attempt={attempt}", timeout=15) as response:
+                  request = urllib.request.Request(
+                      f"{url}/version.json?sha={os.environ['RELEASE_SHA']}&attempt={attempt}",
+                      headers={'User-Agent': 'techarena-deploy-verifier/1.0', 'Accept': 'application/json'},
+                  )
+                  with urllib.request.urlopen(request, timeout=15) as response:
                       version = json.load(response)
                   if version == {'tag': os.environ['RELEASE_TAG'], 'sha': os.environ['RELEASE_SHA']}:
                       break
-              except (OSError, ValueError):
-                  pass
+                  print(f"Attempt {attempt + 1}: published version does not match the expected tag and SHA", flush=True)
+              except (OSError, ValueError) as error:
+                  print(f"Attempt {attempt + 1}: {type(error).__name__}: {error}", flush=True)
               time.sleep(10)
           else:
               raise RuntimeError('Published frontend version did not match the release')
