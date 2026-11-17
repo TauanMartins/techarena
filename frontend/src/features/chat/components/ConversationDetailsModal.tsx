@@ -1,3 +1,4 @@
+import { ConversationMembers } from './ConversationMembers';
 import Image from 'react-bootstrap/Image';
 import Modal from 'react-bootstrap/Modal';
 import { ProfileAvatar } from '../../../components/ui/ProfileAvatar';
@@ -7,10 +8,12 @@ export function ConversationDetailsModal({
   conversation,
   show,
   onHide,
+  token,
 }: {
   conversation?: Conversation;
   show: boolean;
   onHide: () => void;
+  token?: string;
 }) {
   return (
     <Modal
@@ -61,7 +64,12 @@ export function ConversationDetailsModal({
                   {conversation.description ||
                     'Esta equipe ainda não tem uma descrição.'}
                 </p>
-                {conversation.role && <p>Seu papel: {conversation.role}</p>}
+                {conversation.role && (
+                  <p>
+                    Você participa como{' '}
+                    {conversation.role === 'captain' ? 'capitão' : 'membro'}
+                  </p>
+                )}
               </>
             )}
             {conversation.kind === 'appointment' && (
@@ -92,6 +100,13 @@ export function ConversationDetailsModal({
                   </p>
                 )}
               </>
+            )}
+            {show && token && conversation.kind === 'team' && (
+              <ConversationMembers
+                key={conversation.id}
+                token={token}
+                teamId={conversation.id}
+              />
             )}
           </div>
         )}

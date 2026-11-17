@@ -1,10 +1,9 @@
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
-import Modal from 'react-bootstrap/Modal';
 import { useState } from 'react';
 import type { Appointment } from '../types/appointments.types';
 import { SportIcon } from '../../../components/ui/SportIcon';
-import { ProfileAvatar } from '../../../components/ui/ProfileAvatar';
+import { AppointmentDetailsModal } from './AppointmentDetailsModal';
 
 export function AppointmentCard({
   appointment,
@@ -12,9 +11,15 @@ export function AppointmentCard({
   actionLabel,
   onDetails,
   disabled = false,
+  token,
+  error,
+  joined = appointment.isInside,
 }: {
   appointment: Appointment;
-  action?: () => void;
+  action?: (holder?: boolean) => void;
+  token?: string;
+  error?: string;
+  joined?: boolean;
   actionLabel?: string;
   onDetails?: () => void;
   disabled?: boolean;
@@ -94,7 +99,9 @@ export function AppointmentCard({
           <Button
             className="w-100 mt-2"
             variant="outline-primary"
-            onClick={action}
+            onClick={() =>
+              !onDetails && !joined ? setShowDetails(true) : action()
+            }
             disabled={disabled}
           >
             {actionLabel ?? 'Participar'}
@@ -102,97 +109,16 @@ export function AppointmentCard({
         )}
       </Card.Body>
       {!onDetails && (
-        <Modal
+        <AppointmentDetailsModal
+          appointment={appointment}
           show={showDetails}
           onHide={() => setShowDetails(false)}
-          centered
-        >
-          <Modal.Header closeButton>
-            <Modal.Title>{appointment.title}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>{appointment.description || 'Sem descrição adicional.'}</p>
-            <dl className="mt-3 small">
-              <dt>Esporte</dt>
-              <dd>{appointment.sportName ?? 'Não informado'}</dd>
-              <dt>Data e horário</dt>
-              <dd>
-                {scheduledAt.toLocaleString('pt-BR', {
-                  dateStyle: 'long',
-                  timeStyle: 'short',
-                })}
-              </dd>
-              <dt>Local</dt>
-              <dd>{appointment.arenaAddress ?? 'Local a confirmar'}</dd>
-              <dt>Participantes</dt>
-              <dd>
-                {appointment.players}
-                {appointment.maxPlayers
-                  ? ` de ${appointment.maxPlayers} vagas titulares`
-                  : ''}
-              </dd>
-              <dt>Situação</dt>
-              <dd>
-                {appointment.status === 'scheduled'
-                  ? 'Confirmado'
-                  : appointment.status === 'in_progress'
-                    ? 'Em andamento'
-                    : appointment.status === 'finished'
-                      ? 'Finalizado'
-                      : 'Cancelado'}
-              </dd>
-              {appointment.distanceKm !== null && (
-                <>
-                  <dt>Distância</dt>
-                  <dd>{appointment.distanceKm.toFixed(1)} km</dd>
-                </>
-              )}
-              {appointment.participants.length > 0 && (
-                <>
-                  <dt>Atletas</dt>
-                  <dd>
-                    <div className="list-group rounded-3">
-                      {appointment.participants.map((participant) => (
-                        <div
-                          className="list-group-item d-flex flex-wrap align-items-center gap-3 p-3"
-                          key={participant.id}
-                        >
-                          <ProfileAvatar
-                            name={participant.name}
-                            image={participant.image}
-                          />
-                          <div className="d-flex flex-column gap-1 text-break me-auto">
-                            <strong>{participant.name ?? 'Atleta'}</strong>
-                            <span>
-                              {participant.username
-                                ? `@${participant.username}`
-                                : participant.holder
-                                  ? 'Titular'
-                                  : 'Participante'}
-                            </span>
-                          </div>
-                          {participant.holder && (
-                            <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">
-                              Titular
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </dd>
-                </>
-              )}
-            </dl>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button
-              variant="secondary"
-              onClick={() => setShowDetails(false)}
-            >
-              Fechar
-            </Button>
-          </Modal.Footer>
-        </Modal>
+          action={action}
+          disabled={disabled}
+          token={token}
+          joined={joined}
+          error={error}
+        />
       )}
     </Card>
   );

@@ -122,6 +122,7 @@ export function ChatPage() {
         </Col>
       </Row>
       <ConversationDetailsModal
+        token={token}
         conversation={selected}
         show={showDetails}
         onHide={() => setShowDetails(false)}

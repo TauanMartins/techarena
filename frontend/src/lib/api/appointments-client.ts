@@ -30,13 +30,13 @@ export const appointmentsClient = {
       `/users/me/appointments${queryString({ page, limit: 20, from: new Date().toISOString(), sortOrder: 'asc' })}`,
       token,
     ),
-  joinAppointment: (token: string, appointmentId: string) =>
+  joinAppointment: (token: string, appointmentId: string, holder = true) =>
     apiRequest<AppointmentMembership>(
       `/users/me/appointments/${appointmentId}`,
       token,
       {
         method: 'POST',
-        body: JSON.stringify({ holder: true }),
+        body: JSON.stringify({ holder }),
       },
     ),
   getAvailability: (

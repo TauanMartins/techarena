@@ -189,7 +189,7 @@ describe('feature data hooks', () => {
     const wrapper = createTestWrapper(queryClient);
     const { result } = renderHook(
       () => ({
-        catalog: useTeamCatalog('token', 'user-1'),
+        catalog: useTeamCatalog('token', 'user-1', 'aurora'),
         create: useCreateTeam('token', 'user-1'),
       }),
       { wrapper },

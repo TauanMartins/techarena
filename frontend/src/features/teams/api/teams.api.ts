@@ -20,6 +20,7 @@ export function useTeamCatalog(token: string, userId: string, search = '') {
   return useQuery({
     queryKey: queryKeys.teams(userId, search),
     queryFn: () => teamsApi.list(token, search),
+    enabled: search.trim().length >= 2,
   });
 }
 

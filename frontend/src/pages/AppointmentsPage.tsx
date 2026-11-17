@@ -89,6 +89,14 @@ export function AppointmentsPage() {
         <div className="row g-3">
           {appointments.map((appointment) => {
             const isOrganizer = appointment.organizerId === session?.user.id;
+            const isCurrentMutation =
+              (typeof joinMutation.variables === 'string'
+                ? joinMutation.variables
+                : joinMutation.variables?.appointmentId) === appointment.id;
+            const joined =
+              isOrganizer ||
+              appointment.isInside ||
+              (isCurrentMutation && joinMutation.isSuccess);
             return (
               <div
                 className="col-md-6 col-xl-4"
@@ -96,16 +104,28 @@ export function AppointmentsPage() {
               >
                 <AppointmentCard
                   appointment={appointment}
+                  token={session!.access_token}
+                  joined={joined}
+                  error={
+                    isCurrentMutation ? joinMutation.error?.message : undefined
+                  }
                   action={
-                    isOrganizer || appointment.isInside
+                    joined
                       ? () => navigate(`/chat/appointment/${appointment.id}`)
-                      : () => joinMutation.mutate(appointment.id)
+                      : (holder = true) =>
+                          joinMutation.mutate({
+                            appointmentId: appointment.id,
+                            holder,
+                          })
                   }
                   actionLabel={
-                    isOrganizer || appointment.isInside
+                    joined
                       ? 'Ir para conversa'
                       : joinMutation.isPending &&
-                          joinMutation.variables === appointment.id
+                          (typeof joinMutation.variables === 'string'
+                            ? joinMutation.variables
+                            : joinMutation.variables?.appointmentId) ===
+                            appointment.id
                         ? 'Entrando...'
                         : 'Participar'
                   }
@@ -113,7 +133,10 @@ export function AppointmentsPage() {
                     !isOrganizer &&
                     !appointment.isInside &&
                     joinMutation.isPending &&
-                    joinMutation.variables === appointment.id
+                    (typeof joinMutation.variables === 'string'
+                      ? joinMutation.variables
+                      : joinMutation.variables?.appointmentId) ===
+                      appointment.id
                   }
                 />
               </div>

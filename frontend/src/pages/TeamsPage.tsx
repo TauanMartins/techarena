@@ -4,7 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { ErrorState, PageHeading } from '../components/ui/Feedback';
+import {
+  ErrorState,
+  PageHeading,
+  LoadingState,
+} from '../components/ui/Feedback';
 import { CreateTeamModal } from '../features/teams/components/CreateTeamModal';
 import { MyTeamsList } from '../features/teams/components/MyTeamsList';
 import {
@@ -36,6 +40,7 @@ export function TeamsPage() {
   const userId = session!.user.id;
   const [search, setSearch] = useState('');
   const [catalogSearch, setCatalogSearch] = useState('');
+  const [catalogPage, setCatalogPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamOverview | null>(null);
   const [inviteSearch, setInviteSearch] = useState('');
@@ -54,6 +59,7 @@ export function TeamsPage() {
     token,
     userId,
     catalogSearch,
+    catalogPage,
     selectedTeam,
     inviteSearch: submittedInviteSearch,
   });
@@ -71,11 +77,13 @@ export function TeamsPage() {
     if (created) {
       setShowCreate(false);
       reset();
-      setCatalogSearch(search);
+      setCatalogPage(1);
     }
   });
   function openDetails(team: TeamOverview | TeamMembership) {
-    setSelectedTeam(team);
+    setSelectedTeam(
+      data.myTeams.find((membership) => membership.id === team.id) ?? team,
+    );
     setInviteSearch('');
     setSubmittedInviteSearch('');
     actions.setError(null);
@@ -91,26 +99,29 @@ export function TeamsPage() {
   }
   function searchTeams(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCatalogSearch(search);
+    const term = search.trim();
+    if (term.length < 2) {
+      setCatalogSearch('');
+      actions.setError(
+        'Digite pelo menos 2 caracteres para buscar uma equipe.',
+      );
+      return;
+    }
+    actions.setError(null);
+    setCatalogPage(1);
+    setCatalogSearch(term);
   }
   async function requestJoin(team: Pick<Team, 'id' | 'name'>) {
-    const result = await actions.requestJoin(team);
-    if (result) setCatalogSearch(search);
+    await actions.requestJoin(team);
   }
   async function respondToInvitation(id: string, action: 'accept' | 'decline') {
-    const result = await actions.respondToInvitation(id, action);
-    if (result) setCatalogSearch(search);
+    await actions.respondToInvitation(id, action);
   }
   async function decideRequest(
     request: Parameters<typeof actions.decideTeamRequest>[1],
     action: 'accept' | 'decline',
   ) {
-    const result = await actions.decideTeamRequest(
-      selectedTeam,
-      request,
-      action,
-    );
-    if (result) setCatalogSearch(search);
+    await actions.decideTeamRequest(selectedTeam, request, action);
   }
 
   return (
@@ -118,7 +129,7 @@ export function TeamsPage() {
       <PageHeading
         eyebrow="JOGUE EM EQUIPE"
         title="Equipes"
-        description="Descubra grupos, solicite participação ou crie sua própria equipe."
+        description="Suas equipes, seus convites e as pessoas com quem você joga."
         action={
           <Button
             onClick={() => {
@@ -147,29 +158,64 @@ export function TeamsPage() {
           }
         />
       )}
-      <TeamSearchBar
-        value={search}
-        onChange={setSearch}
-        onSubmit={searchTeams}
-      />
       <TeamInvitations
         invitations={invitations}
         onRespond={(id, action) => void respondToInvitation(id, action)}
       />
+      {data.isLoading && <LoadingState label="Carregando suas equipes..." />}
       <MyTeamsList
         teams={data.myTeams}
         onDetails={openDetails}
         onChat={(id) => navigate(`/chat/team/${id}`)}
       />
-      <TeamCatalog
-        teams={data.teams}
-        loading={data.isLoading}
-        error={Boolean(data.error)}
-        myTeamIds={myTeamIds}
-        pendingIds={pendingRequestIds}
-        onDetails={(team: Team) => openDetails(team)}
-        onJoin={(team) => void requestJoin(team)}
-      />
+      <section
+        className="mt-4"
+        aria-label="Buscar uma equipe"
+      >
+        <h2 className="h5">Encontre uma equipe pelo nome</h2>
+        <p className="text-body-secondary">
+          Procure uma equipe que você conhece para ver quem joga nela e
+          solicitar participação.
+        </p>
+        <TeamSearchBar
+          value={search}
+          onChange={setSearch}
+          onSubmit={searchTeams}
+        />
+        {catalogSearch.length >= 2 && (
+          <>
+            <TeamCatalog
+              teams={data.teams}
+              loading={data.searching}
+              error={Boolean(data.error)}
+              myTeamIds={myTeamIds}
+              pendingIds={pendingRequestIds}
+              onDetails={(team: Team) => openDetails(team)}
+              onJoin={(team) => void requestJoin(team)}
+            />
+            <nav
+              aria-label="Páginas da busca de equipes"
+              className="d-flex align-items-center gap-3 mb-4"
+            >
+              <Button
+                variant="outline-secondary"
+                disabled={catalogPage === 1 || data.searching}
+                onClick={() => setCatalogPage((page) => page - 1)}
+              >
+                Anterior
+              </Button>
+              <span>Página {catalogPage}</span>
+              <Button
+                variant="outline-secondary"
+                disabled={!data.hasNextPage || data.searching}
+                onClick={() => setCatalogPage((page) => page + 1)}
+              >
+                Próxima
+              </Button>
+            </nav>
+          </>
+        )}
+      </section>
       <CreateTeamModal
         show={showCreate}
         busy={actions.isCreating}

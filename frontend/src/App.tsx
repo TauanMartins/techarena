@@ -34,6 +34,11 @@ const LeaguePage = lazy(() =>
     default: module.LeaguePage,
   })),
 );
+const LeagueDetailsPage = lazy(() =>
+  import('./pages/LeagueDetailsPage').then((module) => ({
+    default: module.LeagueDetailsPage,
+  })),
+);
 const SettingsPage = lazy(() =>
   import('./pages/SettingsPage').then((module) => ({
     default: module.SettingsPage,
@@ -85,6 +90,10 @@ function ApplicationRoutes() {
           <Route
             path="ligas"
             element={<LeaguePage />}
+          />
+          <Route
+            path="ligas/:leagueId"
+            element={<LeagueDetailsPage />}
           />
           <Route
             path="equipes"

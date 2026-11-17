@@ -84,7 +84,10 @@ describe('TeamsPage', () => {
       .mockResolvedValue({ success: true } as never);
     renderWithProviders(<TeamsPage />);
 
-    await screen.findByRole('heading', { name: 'Vôlei da Praia' });
+    expect(teamsApi.list).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('heading', { name: 'Vôlei da Praia' }),
+    ).not.toBeInTheDocument();
     await user.type(screen.getByLabelText('Buscar equipes'), 'praia');
     await user.click(screen.getByRole('button', { name: 'Buscar' }));
     await user.click(

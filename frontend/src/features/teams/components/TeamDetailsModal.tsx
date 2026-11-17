@@ -79,9 +79,17 @@ export function TeamDetailsModal(props: TeamDetailsModalProps) {
             </p>
             <p className="text-secondary">
               {team.role
-                ? `Seu papel: ${team.role}`
+                ? `Você participa como ${team.role === 'captain' ? 'capitão' : 'membro'}`
                 : 'Explore a equipe e solicite participação para entrar.'}
             </p>
+            {joined && (
+              <div className="d-flex align-items-center justify-content-between gap-3 border rounded-3 p-3 mb-3">
+                <span>Combine os próximos jogos com o grupo.</span>
+                <Button onClick={() => onOpenChat(team.id)}>
+                  Conversar com a equipe
+                </Button>
+              </div>
+            )}
             <hr />
             <TeamMembersList
               members={members}

@@ -7,19 +7,22 @@ export function useTeamsData({
   token,
   userId,
   catalogSearch,
+  catalogPage = 1,
   selectedTeam,
   inviteSearch,
 }: {
   token: string;
   userId: string;
   catalogSearch: string;
+  catalogPage?: number;
   selectedTeam: TeamOverview | null;
   inviteSearch: string;
 }) {
   const queryClient = useQueryClient();
   const teamsQuery = useQuery({
-    queryKey: queryKeys.teams(userId, catalogSearch),
-    queryFn: () => teamsApi.list(token, catalogSearch),
+    queryKey: [...queryKeys.teams(userId, catalogSearch), catalogPage],
+    queryFn: () => teamsApi.list(token, catalogSearch, catalogPage),
+    enabled: catalogSearch.trim().length >= 2,
   });
   const myTeamsQuery = useQuery({
     queryKey: queryKeys.myTeams(userId),
@@ -56,14 +59,16 @@ export function useTeamsData({
   ].find((cause): cause is Error => cause instanceof Error);
 
   return {
-    teams: teamsQuery.data?.items ?? [],
+    teams:
+      catalogSearch.trim().length >= 2 ? (teamsQuery.data?.items ?? []) : [],
+    hasNextPage: teamsQuery.data?.hasNextPage ?? false,
+    searching: teamsQuery.isFetching,
     myTeams: myTeamsQuery.data?.items ?? [],
     requests: requestsQuery.data?.items ?? [],
     members: teamDetailsQuery.data?.members ?? [],
     teamRequests: teamDetailsQuery.data?.requests ?? [],
     inviteCandidates: inviteCandidatesQuery.data?.items ?? [],
-    isLoading:
-      teamsQuery.isPending || myTeamsQuery.isPending || requestsQuery.isPending,
+    isLoading: myTeamsQuery.isPending || requestsQuery.isPending,
     isLoadingDetails: teamDetailsQuery.isPending,
     error: queryError?.message ?? null,
     invalidateTeamLists: () =>

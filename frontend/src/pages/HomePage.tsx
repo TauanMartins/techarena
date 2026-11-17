@@ -149,7 +149,10 @@ export function HomePage() {
                 className="col-md-6 col-xl-4"
                 key={appointment.id}
               >
-                <AppointmentCard appointment={appointment} />
+                <AppointmentCard
+                  appointment={appointment}
+                  token={session!.access_token}
+                />
               </div>
             ))}
           </div>

@@ -8,9 +8,9 @@ import type {
 import { apiRequest } from './api-request';
 import { queryString } from './query-string';
 export const teamsClient = {
-  listTeams: (token: string, search = '') =>
+  listTeams: (token: string, search = '', page = 1) =>
     apiRequest<Page<Team>>(
-      `/team${queryString({ page: 1, limit: 20, search: search || undefined })}`,
+      `/team${queryString({ page, limit: 20, search: search.trim() || undefined })}`,
       token,
     ),
   listMyTeams: (token: string) =>
@@ -45,9 +45,9 @@ export const teamsClient = {
       `/team/user${queryString({ teamId, page: 1, limit: 50 })}`,
       token,
     ),
-  listTeamMembers: (token: string, teamId: string) =>
+  listTeamMembers: (token: string, teamId: string, page = 1) =>
     apiRequest<Page<TeamMember>>(
-      `/team/members${queryString({ teamId, page: 1, limit: 50 })}`,
+      `/team/members${queryString({ teamId, page, limit: 50 })}`,
       token,
     ),
   respondToTeamInvitation: (

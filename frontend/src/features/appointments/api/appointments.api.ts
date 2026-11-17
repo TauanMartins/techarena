@@ -35,8 +35,10 @@ export function useJoinAppointment(
 ) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (appointmentId: string) =>
-      appointmentApi.join(token, appointmentId),
+    mutationFn: (input: string | { appointmentId: string; holder: boolean }) =>
+      typeof input === 'string'
+        ? appointmentApi.join(token, input)
+        : appointmentApi.join(token, input.appointmentId, input.holder),
     onSuccess: () => {
       onJoined?.();
       return Promise.all([

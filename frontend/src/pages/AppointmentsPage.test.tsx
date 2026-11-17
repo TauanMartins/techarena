@@ -88,12 +88,18 @@ describe('AppointmentsPage', () => {
     renderWithProviders(<AppointmentsPage />);
 
     await user.click(await screen.findByRole('button', { name: 'Participar' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmar participação' }),
+    );
     await vi.waitFor(() =>
-      expect(join).toHaveBeenCalledWith('token', 'appointment-1'),
+      expect(join).toHaveBeenCalledWith('token', 'appointment-1', true),
     );
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Você entrou no agendamento.',
     );
-    await user.click(screen.getByRole('button', { name: 'Ir para conversa' }));
+    await user.click(screen.getByRole('button', { name: 'Fechar' }));
+    await user.click(
+      screen.getAllByRole('button', { name: 'Ir para conversa' })[0],
+    );
   });
 });
