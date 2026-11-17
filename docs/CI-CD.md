@@ -5,9 +5,11 @@
 1. Criar uma branch a partir da `main`; manter o PR como draft até estar pronto.
 2. PR pronto: `CI` executa lint, formatação do frontend, testes com cobertura,
    builds e integração com PostgreSQL/PostGIS descartável. Não acessa produção.
-3. `Enable auto-merge` habilita squash automático apenas para PRs do dono do
-   repositório, criados no próprio repositório. Nunca executa código do PR com
-   credenciais privilegiadas. Contribuições externas exigem habilitação manual.
+3. Após o check `CI` passar, o job `Enable auto-merge after CI` da mesma
+   execução habilita squash automático para PRs do dono do repositório, criados
+   no próprio repositório e fora de draft. Esse job não faz checkout nem executa
+   código do PR. Revalida o SHA e título atuais antes de habilitar o merge.
+   Contribuições externas exigem habilitação manual.
 4. A proteção da `main` precisa exigir o check `CI` e branch atualizada.
 5. Depois do merge, a CI valida o commit integrado. `Release and deploy` é
    disparado por essa CI concluída com sucesso, somente em pushes na `main`.
@@ -18,11 +20,23 @@
 8. Se backend e frontend mudarem juntos, publicar backend, aguardar o deploy
    exato e validar `/health`, depois publicar e verificar o frontend.
 
-O primeiro PR de configuração deve ser integrado manualmente após a CI, pois o
-workflow de auto-merge só estará disponível na branch padrão depois desse merge.
 Não se cria versão só por abrir um PR. Uma tag é um registro de release; seu
 sucesso de publicação deve ser conferido no job `deploy` e no environment
 `production`. Não se movem tags para corrigir um deploy.
+
+### Por que há mais de uma execução?
+
+O PR da feature e o PR de versão passam por CI antes e depois de cada merge:
+são quatro validações de commits diferentes. O deploy exige CI de push aprovada
+para o SHA exato publicado. Editar um PR também revalida o título usado no squash;
+por enquanto isso repete os demais checks para manter um único check obrigatório.
+
+Depois do merge da feature, `Release and deploy` prepara o PR de versão e deixa
+`deploy` como skipped, pois ainda não existe tag naquele commit. Depois do merge
+do PR de versão, cria as tags e publica. O auto-merge do PR do bot é habilitado
+pelo próprio job de release; o job de auto-merge do CI é exclusivo do proprietário.
+Não existe mais workflow separado nem gatilho `pull_request_target`, portanto
+não é necessário liberar esse evento na política de Actions.
 
 ## Componentes e commits
 
@@ -50,8 +64,11 @@ Repository variables (Settings > Secrets and variables > Actions):
 
 | Nome | Uso |
 | --- | --- |
-| `RELEASE_APP_ID` | ID da GitHub App privada |
+| `RELEASE_APP_CLIENT_ID` | Client ID da GitHub App privada (não o App ID numérico) |
 | `PRODUCTION_DEPLOY_ENABLED` | `true` somente depois de desativar deploys nativos nos provedores |
+
+O Client ID está em Settings > Developer settings > GitHub Apps > sua App.
+A migração de `RELEASE_APP_ID` não exige recriar a App ou sua chave privada.
 
 Repository secret: `RELEASE_APP_PRIVATE_KEY`, conteúdo completo da chave PEM.
 Instalar a App somente neste repositório, sem webhook, com Contents,
