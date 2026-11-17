@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/TauanMartins/techarena/compare/backend-v0.1.0...backend-v0.2.0) (2026-11-17)
+
+
+### Features
+
+* restore social discovery and align hexagonal backend ([#6](https://github.com/TauanMartins/techarena/issues/6)) ([53b2c6e](https://github.com/TauanMartins/techarena/commit/53b2c6e98d9569227767097284741f98f1791aca))
+
 ## [0.1.0](https://github.com/TauanMartins/techarena/compare/backend-v0.0.1...backend-v0.1.0) (2026-11-16)
 
 
