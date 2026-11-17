@@ -1,10 +1,13 @@
 import { assertPageRequest } from '../../../shared/domain/pagination.js';
-import { APPOINTMENT_STATUSES } from '../domain/appointment-membership.js';
-import type { AppointmentMembershipsRepository } from '../domain/appointment-memberships-repository.port.js';
+import {
+  APPOINTMENT_STATUSES,
+  assertAppointmentAdmission,
+} from '../domain/appointment-membership.js';
+import type { AppointmentMembershipsRepository } from './ports/appointment-memberships-repository.port.js';
 
-import type { AppointmentMembershipQuery } from '../domain/appointment-membership.js';
+import type { ProfileAccess } from '../../../profile/application/ports/profile-access.port.js';
 import { UserError } from '../../../shared/domain/user-error.js';
-import type { ProfileAccess } from '../../../profile/application/profile-access.port.js';
+import type { AppointmentMembershipQuery } from '../domain/appointment-membership.js';
 export class AppointmentMembershipsApplication {
   constructor(
     private readonly repository: AppointmentMembershipsRepository,
@@ -39,6 +42,17 @@ export class AppointmentMembershipsApplication {
   }
   async joinAppointment(id: string, appointmentId: string, holder: boolean) {
     await this.profiles.ensureAdult(id);
-    return this.repository.joinAppointment(id, appointmentId, holder, this.now);
+    return this.repository.transaction(async (store) => {
+      const context = await store.lock(id, appointmentId, holder);
+      if (!context)
+        throw new UserError(
+          'not_found',
+          'APPOINTMENT_NOT_FOUND',
+          'Appointment not found',
+        );
+      assertAppointmentAdmission(context.admission, holder, this.now());
+      await store.insert(id, appointmentId, holder);
+      return context.summary;
+    });
   }
 }

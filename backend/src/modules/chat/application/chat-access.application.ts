@@ -1,10 +1,10 @@
 import { DomainError } from '../../../common/domain/domain-error.js';
 import { InvalidChatTopicError, parseChatTopic } from '../domain/chat-topic.js';
-import type { ChatAccessPort } from './chat-access.port.js';
+import type { ChatAccessPort } from './ports/chat-access.port.js';
 import type {
   ChatAuthorization,
   ChatProvisioning,
-} from './chat-gateways.port.js';
+} from './ports/chat-gateways.port.js';
 
 export class ChatAccessApplication implements ChatAccessPort {
   constructor(

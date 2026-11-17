@@ -1,23 +1,23 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
 import {
   APP_CONFIGURATION,
   ConfigurationModule,
 } from './config/configuration.module.js';
-import { databaseOptions } from './database/database.options.js';
 import { DatabaseReadinessService } from './database/database-readiness.service.js';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { ResponseValidationInterceptor } from './common/http/response-validation.interceptor.js';
-import { SportsModule } from './modules/sports/sports.module.js';
-import { ArenasModule } from './modules/arenas/arenas.module.js';
-import { AppointmentsModule } from './modules/appointments/appointments.module.js';
-import { TeamsModule } from './modules/teams/teams.module.js';
-import { FriendsModule } from './modules/friends/friends.module.js';
-import { UsersModule } from './modules/users/users.module.js';
-import { AuthModule } from './modules/auth/auth.module.js';
+import { databaseOptions } from './database/database.options.js';
 import { HealthModule } from './health/health.module.js';
+import { AppointmentsModule } from './modules/appointments/appointments.module.js';
+import { ArenasModule } from './modules/arenas/arenas.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
 import { ChatModule } from './modules/chat/chat.module.js';
+import { FriendsModule } from './modules/friends/friends.module.js';
 import { LeaguesModule } from './modules/leagues/leagues.module.js';
+import { SportsModule } from './modules/sports/sports.module.js';
+import { TeamsModule } from './modules/teams/teams.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [

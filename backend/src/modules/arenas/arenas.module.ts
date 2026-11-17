@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import type { ProfileAccess } from '../users/profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../users/profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../users/profile/profile.module.js';
-import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { ARENAS_REPOSITORY } from './application/arenas.port.js';
-import type { ArenasRepository } from './application/arenas.port.js';
-import { TypeormArenasRepository } from './adapters/persistence/typeorm-arenas.repository.js';
 import {
   ArenaCatalogController,
   ArenaManagementController,
-} from './adapters/http/arenas.controller.js';
+} from './adapters/http/controllers/arenas.controller.js';
+import { TypeormArenasRepository } from './adapters/persistence/typeorm-arenas.repository.js';
 import {
   ArenaCatalogApplication,
   ArenaManagementApplication,
 } from './application/arenas.application.js';
+import type { ArenasRepository } from './application/ports/arenas.port.js';
+import { ARENAS_REPOSITORY } from './application/ports/arenas.port.js';
 @Module({
   imports: [ProfileModule],
   controllers: [ArenaCatalogController, ArenaManagementController],

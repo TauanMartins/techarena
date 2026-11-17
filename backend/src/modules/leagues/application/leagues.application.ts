@@ -1,28 +1,36 @@
 import { assertCalendarDate } from '../../appointments/domain/booking-policy.js';
-import { DomainError } from '../../../common/domain/domain-error.js';
+import type { ProfileAccess } from '../../users/profile/application/ports/profile-access.port.js';
+import type { LeagueUseCases } from './ports/leagues.port.js';
 import {
-  assertFixtureSchedule,
   assertDifferentTeams,
+  assertFixtureSchedule,
   assertTournamentOptions,
   assertValidScores,
 } from '../domain/league-policy.js';
-import type { LeaguesRepository } from '../application/leagues.port.js';
-import type { LeagueAvailabilityQuery, LeagueInput, LeagueMatchInput, LeagueResultInput, LeagueUpdateInput, LeagueTeamInvitationView, FixtureScheduleInput } from '../domain/league.js';
-import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
+import type {
+  FixtureScheduleInput,
+  LeagueAvailabilityQuery,
+  LeagueInput,
+  LeagueMatchInput,
+  LeagueResultInput,
+  LeagueTeamInvitationView,
+  LeagueUpdateInput,
+} from '../domain/league.js';
+import { normalizeLeagueUpdate } from '../domain/normalize-league-update.js';
 
 export class LeaguesApplication {
   constructor(
-    private readonly repository: LeaguesRepository,
+    private readonly operations: LeagueUseCases,
     private readonly profiles: ProfileAccess,
     private readonly now: () => Date = () => new Date(),
   ) {}
 
   list(actor: string) {
-    return this.repository.list(actor);
+    return this.operations.list(actor);
   }
 
   details(actor: string, leagueId: string) {
-    return this.repository.details(actor, leagueId);
+    return this.operations.details(actor, leagueId);
   }
 
   async create(actor: string, input: LeagueInput) {
@@ -32,7 +40,7 @@ export class LeaguesApplication {
       input.groupCount ?? 2,
       input.qualifiersPerGroup ?? 2,
     );
-    return this.repository.create(actor, {
+    return this.operations.create(actor, {
       ...input,
       name: input.name.trim(),
       description: input.description?.trim() || null,
@@ -41,30 +49,24 @@ export class LeaguesApplication {
 
   async update(actor: string, leagueId: string, input: LeagueUpdateInput) {
     await this.profiles.ensureExists(actor);
-    if (input.name !== undefined && !input.name.trim())
-      throw new DomainError(
-        'invalid',
-        'INVALID_LEAGUE_NAME',
-        'League name cannot be empty',
-      );
-    return this.repository.update(actor, leagueId, {
-      ...input,
-      name: input.name?.trim(),
-      description: input.description?.trim() || null,
-    });
+    return this.operations.update(
+      actor,
+      leagueId,
+      normalizeLeagueUpdate(input),
+    );
   }
 
   async registerTeam(actor: string, leagueId: string, teamId: string) {
     await this.profiles.ensureAdult(actor);
-    await this.repository.registerTeam(actor, leagueId, teamId);
+    await this.operations.registerTeam(actor, leagueId, teamId);
   }
 
   inviteTeam(actor: string, leagueId: string, teamId: string) {
-    return this.repository.inviteTeam(actor, leagueId, teamId);
+    return this.operations.inviteTeam(actor, leagueId, teamId);
   }
 
   teamInvitations(actor: string): Promise<LeagueTeamInvitationView[]> {
-    return this.repository.teamInvitations(actor);
+    return this.operations.teamInvitations(actor);
   }
 
   async respondToTeamInvitation(
@@ -74,28 +76,28 @@ export class LeaguesApplication {
   ) {
     if (action === 'accept') await this.profiles.ensureAdult(actor);
     else await this.profiles.ensureExists(actor);
-    return this.repository.respondToTeamInvitation(actor, invitationId, action);
+    return this.operations.respondToTeamInvitation(actor, invitationId, action);
   }
 
   removeTeam(actor: string, leagueId: string, teamId: string) {
-    return this.repository.removeTeam(actor, leagueId, teamId);
+    return this.operations.removeTeam(actor, leagueId, teamId);
   }
 
   arenas(leagueId: string) {
-    return this.repository.arenas(leagueId);
+    return this.operations.arenas(leagueId);
   }
 
   async availability(leagueId: string, query: LeagueAvailabilityQuery) {
     assertCalendarDate(query.date);
     return {
-      items: await this.repository.availability(leagueId, query, this.now()),
+      items: await this.operations.availability(leagueId, query, this.now()),
     };
   }
 
   async createMatch(actor: string, leagueId: string, input: LeagueMatchInput) {
     assertCalendarDate(input.date);
     assertDifferentTeams(input.homeTeamId, input.awayTeamId);
-    await this.repository.createMatch(actor, leagueId, input, this.now());
+    await this.operations.createMatch(actor, leagueId, input, this.now);
   }
 
   async recordResult(
@@ -105,7 +107,7 @@ export class LeaguesApplication {
     input: LeagueResultInput,
   ) {
     assertValidScores(input.homeScore, input.awayScore);
-    await this.repository.recordResult(actor, leagueId, matchId, input);
+    await this.operations.recordResult(actor, leagueId, matchId, input);
   }
 
   async generateFixtures(
@@ -115,7 +117,7 @@ export class LeaguesApplication {
   ) {
     assertCalendarDate(input.date);
     assertFixtureSchedule(input);
-    await this.repository.generateFixtures(actor, leagueId, input, this.now());
+    await this.operations.generateFixtures(actor, leagueId, input, this.now);
   }
 
   async generateNextRound(
@@ -125,7 +127,7 @@ export class LeaguesApplication {
   ) {
     assertCalendarDate(input.date);
     assertFixtureSchedule(input);
-    await this.repository.generateNextRound(actor, leagueId, input, this.now());
+    await this.operations.generateNextRound(actor, leagueId, input, this.now);
   }
 
   async rescheduleMatch(
@@ -136,20 +138,20 @@ export class LeaguesApplication {
   ) {
     assertCalendarDate(input.date);
     assertDifferentTeams(input.homeTeamId, input.awayTeamId);
-    await this.repository.rescheduleMatch(
+    await this.operations.rescheduleMatch(
       actor,
       leagueId,
       matchId,
       input,
-      this.now(),
+      this.now,
     );
   }
 
   cancelMatch(actor: string, leagueId: string, matchId: string) {
-    return this.repository.cancelMatch(actor, leagueId, matchId, this.now());
+    return this.operations.cancelMatch(actor, leagueId, matchId, this.now);
   }
 
   finish(actor: string, leagueId: string, status: 'completed' | 'canceled') {
-    return this.repository.finish(actor, leagueId, status);
+    return this.operations.finish(actor, leagueId, status);
   }
 }

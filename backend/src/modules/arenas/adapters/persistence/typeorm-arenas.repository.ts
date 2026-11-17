@@ -1,17 +1,19 @@
 import { DataSource, In } from 'typeorm';
-import {
-  Arena,
-  Sport,
-  SportArena,
-} from '../../../../database/entities/index.js';
-import type { ArenaTransaction } from '../../application/arenas.port.js';
 import { paginate } from '../../../../common/domain/pagination.js';
 import { databaseWrite } from '../../../../common/persistence/database-write.js';
 import {
   ARENA_DISTANCE_KM,
   escapeLike,
 } from '../../../../common/persistence/queries.js';
-import type { ArenasRepository } from '../../application/arenas.port.js';
+import {
+  Arena,
+  Sport,
+  SportArena,
+} from '../../../../database/entities/index.js';
+import type {
+  ArenasRepository,
+  ArenaTransaction,
+} from '../../application/ports/arenas.port.js';
 import type { ArenaQuery, ArenaView } from '../../domain/arena.js';
 function view(
   a: Arena,
@@ -83,12 +85,10 @@ export class TypeormArenasRepository implements ArenasRepository {
         work({
           lock: async (id) =>
             Boolean(
-              await m
-                .getRepository(Arena)
-                .findOne({
-                  where: { id },
-                  lock: { mode: 'pessimistic_write' },
-                }),
+              await m.getRepository(Arena).findOne({
+                where: { id },
+                lock: { mode: 'pessimistic_write' },
+              }),
             ),
           existingSports: async (arenaId) =>
             (await m.getRepository(SportArena).findBy({ arenaId })).map(

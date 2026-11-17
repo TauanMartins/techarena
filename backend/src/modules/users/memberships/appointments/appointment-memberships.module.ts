@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { AppointmentMembershipsController } from './adapters/http/appointment-memberships.controller.js';
-import { AppointmentMembershipsApplication } from './application/appointment-memberships.application.js';
-import { APPOINTMENT_MEMBERSHIPS_REPOSITORY } from './domain/appointment-memberships-repository.port.js';
-import type { AppointmentMembershipsRepository } from './domain/appointment-memberships-repository.port.js';
-import { TypeormAppointmentMembershipsRepository } from './adapters/persistence/typeorm-appointment-memberships.repository.js';
+import type { ProfileAccess } from '../../profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../../profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../../profile/profile.module.js';
-import { PROFILE_ACCESS } from '../../profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../../profile/application/profile-access.port.js';
+import { AppointmentMembershipsController } from './adapters/http/controllers/appointment-memberships.controller.js';
+import { TypeormAppointmentMembershipsRepository } from './adapters/persistence/typeorm-appointment-memberships.repository.js';
+import type { AppointmentMembershipsRepository } from './application/ports/appointment-memberships-repository.port.js';
+import { APPOINTMENT_MEMBERSHIPS_REPOSITORY } from './application/ports/appointment-memberships-repository.port.js';
+import { AppointmentMembershipsApplication } from './application/appointment-memberships.application.js';
 @Module({
   imports: [ProfileModule],
   controllers: [AppointmentMembershipsController],

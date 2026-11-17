@@ -1,5 +1,5 @@
+import type { AppointmentMembershipsRepository } from './ports/appointment-memberships-repository.port.js';
 import { AppointmentMembershipsApplication } from './appointment-memberships.application.js';
-import type { AppointmentMembershipsRepository } from '../domain/appointment-memberships-repository.port.js';
 const profiles = {
   ensureExists: vi.fn().mockResolvedValue(undefined),
   ensureAdmin: vi.fn(),
@@ -22,22 +22,41 @@ it('rejects reversed date ranges before hitting the membership repository', asyn
   ).rejects.toMatchObject({ code: 'INVALID_DATE_RANGE' });
   expect(repository.getAppointments).not.toHaveBeenCalled();
 });
-it('defers time evaluation until the adapter holds the appointment lock', async () => {
-  let current = new Date('2026-11-01T00:00:00Z');
-  const clock = () => current;
-  const repository = { joinAppointment: vi.fn().mockResolvedValue({}) };
+it('evaluates admission time after acquiring the lock', async () => {
+  let current = new Date('2026-11-01T11:59:00Z');
+  const insert = vi.fn();
+  const repository = {
+    transaction: async (
+      work: (
+        store: import('./ports/appointment-memberships-repository.port.js').AppointmentAdmissionStore,
+      ) => Promise<unknown>,
+    ) =>
+      work({
+        lock: async () => {
+          current = new Date('2026-11-01T12:01:00Z');
+          return {
+            admission: {
+              deleted: false,
+              status: 'scheduled',
+              scheduledAt: new Date('2026-11-01T12:00:00Z'),
+              alreadyParticipating: false,
+              maxPlayers: 4,
+              startingPlayers: 0,
+            },
+            summary:
+              {} as import('../domain/appointment-membership.js').AppointmentSummary,
+          };
+        },
+        insert,
+      }),
+  };
   const app = new AppointmentMembershipsApplication(
     repository as unknown as AppointmentMembershipsRepository,
     profiles,
-    clock,
+    () => current,
   );
-  await app.joinAppointment('user', '1', true);
-  expect(repository.joinAppointment).toHaveBeenCalledWith(
-    'user',
-    '1',
-    true,
-    clock,
-  );
-  current = new Date('2026-11-02T00:00:00Z');
-  expect(repository.joinAppointment.mock.calls[0][3]()).toEqual(current);
+  await expect(app.joinAppointment('user', '1', true)).rejects.toMatchObject({
+    code: 'APPOINTMENT_CLOSED',
+  });
+  expect(insert).not.toHaveBeenCalled();
 });

@@ -1,5 +1,8 @@
-import { DataSource } from 'typeorm';
 import type { EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
+import { paginate } from '../../../../common/domain/pagination.js';
+import { databaseWrite } from '../../../../common/persistence/database-write.js';
+import { ARENA_DISTANCE_KM } from '../../../../common/persistence/queries.js';
 import {
   Appointment,
   Arena,
@@ -8,21 +11,20 @@ import {
   SportArena,
   UserAppointment,
 } from '../../../../database/entities/index.js';
-import { paginate } from '../../../../common/domain/pagination.js';
-import { databaseWrite } from '../../../../common/persistence/database-write.js';
-import { ARENA_DISTANCE_KM } from '../../../../common/persistence/queries.js';
-import type { AppointmentsRepository } from '../../application/appointments.port.js';
 import type {
+  AppointmentsRepository,
+  BookingTransaction,
+} from '../../application/ports/appointments.port.js';
+import type {
+  AppointmentParticipant,
   AppointmentQuery,
   AvailabilityQuery,
-  AppointmentParticipant,
   BookingCard,
 } from '../../domain/appointment.js';
 import type {
   BookingContext,
   BookingDraft,
 } from '../../domain/booking-policy.js';
-import type { BookingTransaction } from '../../application/appointments.port.js';
 function card(
   a: Appointment,
   actor: string,
@@ -225,12 +227,10 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
         work({
           context: async (query, scheduleId) => {
             // Same lock order as arena catalog edits; business decisions run after acquisition.
-            await manager
-              .getRepository(Arena)
-              .findOne({
-                where: { id: query.arenaId },
-                lock: { mode: 'pessimistic_write' },
-              });
+            await manager.getRepository(Arena).findOne({
+              where: { id: query.arenaId },
+              lock: { mode: 'pessimistic_write' },
+            });
             return this.loadContext(manager, query, scheduleId);
           },
           insert: (draft) => this.insert(manager, draft),
@@ -250,12 +250,10 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
     await manager
       .getRepository(UserAppointment)
       .insert({ userId: draft.organizerId, appointmentId: row.id, holder });
-    const saved = await manager
-      .getRepository(Appointment)
-      .findOneOrFail({
-        where: { id: row.id },
-        relations: { arena: true, sport: true },
-      });
+    const saved = await manager.getRepository(Appointment).findOneOrFail({
+      where: { id: row.id },
+      relations: { arena: true, sport: true },
+    });
     return card(saved, draft.organizerId, 1, holder ? 1 : 0, true, null, [
       {
         id: draft.organizerId,

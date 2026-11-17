@@ -1,5 +1,6 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { APPLICATION_VERSION } from '../config/application-version.js';
 import { HealthController } from './health.controller.js';
 
 it('checks PostgreSQL before reporting healthy', async () => {
@@ -34,4 +35,3 @@ it('reports 503 when PostgreSQL is reachable but migrations are pending', async 
     new HealthController(dataSource as unknown as DataSource).check(),
   ).rejects.toBeInstanceOf(ServiceUnavailableException);
 });
-import { APPLICATION_VERSION } from '../config/application-version.js';

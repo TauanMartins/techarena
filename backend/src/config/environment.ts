@@ -81,8 +81,7 @@ export function parseEnvironment(
       );
     }
   }
-  const serviceRoleKey =
-    environment.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
+  const serviceRoleKey = environment.SUPABASE_SERVICE_ROLE_KEY?.trim() || null;
   if (serviceRoleKey && !projectUrl) {
     throw new Error(
       'SUPABASE_URL is required when SUPABASE_SERVICE_ROLE_KEY is configured.',

@@ -1,14 +1,13 @@
+import type { PageRequest } from '../../../common/domain/pagination.js';
+import { assertPageRequest } from '../../../common/domain/pagination.js';
+import type { ChatAccessPort } from '../../chat/application/ports/chat-access.port.js';
+import { directChatTopic } from '../../chat/domain/chat-topic.js';
+import type { ProfileAccess } from '../../users/profile/application/ports/profile-access.port.js';
+import type { FriendsRepository } from './ports/friends.port.js';
 import {
   assertCanRequestFriendship,
   friendshipOutcome,
 } from '../domain/friend-policy.js';
-import { DomainError } from '../../../common/domain/domain-error.js';
-import { assertPageRequest } from '../../../common/domain/pagination.js';
-import type { PageRequest } from '../../../common/domain/pagination.js';
-import type { ProfileAccess } from '../../users/profile/application/profile-access.port.js';
-import type { FriendsRepository } from '../application/friends.port.js';
-import type { ChatAccessPort } from '../../chat/application/chat-access.port.js';
-import { directChatTopic } from '../../chat/domain/chat-topic.js';
 export class FriendsApplication {
   constructor(
     private readonly repository: FriendsRepository,
@@ -22,12 +21,6 @@ export class FriendsApplication {
   }
   async request(actor: string, userId: string) {
     await this.profiles.ensureExists(actor);
-    if (actor === userId)
-      throw new DomainError(
-        'invalid',
-        'SELF_FRIENDSHIP',
-        'You cannot add yourself',
-      );
     return this.repository.transaction(async (store) => {
       assertCanRequestFriendship(
         actor,

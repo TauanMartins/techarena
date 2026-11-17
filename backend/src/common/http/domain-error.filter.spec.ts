@@ -1,5 +1,5 @@
-import { BadRequestException, Logger } from '@nestjs/common';
 import type { ArgumentsHost } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { DomainError } from '../domain/domain-error.js';
 import { DomainErrorFilter } from './domain-error.filter.js';
 

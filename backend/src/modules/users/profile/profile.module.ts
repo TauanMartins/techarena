@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { ProfileController } from './adapters/http/profile.controller.js';
-import { ProfileApplication } from './application/profile.application.js';
-import { PROFILE_REPOSITORY } from './domain/profile-repository.port.js';
-import type { ProfileRepository } from './domain/profile-repository.port.js';
+import { ProfileController } from './adapters/http/controllers/profile.controller.js';
 import { TypeormProfileRepository } from './adapters/persistence/typeorm-profile.repository.js';
-import { PROFILE_ACCESS } from './application/profile-access.port.js';
+import { PROFILE_ACCESS } from './application/ports/profile-access.port.js';
+import type { ProfileRepository } from './application/ports/profile-repository.port.js';
+import { PROFILE_REPOSITORY } from './application/ports/profile-repository.port.js';
+import { ProfileApplication } from './application/profile.application.js';
 @Module({
   imports: [],
   controllers: [ProfileController],

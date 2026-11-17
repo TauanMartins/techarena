@@ -129,4 +129,3 @@ export interface LeagueResultInput {
   homeScore: number;
   awayScore: number;
 }
-

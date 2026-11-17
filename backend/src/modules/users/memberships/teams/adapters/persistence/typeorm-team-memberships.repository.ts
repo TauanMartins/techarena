@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import { UserTeam } from '../../../../../../database/entities/index.js';
-import type { TeamMembershipsRepository } from '../../domain/team-memberships-repository.port.js';
-import type { TeamMembershipQuery } from '../../domain/team-membership.js';
 import { paginate } from '../../../../shared/domain/pagination.js';
+import type { TeamMembershipsRepository } from '../../application/ports/team-memberships-repository.port.js';
+import type { TeamMembershipQuery } from '../../domain/team-membership.js';
 export class TypeormTeamMembershipsRepository implements TeamMembershipsRepository {
   constructor(private readonly dataSource: DataSource) {}
   async getTeams(id: string, query: TeamMembershipQuery) {

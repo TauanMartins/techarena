@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
 import { Equals, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
 
 export class HealthResponseDto {
   /** Backend package version published by the release pipeline. */

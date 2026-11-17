@@ -1,12 +1,14 @@
-import { DataSource } from 'typeorm';
 import type { EntityManager } from 'typeorm';
-import { Friend, User } from '../../../../database/entities/index.js';
-import { paginate } from '../../../../common/domain/pagination.js';
+import { DataSource } from 'typeorm';
 import type { PageRequest } from '../../../../common/domain/pagination.js';
+import { paginate } from '../../../../common/domain/pagination.js';
 import { databaseWrite } from '../../../../common/persistence/database-write.js';
-import type { FriendsRepository } from '../../application/friends.port.js';
+import { Friend, User } from '../../../../database/entities/index.js';
+import type {
+  FriendshipTransaction,
+  FriendsRepository,
+} from '../../application/ports/friends.port.js';
 import type { FriendView } from '../../domain/friend.js';
-import type { FriendshipTransaction } from '../../application/friends.port.js';
 function view(row: Friend, actor: string): FriendView {
   const user = actor === row.requesterId ? row.addressee : row.requester;
   return {
@@ -93,15 +95,13 @@ export class TypeormFriendsRepository implements FriendsRepository {
               .findOne({ where: { id }, lock: { mode: 'pessimistic_write' } }),
           insert: async (requesterId, addresseeId) =>
             (
-              await m
-                .getRepository(Friend)
-                .save({
-                  requesterId,
-                  addresseeId,
-                  status: 'pending',
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                })
+              await m.getRepository(Friend).save({
+                requesterId,
+                addresseeId,
+                status: 'pending',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              })
             ).id,
           setStatus: async (id, status) => {
             await m

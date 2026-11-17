@@ -1,3 +1,4 @@
+import type { Point } from 'geojson';
 import {
   Check,
   Column,
@@ -9,10 +10,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import type { Arena } from './arena.entity.js';
-import type { Sport } from './sport.entity.js';
 import type { Schedule } from './schedule.entity.js';
+import type { Sport } from './sport.entity.js';
 import type { User } from './users.entity.js';
-import type { Point } from 'geojson';
 
 @Entity({ name: 'appointment', schema: 'public' })
 @Check(

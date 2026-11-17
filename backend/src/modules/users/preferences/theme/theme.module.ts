@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { ThemeController } from './adapters/http/theme.controller.js';
-import { ThemeApplication } from './application/theme.application.js';
-import { THEME_REPOSITORY } from './domain/theme-repository.port.js';
-import type { ThemeRepository } from './domain/theme-repository.port.js';
-import { TypeormThemeRepository } from './adapters/persistence/typeorm-theme.repository.js';
+import type { ProfileAccess } from '../../profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../../profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../../profile/profile.module.js';
-import { PROFILE_ACCESS } from '../../profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../../profile/application/profile-access.port.js';
+import { ThemeController } from './adapters/http/controllers/theme.controller.js';
+import { TypeormThemeRepository } from './adapters/persistence/typeorm-theme.repository.js';
+import type { ThemeRepository } from './application/ports/theme-repository.port.js';
+import { THEME_REPOSITORY } from './application/ports/theme-repository.port.js';
+import { ThemeApplication } from './application/theme.application.js';
 @Module({
   imports: [ProfileModule],
   controllers: [ThemeController],

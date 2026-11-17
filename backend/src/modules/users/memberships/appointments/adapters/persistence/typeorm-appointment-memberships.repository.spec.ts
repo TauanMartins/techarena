@@ -1,5 +1,7 @@
 import type { DataSource } from 'typeorm';
 import { Appointment } from '../../../../../../database/entities/index.js';
+import type { ProfileAccess } from '../../../../profile/application/ports/profile-access.port.js';
+import { AppointmentMembershipsApplication } from '../../application/appointment-memberships.application.js';
 import { TypeormAppointmentMembershipsRepository } from './typeorm-appointment-memberships.repository.js';
 
 it('rejects an appointment that starts while admission is waiting for its row lock', async () => {
@@ -33,7 +35,14 @@ it('rejects an appointment that starts while admission is waiting for its row lo
   } as unknown as DataSource;
   const repository = new TypeormAppointmentMembershipsRepository(source);
   const clock = vi.fn(() => new Date('2026-11-01T12:00:01Z'));
-  const request = repository.joinAppointment('user', '1', true, clock);
+  const application = new AppointmentMembershipsApplication(
+    repository,
+    {
+      ensureAdult: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ProfileAccess,
+    clock,
+  );
+  const request = application.joinAppointment('user', '1', true);
   expect(clock).not.toHaveBeenCalled();
   release(appointment);
   await expect(request).rejects.toMatchObject({ code: 'APPOINTMENT_CLOSED' });

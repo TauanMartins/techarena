@@ -36,6 +36,31 @@ describe('catalogs migration workflows', () => {
     await h.get('/sports/arena').query({ arenaId: '99999' }).expect(404);
     await h.get('/sports/material').query({ sportId: '0' }).expect(400);
   });
+  it('lists player-provided materials, excluding equipment belonging to the venue', async () => {
+    const expected = await h.db.query<{ id: string }[]>(
+      'SELECT material_id AS id FROM sport_material WHERE sport_id = $1 AND related_to_local = false ORDER BY id',
+      ['1'],
+    );
+    const local = await h.db.query<{ id: string }[]>(
+      'SELECT material_id AS id FROM sport_material WHERE sport_id = $1 AND related_to_local = true',
+      ['1'],
+    );
+    expect(expected.length).toBeGreaterThan(0);
+    expect(local.length).toBeGreaterThan(0);
+    const response = await h
+      .get('/sports/material')
+      .query({ sportId: '1', limit: 50 })
+      .expect(200);
+    expect(response.body.total).toBe(expected.length);
+    expect(response.body.items.map((item: { id: string }) => item.id)).toEqual(
+      expected.map((item) => item.id),
+    );
+    expect(
+      response.body.items.every(
+        (item: { relatedToLocal: boolean }) => !item.relatedToLocal,
+      ),
+    ).toBe(true);
+  });
   it('filters arenas and computes distance with bound coordinates', async () => {
     await h.get('/arenas').expect(200);
     const filtered = await h

@@ -1,18 +1,18 @@
+import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import {
   Inject,
   Injectable,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import type { AccessTokenVerifier } from '../../domain/access-token-verifier.port.js';
 import {
   ACCESS_TOKEN_VERIFIER,
   IdentityProviderUnavailable,
 } from '../../domain/access-token-verifier.port.js';
-import type { AccessTokenVerifier } from '../../domain/access-token-verifier.port.js';
-import { IS_PUBLIC } from './auth.decorators.js';
 import type { AuthenticatedRequest } from './auth.decorators.js';
+import { IS_PUBLIC } from './auth.decorators.js';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {

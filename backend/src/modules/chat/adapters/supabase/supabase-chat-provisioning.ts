@@ -3,7 +3,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import type { AppConfiguration } from '../../../../config/environment.js';
-import type { ChatProvisioning } from '../../application/chat-gateways.port.js';
+import type { ChatProvisioning } from '../../application/ports/chat-gateways.port.js';
 import type { ParsedChatTopic } from '../../domain/chat-topic.js';
 export class SupabaseChatProvisioning implements ChatProvisioning {
   constructor(private readonly configuration: AppConfiguration) {}

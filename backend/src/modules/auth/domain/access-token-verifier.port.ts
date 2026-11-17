@@ -1,10 +1,3 @@
-export interface AuthenticatedUser {
-  readonly id: string;
-}
-
-export const ACCESS_TOKEN_VERIFIER = Symbol('ACCESS_TOKEN_VERIFIER');
-export interface AccessTokenVerifier {
-  verify(token: string): Promise<AuthenticatedUser>;
-}
-export class InvalidAccessToken extends Error {}
-export class IdentityProviderUnavailable extends Error {}
+export * from './access-token-verifier.port-shared.js';
+export { IdentityProviderUnavailable } from './identity-provider-unavailable.js';
+export { InvalidAccessToken } from './invalid-access-token.js';

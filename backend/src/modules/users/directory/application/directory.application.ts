@@ -1,7 +1,7 @@
 import { assertPageRequest } from '../../shared/domain/pagination.js';
-import type { DirectoryRepository } from '../domain/directory-repository.port.js';
-import type { DirectoryQuery } from '../domain/directory.js';
 import { UserError } from '../../shared/domain/user-error.js';
+import type { DirectoryQuery } from '../domain/directory.js';
+import type { DirectoryRepository } from './ports/directory-repository.port.js';
 export class DirectoryApplication {
   constructor(private readonly repository: DirectoryRepository) {}
   search(query: DirectoryQuery) {

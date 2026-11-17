@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import { parseEnvironment } from '../../../../config/environment.js';
 import { ChatAccessApplication } from '../../application/chat-access.application.js';
-import { TypeormChatAuthorization } from './typeorm-chat-authorization.js';
 import { SupabaseChatProvisioning } from '../supabase/supabase-chat-provisioning.js';
+import { TypeormChatAuthorization } from './typeorm-chat-authorization.js';
 function service(source: DataSource, config: typeof configuration) {
   return new ChatAccessApplication(
     new TypeormChatAuthorization(source),

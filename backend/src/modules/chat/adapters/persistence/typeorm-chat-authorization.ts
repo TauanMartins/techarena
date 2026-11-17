@@ -1,5 +1,5 @@
 import type { DataSource } from 'typeorm';
-import type { ChatAuthorization } from '../../application/chat-gateways.port.js';
+import type { ChatAuthorization } from '../../application/ports/chat-gateways.port.js';
 import type { parseChatTopic } from '../../domain/chat-topic.js';
 interface AuthorizationRow {
   allowed: boolean;

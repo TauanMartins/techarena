@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { DirectoryController } from './adapters/http/directory.controller.js';
-import { DirectoryApplication } from './application/directory.application.js';
-import { DIRECTORY_REPOSITORY } from './domain/directory-repository.port.js';
-import type { DirectoryRepository } from './domain/directory-repository.port.js';
+import { DirectoryController } from './adapters/http/controllers/directory.controller.js';
 import { TypeormDirectoryRepository } from './adapters/persistence/typeorm-directory.repository.js';
+import type { DirectoryRepository } from './application/ports/directory-repository.port.js';
+import { DIRECTORY_REPOSITORY } from './application/ports/directory-repository.port.js';
+import { DirectoryApplication } from './application/directory.application.js';
 @Module({
   imports: [],
   controllers: [DirectoryController],

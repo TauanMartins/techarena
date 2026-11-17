@@ -1,5 +1,5 @@
-import type { ProfileRepository } from '../domain/profile-repository.port.js';
 import type { UserProfile } from '../domain/profile.js';
+import type { ProfileRepository } from './ports/profile-repository.port.js';
 import { ProfileApplication } from './profile.application.js';
 const now = new Date('2026-10-28T12:00:00Z');
 const profile: UserProfile = {

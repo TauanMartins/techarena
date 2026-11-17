@@ -5,11 +5,11 @@ import {
   ConfigurationModule,
 } from '../../config/configuration.module.js';
 import type { AppConfiguration } from '../../config/environment.js';
-import { CHAT_ACCESS } from './application/chat-access.port.js';
-import { ChatAccessApplication } from './application/chat-access.application.js';
+import { ChatAccessController } from './adapters/http/controllers/chat-access.controller.js';
 import { TypeormChatAuthorization } from './adapters/persistence/typeorm-chat-authorization.js';
 import { SupabaseChatProvisioning } from './adapters/supabase/supabase-chat-provisioning.js';
-import { ChatAccessController } from './adapters/http/chat-access.controller.js';
+import { ChatAccessApplication } from './application/chat-access.application.js';
+import { CHAT_ACCESS } from './application/ports/chat-access.port.js';
 
 @Module({
   imports: [ConfigurationModule],

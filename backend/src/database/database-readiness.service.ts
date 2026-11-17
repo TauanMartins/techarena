@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import type { OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { assertDatabaseReady } from './database-readiness.js';
 

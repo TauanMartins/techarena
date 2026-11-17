@@ -1,23 +1,25 @@
-import { DataSource } from 'typeorm';
 import type { EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
+import { DomainError } from '../../../../common/domain/domain-error.js';
+import type { PageRequest } from '../../../../common/domain/pagination.js';
+import { paginate } from '../../../../common/domain/pagination.js';
+import { databaseWrite } from '../../../../common/persistence/database-write.js';
+import { escapeLike } from '../../../../common/persistence/queries.js';
 import {
   Team,
   TeamMembershipRequest,
   User,
   UserTeam,
 } from '../../../../database/entities/index.js';
-import { DomainError } from '../../../../common/domain/domain-error.js';
-import { paginate } from '../../../../common/domain/pagination.js';
-import type { PageRequest } from '../../../../common/domain/pagination.js';
-import { databaseWrite } from '../../../../common/persistence/database-write.js';
-import { escapeLike } from '../../../../common/persistence/queries.js';
-import type { TeamsRepository } from '../../application/teams.port.js';
+import type {
+  TeamsRepository,
+  TeamTransaction,
+} from '../../application/ports/teams.port.js';
 import type {
   MembershipRequestView,
   TeamMemberView,
   TeamQuery,
 } from '../../domain/team.js';
-import type { TeamTransaction } from '../../application/teams.port.js';
 export class TypeormTeamsRepository implements TeamsRepository {
   constructor(private readonly source: DataSource) {}
   async list(query: TeamQuery) {
@@ -104,33 +106,27 @@ export class TypeormTeamsRepository implements TeamsRepository {
           request: (id) =>
             m.getRepository(TeamMembershipRequest).findOneBy({ id }),
           createTeam: (input) =>
-            m
-              .getRepository(Team)
-              .save({
-                name: input.name,
-                description: input.description ?? null,
-                image: input.image ?? null,
-              }),
+            m.getRepository(Team).save({
+              name: input.name,
+              description: input.description ?? null,
+              image: input.image ?? null,
+            }),
           updateTeam: async (id, input) => {
-            await m
-              .getRepository(Team)
-              .update(id, {
-                name: input.name,
-                description: input.description ?? null,
-                image: input.image ?? null,
-              });
+            await m.getRepository(Team).update(id, {
+              name: input.name,
+              description: input.description ?? null,
+              image: input.image ?? null,
+            });
             return m.getRepository(Team).findOneByOrFail({ id });
           },
           addMember: async (teamId, userId, role) => {
-            await m
-              .getRepository(UserTeam)
-              .insert({
-                teamId,
-                userId,
-                role,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              });
+            await m.getRepository(UserTeam).insert({
+              teamId,
+              userId,
+              role,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
           },
           createRequest: async (input) =>
             (await m.getRepository(TeamMembershipRequest).save(input)).id,

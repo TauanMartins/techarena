@@ -27,7 +27,8 @@ function fixture() {
     list: vi.fn(),
     context: vi.fn().mockResolvedValue(context),
     available: vi.fn().mockResolvedValue([]),
-    transaction: <T>(work: (transaction: typeof store) => Promise<T>) => work(store),
+    transaction: <T>(work: (transaction: typeof store) => Promise<T>) =>
+      work(store),
   };
   const profiles = {
     ensureAdult: vi.fn().mockResolvedValue(undefined),

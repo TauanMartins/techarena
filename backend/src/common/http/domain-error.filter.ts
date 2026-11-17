@@ -1,5 +1,5 @@
-import { Catch, HttpException, Logger } from '@nestjs/common';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
+import { Catch, HttpException, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { DomainError } from '../domain/domain-error.js';
 import {

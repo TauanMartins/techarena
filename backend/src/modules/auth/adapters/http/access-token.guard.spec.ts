@@ -4,11 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AccessTokenGuard } from './access-token.guard.js';
 import {
   IdentityProviderUnavailable,
   InvalidAccessToken,
 } from '../../domain/access-token-verifier.port.js';
+import { AccessTokenGuard } from './access-token.guard.js';
 
 function fixture(authorization?: string, isPublic = false) {
   const request = { headers: { authorization }, user: undefined };
