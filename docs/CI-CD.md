@@ -3,22 +3,27 @@
 ## Fluxo
 
 1. Criar uma branch a partir da `main`; manter o PR como draft até estar pronto.
-2. PR pronto: `CI` executa lint, formatação do frontend, testes com cobertura,
-   builds e integração com PostgreSQL/PostGIS descartável. Não acessa produção.
+2. PR pronto: `CI` seleciona os componentes alterados e executa lint, formatação
+   do frontend, testes com cobertura, builds e integração do backend com PostGIS
+   descartável quando aplicável. Arquivos compartilhados ou desconhecidos validam
+   ambos. Alterações somente em `docs/` ou `README.md` executam apenas automação.
+   O workflow `PR title` valida o Conventional Commit separadamente.
 3. Após o check `CI` passar, o job `Enable auto-merge after CI` da mesma
    execução habilita squash automático para PRs do dono do repositório, criados
    no próprio repositório e fora de draft. Esse job não faz checkout nem executa
-   código do PR. Revalida o SHA e título atuais antes de habilitar o merge.
+   código do PR. Revalida o SHA e estado atuais antes de habilitar o merge.
    Contribuições externas exigem habilitação manual.
-4. A proteção da `main` precisa exigir o check `CI` e branch atualizada.
+4. A proteção da `main` exige `CI`, `Conventional PR title` e branch atualizada.
+   O título bloqueia o merge independentemente do resultado dos testes.
 5. Depois do merge, a CI valida o commit integrado. `Release and deploy` é
    disparado por essa CI concluída com sucesso, somente em pushes na `main`.
 6. Release Please cria/atualiza um PR com versões e changelogs dos componentes
    alterados. A GitHub App habilita o auto-merge desse PR sem bypass dos checks.
 7. O merge do PR de release passa novamente pela CI. Release Please cria as
    tags e GitHub Releases; apenas os componentes com tag nesse SHA são publicados.
-8. Se backend e frontend mudarem juntos, publicar backend, aguardar o deploy
-   exato e validar `/health`, depois publicar e verificar o frontend.
+8. Antes de publicar, validar toda a configuração dos componentes selecionados
+   e construir o frontend de produção. Depois publicar backend, conferir SHA,
+   saúde e versão no `/health`; por último publicar e verificar o frontend.
 
 Não se cria versão só por abrir um PR. Uma tag é um registro de release; seu
 sucesso de publicação deve ser conferido no job `deploy` e no environment
@@ -27,9 +32,12 @@ sucesso de publicação deve ser conferido no job `deploy` e no environment
 ### Por que há mais de uma execução?
 
 O PR da feature e o PR de versão passam por CI antes e depois de cada merge:
-são quatro validações de commits diferentes. O deploy exige CI de push aprovada
-para o SHA exato publicado. Editar um PR também revalida o título usado no squash;
-por enquanto isso repete os demais checks para manter um único check obrigatório.
+são quatro validações de commits diferentes, com seleção de componentes nos PRs
+e validação completa nos pushes da `main` e execuções manuais. O deploy exige
+CI de push aprovada para o SHA exato publicado. Editar título ou descrição executa
+apenas `PR title`, sem repetir builds, testes ou cancelar um CI em andamento.
+O check agregador `CI` aceita skips apenas quando o seletor explicitamente
+dispensou o componente. Falhas, cancelamentos e seleção inválida bloqueiam o PR.
 
 Depois do merge da feature, `Release and deploy` prepara o PR de versão e deixa
 `deploy` como skipped, pois ainda não existe tag naquele commit. Depois do merge
@@ -90,9 +98,9 @@ No environment `production`, restringir deploys à `main` e cadastrar:
 | Variable | `VITE_SUPABASE_URL` |
 | Variable | `VITE_SUPABASE_PUBLISHABLE_KEY` |
 
-`CI` deve ser obrigatório no ruleset da `main`, com branch atualizada antes do
-merge. Ativar Allow auto-merge e squash usando título e corpo do PR. O workflow
-recusa habilitar auto-merge se não encontrar `CI` entre os checks do ruleset.
+`CI` e `Conventional PR title` devem ser obrigatórios no ruleset da `main`,
+com branch atualizada antes do merge. Ativar Allow auto-merge e squash usando título e corpo do PR. O workflow
+recusa habilitar auto-merge se não encontrar ambos os checks no ruleset.
 
 ## Ativação e operação
 
@@ -113,7 +121,7 @@ de `/health` e no Swagger. O Release Please mantém esses arquivos atualizados.
 
 O frontend gera `/version.json` com tag e SHA; a esteira confere esse arquivo
 após publicar. O backend é validado pelo SHA retornado pela API do Render e
-pela resposta de `/health`. Não são necessárias credenciais do banco no Actions.
+pela saúde do banco e versão esperada na resposta de `/health`. Não são necessárias credenciais do banco no Actions.
 Migrations de produção continuam sendo uma operação separada e revisada: este
 workflow não as aplica. Alterações de banco e API precisam ser compatíveis com
 a versão anterior durante o deploy. Falha do frontend não desfaz o backend.
@@ -147,3 +155,15 @@ python3 -m unittest discover -s .github/tests -v
 Os testes de deploy simulam respostas do Render: conclusão correta, SHA errado,
 falha de build, timeout e banco indisponível. Não publicam nada. A CI de aplicação
 continua executando ambos os componentes e disponibiliza cobertura por sete dias.
+
+### Ferramentas e validações da automação
+
+A versão do npm usada nos jobs de aplicação e no build de produção do frontend
+vem de `.npm-version`; o Node vem de `backend/.nvmrc`. O Render continua construindo
+o backend no seu próprio ambiente; mantenha esse runtime compatível com os engines
+do pacote. O actionlint roda no job de automação com versão e SHA-256 fixados.
+
+Os testes da automação cobrem seleção de componentes, skips inesperados, configuração
+incompleta, tags incompatíveis e versão incorreta no health. A pré-validação confirma
+presença e formato das configurações; não comprova que tokens continuam autorizados
+nos provedores. Falhas remotas ainda podem interromper a publicação.

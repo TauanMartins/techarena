@@ -28,7 +28,7 @@ const core = {info() {}, summary: {addRaw() { return this; }, async write() {}}}
 const github = {
   rest: {pulls: {async get() {return {data: input.current};}}},
   async request() {return {data: input.protected ? [{type: 'required_status_checks',
-    parameters: {required_status_checks: [{context: 'CI'}]}}] : []};},
+    parameters: {required_status_checks: input.protected === 'ci-only' ? [{context: 'CI'}] : [{context: 'CI'}, {context: 'Conventional PR title'}]}}] : []};},
   async graphql(query, variables) {calls.push({query, variables});}
 };
 (async () => {
@@ -54,7 +54,7 @@ const github = {
 
     def test_does_not_merge_changed_or_ineligible_pr(self):
         changes = [
-            ('state', 'closed'), ('draft', True), ('title', 'different title'),
+            ('state', 'closed'), ('draft', True),
             ('base', {'ref': 'other'}), ('user', {'login': 'other'}),
             ('head', {'sha': 'new', 'repo': {'full_name': 'owner/repo'}}),
             ('head', {'sha': 'approved', 'repo': {'full_name': 'external/fork'}}),
@@ -75,3 +75,13 @@ const github = {
         result = self.run_script(protected=False)
         self.assertEqual(result['calls'], [])
         self.assertIn('Require CI', result['error'])
+
+    def test_refuses_without_required_title_check(self):
+        result = self.run_script(protected='ci-only')
+        self.assertEqual(result['calls'], [])
+        self.assertIn('Conventional PR title', result['error'])
+
+    def test_title_edit_does_not_require_rebuilding(self):
+        current = copy.deepcopy(self.pr)
+        current['title'] = 'ci: corrected title'
+        self.assertEqual(len(self.run_script(current)['calls']), 1)

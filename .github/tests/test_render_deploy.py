@@ -14,14 +14,14 @@ class DeployTests(unittest.TestCase):
         def request(url, token=None, body=None):
             calls.append((url, token, body))
             return responses.pop(0)
-        result = module.deploy("test-key", "srv-test", SHA, "https://example.test/",
+        result = module.deploy("test-key", "srv-test", SHA, "https://example.test/", "1.2.3",
                                request=request, sleep=lambda _: None, attempts=2)
         return result, calls
 
     def test_waits_for_exact_commit_and_health(self):
         result, calls = self.run_deploy([
             {"id": "dep-test"}, {"status": "build_in_progress"},
-            {"status": "live", "commit": {"id": SHA}}, {"status": "ok", "database": "up"}])
+            {"status": "live", "commit": {"id": SHA}}, {"status": "ok", "database": "up", "version": "1.2.3"}])
         self.assertEqual(result, "dep-test")
         self.assertEqual(calls[0][2]["commitId"], SHA)
         self.assertEqual(calls[-1], ("https://example.test/health", None, None))
@@ -33,6 +33,11 @@ class DeployTests(unittest.TestCase):
     def test_wrong_commit_is_rejected(self):
         with self.assertRaisesRegex(RuntimeError, "different commit"):
             self.run_deploy([{"id": "dep-test"}, {"status": "live", "commit": {"id": "b" * 40}}])
+
+    def test_wrong_health_version_is_rejected(self):
+        with self.assertRaisesRegex(RuntimeError, "version does not match"):
+            self.run_deploy([{"id": "dep-test"}, {"status": "live", "commit": {"id": SHA}}] +
+                            [{"status": "ok", "database": "up", "version": "1.2.2"}] * 12)
 
     def test_timeout(self):
         with self.assertRaises(TimeoutError):
