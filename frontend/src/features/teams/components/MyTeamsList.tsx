@@ -22,8 +22,8 @@ export function MyTeamsList({
       {!teams.length && (
         <Card className="border rounded-4 shadow-sm bg-body mb-4">
           <Card.Body>
-            Você ainda não faz parte de uma equipe. Explore as opções abaixo
-            para começar.
+            Você ainda não faz parte de uma equipe. Busque pelo nome de uma
+            equipe ou crie um grupo para jogar com seus amigos.
           </Card.Body>
         </Card>
       )}
@@ -50,7 +50,7 @@ export function MyTeamsList({
                     </div>
                   )}
                   <span className="badge rounded-pill bg-success-subtle text-success-emphasis text-capitalize">
-                    {team.role}
+                    {team.role === 'captain' ? 'Capitão' : 'Membro'}
                   </span>
                   <h3 className="h5 fw-bold mt-3 mb-2">{team.name}</h3>
                   <p>{team.description || 'Equipe TechArena'}</p>

@@ -1,27 +1,29 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import type { ProfileAccess } from '../users/profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../users/profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../users/profile/profile.module.js';
-import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
+import { LeaguesController } from './adapters/http/controllers/leagues.controller.js';
+import { TypeormLeagueStore } from './adapters/persistence/typeorm-league-store.js';
+import { LeagueOperations } from './application/league-operations.js';
 import { LeaguesApplication } from './application/leagues.application.js';
-import { LeaguesController } from './adapters/http/leagues.controller.js';
-import { TypeormLeaguesRepository } from './adapters/persistence/typeorm-leagues.repository.js';
-import { LEAGUES_REPOSITORY } from './domain/leagues.port.js';
-import type { LeaguesRepository } from './domain/leagues.port.js';
+import type { LeagueUseCases } from './application/ports/leagues.port.js';
+import { LEAGUE_USE_CASES } from './application/ports/leagues.port.js';
 
 @Module({
   imports: [ProfileModule],
   controllers: [LeaguesController],
   providers: [
     {
-      provide: LEAGUES_REPOSITORY,
+      provide: LEAGUE_USE_CASES,
       inject: [DataSource],
-      useFactory: (source: DataSource) => new TypeormLeaguesRepository(source),
+      useFactory: (source: DataSource) =>
+        new LeagueOperations(new TypeormLeagueStore(source)),
     },
     {
       provide: LeaguesApplication,
-      inject: [LEAGUES_REPOSITORY, PROFILE_ACCESS],
-      useFactory: (repository: LeaguesRepository, profiles: ProfileAccess) =>
+      inject: [LEAGUE_USE_CASES, PROFILE_ACCESS],
+      useFactory: (repository: LeagueUseCases, profiles: ProfileAccess) =>
         new LeaguesApplication(repository, profiles),
     },
   ],

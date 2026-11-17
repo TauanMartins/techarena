@@ -77,6 +77,12 @@ describe('feature data hooks', () => {
     expect(invalidate).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: ['appointments', 'user-1'] }),
     );
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['myAppointments', 'user-1'],
+    });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['chatConversations', 'user-1'],
+    });
   });
 
   it('combines chat sources into a conversation list', async () => {
@@ -183,7 +189,7 @@ describe('feature data hooks', () => {
     const wrapper = createTestWrapper(queryClient);
     const { result } = renderHook(
       () => ({
-        catalog: useTeamCatalog('token', 'user-1'),
+        catalog: useTeamCatalog('token', 'user-1', 'aurora'),
         create: useCreateTeam('token', 'user-1'),
       }),
       { wrapper },
@@ -195,4 +201,33 @@ describe('feature data hooks', () => {
       expect.objectContaining({ queryKey: ['teams', 'user-1'] }),
     );
   });
+});
+
+it('keeps older appointment conversations and includes subsequent membership pages', async () => {
+  vi.spyOn(chatApi, 'friends').mockResolvedValue({
+    friends: emptyPage,
+    requestedFriends: emptyPage,
+    receivedFriends: emptyPage,
+  } as never);
+  vi.spyOn(chatApi, 'teams').mockResolvedValue(emptyPage as never);
+  const appointments = vi
+    .spyOn(chatApi, 'appointments')
+    .mockResolvedValueOnce({
+      ...emptyPage,
+      hasNextPage: true,
+      items: [{ id: '1', title: 'Novo', scheduledAt: '2999-01-01' }],
+    } as never)
+    .mockResolvedValueOnce({
+      ...emptyPage,
+      items: [{ id: '2', title: 'Histórico', scheduledAt: '2020-01-01' }],
+    } as never);
+  const { result } = renderHook(() => useChatConversations('token', 'user-1'), {
+    wrapper: createTestWrapper(),
+  });
+  await waitFor(() => expect(result.current.isSuccess).toBe(true));
+  expect(result.current.data?.map((item) => item.label)).toEqual([
+    'Novo',
+    'Histórico',
+  ]);
+  expect(appointments).toHaveBeenLastCalledWith('token', 2);
 });

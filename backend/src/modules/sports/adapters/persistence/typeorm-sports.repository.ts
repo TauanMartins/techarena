@@ -1,17 +1,15 @@
 import { DataSource } from 'typeorm';
+import { DomainError } from '../../../../common/domain/domain-error.js';
+import type { PageRequest } from '../../../../common/domain/pagination.js';
+import { paginate } from '../../../../common/domain/pagination.js';
 import {
   Arena,
   Sport,
   SportArena,
   SportMaterial,
 } from '../../../../database/entities/index.js';
-import { DomainError } from '../../../../common/domain/domain-error.js';
-import { paginate } from '../../../../common/domain/pagination.js';
-import type { PageRequest } from '../../../../common/domain/pagination.js';
-import type {
-  SportsQuery,
-  SportsRepository,
-} from '../../domain/sports.port.js';
+import type { SportsRepository } from '../../application/ports/sports.port.js';
+import type { SportsQuery } from '../../domain/sport.js';
 export class TypeormSportsRepository implements SportsRepository {
   constructor(private readonly source: DataSource) {}
   async list(query: SportsQuery) {
@@ -58,13 +56,13 @@ export class TypeormSportsRepository implements SportsRepository {
       query,
     );
   }
-  async materials(sportId: string, query: PageRequest) {
+  async participantMaterials(sportId: string, query: PageRequest) {
     if (!(await this.source.getRepository(Sport).existsBy({ id: sportId })))
       throw new DomainError('not_found', 'SPORT_NOT_FOUND', 'Sport not found');
     const [rows, total] = await this.source
       .getRepository(SportMaterial)
       .findAndCount({
-        where: { sportId },
+        where: { sportId, relatedToLocal: false },
         relations: { material: true },
         order: { id: 'ASC' },
         skip: (query.page - 1) * query.limit,

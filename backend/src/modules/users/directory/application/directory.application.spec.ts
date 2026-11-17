@@ -1,6 +1,6 @@
-import { DirectoryApplication } from './directory.application.js';
-import type { DirectoryRepository } from '../domain/directory-repository.port.js';
 import type { DirectoryQuery } from '../domain/directory.js';
+import type { DirectoryRepository } from './ports/directory-repository.port.js';
+import { DirectoryApplication } from './directory.application.js';
 const query: DirectoryQuery = {
   search: ' Alice ',
   searchBy: 'all',

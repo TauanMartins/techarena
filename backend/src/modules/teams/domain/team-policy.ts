@@ -1,17 +1,6 @@
-import { DomainError } from '../../../common/domain/domain-error.js';
-export function assertMembershipDecision(
-  kind: 'invitation' | 'request',
-  actor: string,
-  target: string,
-  isCaptain: boolean,
-): void {
-  if (
-    (kind === 'request' && !isCaptain) ||
-    (kind === 'invitation' && actor !== target)
-  )
-    throw new DomainError(
-      'forbidden',
-      'WRONG_APPROVER',
-      'Only the receiving party can decide this membership request',
-    );
-}
+export { assertCanRequestMembership } from './assert-can-request-membership.js';
+export { assertCaptain } from './assert-captain.js';
+export { assertMembershipDecision } from './assert-membership-decision.js';
+export { assertTeamExists } from './assert-team-exists.js';
+export { membershipOutcome } from './membership-outcome.js';
+export { normalizeTeam } from './normalize-team.js';

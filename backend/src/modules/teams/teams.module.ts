@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import type { ProfileAccess } from '../users/profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../users/profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../users/profile/profile.module.js';
-import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { TEAMS_REPOSITORY } from './domain/teams.port.js';
-import type { TeamsRepository } from './domain/teams.port.js';
+import {
+  TeamCatalogController,
+  TeamManagementController,
+  TeamRequestsController,
+} from './adapters/http/controllers/teams.controller.js';
 import { TypeormTeamsRepository } from './adapters/persistence/typeorm-teams.repository.js';
 import {
   TeamCatalogApplication,
   TeamManagementApplication,
   TeamRequestsApplication,
 } from './application/teams.application.js';
-import {
-  TeamCatalogController,
-  TeamManagementController,
-  TeamRequestsController,
-} from './adapters/http/teams.controller.js';
+import type { TeamsRepository } from './application/ports/teams.port.js';
+import { TEAMS_REPOSITORY } from './application/ports/teams.port.js';
 @Module({
   imports: [ProfileModule],
   controllers: [

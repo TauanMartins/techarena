@@ -1,25 +1,25 @@
-import { DataSource } from 'typeorm';
 import type { EntityManager } from 'typeorm';
+import { DataSource } from 'typeorm';
+import { DomainError } from '../../../../common/domain/domain-error.js';
+import type { PageRequest } from '../../../../common/domain/pagination.js';
+import { paginate } from '../../../../common/domain/pagination.js';
+import { databaseWrite } from '../../../../common/persistence/database-write.js';
+import { escapeLike } from '../../../../common/persistence/queries.js';
 import {
   Team,
   TeamMembershipRequest,
   User,
   UserTeam,
 } from '../../../../database/entities/index.js';
-import { DomainError } from '../../../../common/domain/domain-error.js';
-import { paginate } from '../../../../common/domain/pagination.js';
-import type { PageRequest } from '../../../../common/domain/pagination.js';
-import { databaseWrite } from '../../../../common/persistence/database-write.js';
-import { escapeLike } from '../../../../common/persistence/queries.js';
 import type {
-  MembershipDecision,
+  TeamsRepository,
+  TeamTransaction,
+} from '../../application/ports/teams.port.js';
+import type {
   MembershipRequestView,
-  TeamInput,
   TeamMemberView,
   TeamQuery,
-  TeamsRepository,
-} from '../../domain/teams.port.js';
-import { assertMembershipDecision } from '../../domain/team-policy.js';
+} from '../../domain/team.js';
 export class TypeormTeamsRepository implements TeamsRepository {
   constructor(private readonly source: DataSource) {}
   async list(query: TeamQuery) {
@@ -53,14 +53,6 @@ export class TypeormTeamsRepository implements TeamsRepository {
       .where('lower(btrim(team.name))=lower(btrim(:name))', { name })
       .getExists();
   }
-  private async team(manager: EntityManager, id: string) {
-    const row = await manager
-      .getRepository(Team)
-      .findOne({ where: { id }, lock: { mode: 'pessimistic_write' } });
-    if (!row)
-      throw new DomainError('not_found', 'TEAM_NOT_FOUND', 'Team not found');
-    return row;
-  }
   private async captain(manager: EntityManager, actor: string, teamId: string) {
     if (
       !(await manager
@@ -72,39 +64,6 @@ export class TypeormTeamsRepository implements TeamsRepository {
         'CAPTAIN_REQUIRED',
         'Only a team captain can perform this action',
       );
-  }
-  create(actor: string, input: TeamInput) {
-    return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        const team = await m.getRepository(Team).save({
-          name: input.name,
-          description: input.description ?? null,
-          image: input.image ?? null,
-        });
-        await m.getRepository(UserTeam).insert({
-          teamId: team.id,
-          userId: actor,
-          role: 'captain',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-        return team;
-      }),
-    );
-  }
-  update(actor: string, id: string, input: TeamInput) {
-    return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        await this.team(m, id);
-        await this.captain(m, actor, id);
-        await m.getRepository(Team).update(id, {
-          name: input.name,
-          description: input.description ?? null,
-          image: input.image ?? null,
-        });
-        return m.getRepository(Team).findOneByOrFail({ id });
-      }),
-    );
   }
   private async present(
     m: EntityManager,
@@ -125,129 +84,60 @@ export class TypeormTeamsRepository implements TeamsRepository {
       createdAt: row.createdAt,
     };
   }
-  private async pending(
-    m: EntityManager,
-    actor: string,
-    teamId: string,
-    userId: string,
-    kind: 'invitation' | 'request',
-  ) {
-    if (!(await m.getRepository(User).existsBy({ id: userId })))
-      throw new DomainError('not_found', 'USER_NOT_FOUND', 'User not found');
-    if (await m.getRepository(UserTeam).existsBy({ teamId, userId }))
-      throw new DomainError(
-        'conflict',
-        'ALREADY_MEMBER',
-        'User is already a member',
-      );
-    if (
-      await m
-        .getRepository(TeamMembershipRequest)
-        .existsBy({ teamId, userId, status: 'pending' })
-    )
-      throw new DomainError(
-        'conflict',
-        'REQUEST_PENDING',
-        'A membership decision is already pending',
-      );
-    const row = await m
-      .getRepository(TeamMembershipRequest)
-      .save({ teamId, userId, createdBy: actor, kind, status: 'pending' });
-    return this.present(m, row.id);
-  }
-  invite(actor: string, teamId: string, userId: string) {
+  transaction<T>(work: (store: TeamTransaction) => Promise<T>): Promise<T> {
     return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        await this.team(m, teamId);
-        await this.captain(m, actor, teamId);
-        return this.pending(m, actor, teamId, userId, 'invitation');
-      }),
-    );
-  }
-  requestJoin(actor: string, teamId: string) {
-    return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        await this.team(m, teamId);
-        return this.pending(m, actor, teamId, actor, 'request');
-      }),
-    );
-  }
-  private async resolve(
-    m: EntityManager,
-    row: TeamMembershipRequest,
-    decision: MembershipDecision,
-  ) {
-    if (row.status !== 'pending')
-      throw new DomainError(
-        'conflict',
-        'REQUEST_CLOSED',
-        'Membership request was already decided',
-      );
-    if (decision === 'accept') {
-      await m.getRepository(UserTeam).insert({
-        teamId: row.teamId,
-        userId: row.userId,
-        role: 'member',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-    await m.getRepository(TeamMembershipRequest).update(row.id, {
-      status: decision === 'accept' ? 'accepted' : 'declined',
-      updatedAt: new Date(),
-    });
-    return this.present(m, row.id);
-  }
-  decideRequest(
-    actor: string,
-    teamId: string,
-    userId: string,
-    decision: MembershipDecision,
-  ) {
-    return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        await this.team(m, teamId);
-        await this.captain(m, actor, teamId);
-        const row = await m
-          .getRepository(TeamMembershipRequest)
-          .findOneBy({ teamId, userId, status: 'pending' });
-        if (!row)
-          throw new DomainError(
-            'not_found',
-            'REQUEST_NOT_FOUND',
-            'Pending membership request not found',
-          );
-        if (row.kind !== 'request')
-          throw new DomainError(
-            'conflict',
-            'INVITATION_REQUIRES_USER',
-            'The invited user must answer this invitation',
-          );
-        assertMembershipDecision(row.kind, actor, row.userId, true);
-        return this.resolve(m, row, decision);
-      }),
-    );
-  }
-  respondInvitation(actor: string, id: string, decision: MembershipDecision) {
-    return databaseWrite(() =>
-      this.source.transaction(async (m) => {
-        const initial = await m
-          .getRepository(TeamMembershipRequest)
-          .findOneBy({ id });
-        if (!initial)
-          throw new DomainError(
-            'not_found',
-            'REQUEST_NOT_FOUND',
-            'Membership request not found',
-          );
-        await this.team(m, initial.teamId);
-        const row = await m
-          .getRepository(TeamMembershipRequest)
-          .findOneByOrFail({ id });
-        assertMembershipDecision(row.kind, actor, row.userId, false);
-        await this.captain(m, row.createdBy, row.teamId);
-        return this.resolve(m, row, decision);
-      }),
+      this.source.transaction((m) =>
+        work({
+          lockTeam: (id) =>
+            m
+              .getRepository(Team)
+              .findOne({ where: { id }, lock: { mode: 'pessimistic_write' } }),
+          isCaptain: (actor, teamId) =>
+            m
+              .getRepository(UserTeam)
+              .existsBy({ teamId, userId: actor, role: 'captain' }),
+          userExists: (id) => m.getRepository(User).existsBy({ id }),
+          isMember: (userId, teamId) =>
+            m.getRepository(UserTeam).existsBy({ teamId, userId }),
+          pending: (teamId, userId) =>
+            m
+              .getRepository(TeamMembershipRequest)
+              .findOneBy({ teamId, userId, status: 'pending' }),
+          request: (id) =>
+            m.getRepository(TeamMembershipRequest).findOneBy({ id }),
+          createTeam: (input) =>
+            m.getRepository(Team).save({
+              name: input.name,
+              description: input.description ?? null,
+              image: input.image ?? null,
+            }),
+          updateTeam: async (id, input) => {
+            await m.getRepository(Team).update(id, {
+              name: input.name,
+              description: input.description ?? null,
+              image: input.image ?? null,
+            });
+            return m.getRepository(Team).findOneByOrFail({ id });
+          },
+          addMember: async (teamId, userId, role) => {
+            await m.getRepository(UserTeam).insert({
+              teamId,
+              userId,
+              role,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          },
+          createRequest: async (input) =>
+            (await m.getRepository(TeamMembershipRequest).save(input)).id,
+          setRequestStatus: async (id, status) => {
+            await m
+              .getRepository(TeamMembershipRequest)
+              .update(id, { status, updatedAt: new Date() });
+          },
+          presentRequest: (id) => this.present(m, id),
+        }),
+      ),
     );
   }
   async requests(actor: string, query: PageRequest, teamId?: string) {

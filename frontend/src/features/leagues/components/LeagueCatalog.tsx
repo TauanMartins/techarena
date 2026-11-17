@@ -13,50 +13,54 @@ export function LeagueCatalog({
   onSelect: (id: string) => void;
 }) {
   return (
-    <aside className="col-lg-4">
+    <section aria-label="Ligas">
       <h2 className="h4 mb-3">Ligas disponíveis</h2>
-      <div className="d-grid gap-2">
+      <div className="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
         {leagues.map((league) => (
-          <Card
+          <div
+            className="col"
             key={league.id}
-            className={`border rounded-4 shadow-sm bg-body ${selectedId === league.id ? 'border-primary' : ''}`}
           >
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-start gap-2">
-                <div>
-                  <h3 className="h5 mb-1">{league.name}</h3>
-                  <div className="text-secondary">
-                    {league.sportName ?? 'Modalidade não definida'}
+            <Card
+              className={`border rounded-4 shadow-sm bg-body h-100 ${selectedId === league.id ? 'border-primary' : ''}`}
+            >
+              <Card.Body>
+                <div className="d-flex justify-content-between align-items-start gap-2">
+                  <div>
+                    <h3 className="h5 mb-1">{league.name}</h3>
+                    <div className="text-secondary">
+                      {league.sportName ?? 'Modalidade não definida'}
+                    </div>
                   </div>
+                  {league.isOwner && <Badge bg="primary">Organizador</Badge>}
                 </div>
-                {league.isOwner && <Badge bg="primary">Organizador</Badge>}
-              </div>
-              <p className="small text-secondary mt-2 mb-2">
-                {league.teamCount} equipes · {league.completedMatchCount}/
-                {league.matchCount} partidas concluídas
-              </p>
-              <div className="small mb-2">
-                {league.status === 'open'
-                  ? 'Inscrições abertas'
-                  : league.status === 'active'
-                    ? 'Em andamento'
-                    : league.status === 'completed'
-                      ? 'Encerrada'
-                      : 'Cancelada'}
-              </div>
-              <Button
-                variant={
-                  selectedId === league.id ? 'primary' : 'outline-primary'
-                }
-                size="sm"
-                onClick={() => onSelect(league.id)}
-              >
-                Ver liga
-              </Button>
-            </Card.Body>
-          </Card>
+                <p className="small text-secondary mt-2 mb-2">
+                  {league.teamCount} equipes · {league.completedMatchCount}/
+                  {league.matchCount} partidas concluídas
+                </p>
+                <div className="small mb-2">
+                  {league.status === 'open'
+                    ? 'Inscrições abertas'
+                    : league.status === 'active'
+                      ? 'Em andamento'
+                      : league.status === 'completed'
+                        ? 'Encerrada'
+                        : 'Cancelada'}
+                </div>
+                <Button
+                  variant={
+                    selectedId === league.id ? 'primary' : 'outline-primary'
+                  }
+                  size="sm"
+                  onClick={() => onSelect(league.id)}
+                >
+                  Ver liga
+                </Button>
+              </Card.Body>
+            </Card>
+          </div>
         ))}
       </div>
-    </aside>
+    </section>
   );
 }

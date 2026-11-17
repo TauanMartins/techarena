@@ -147,7 +147,10 @@ describe('useLeagueWorkspace', () => {
       ),
     );
     await waitFor(() => expect(result.current.error).toBe('permission denied'));
-    expect(update).toHaveBeenCalled();
+    expect(update).toHaveBeenCalledWith('token', 'league-1', {
+      name: 'Liga editada',
+      description: null,
+    });
     await act(() => result.current.updateStatus('canceled'));
     expect(setStatus).not.toHaveBeenCalled();
 

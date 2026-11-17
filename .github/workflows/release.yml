@@ -160,6 +160,15 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.sha }}
           persist-credentials: false
+      - name: Check Google Maps configuration
+        if: needs.release.outputs.frontend_tag != ''
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+        run: |
+          if [ -z "$VITE_GOOGLE_MAPS_API_KEY" ]; then
+            echo '::error::Configure the GitHub Actions secret VITE_GOOGLE_MAPS_API_KEY before deploying the frontend.'
+            exit 1
+          fi
       - name: Publish backend and wait for health
         if: needs.release.outputs.backend_tag != ''
         env:
@@ -178,6 +187,7 @@ jobs:
         if: needs.release.outputs.frontend_tag != ''
         working-directory: frontend
         env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}

@@ -1,12 +1,12 @@
-import type { ProfileRepository } from '../domain/profile-repository.port.js';
 import { UserError } from '../../shared/domain/user-error.js';
-import type { ProfileChanges } from '../domain/profile.js';
 import {
   prepareProfileChanges,
   validateBirthDate,
 } from '../domain/profile-policy.js';
+import type { ProfileChanges } from '../domain/profile.js';
+import type { ProfileRepository } from './ports/profile-repository.port.js';
 
-import type { ProfileAccess } from './profile-access.port.js';
+import type { ProfileAccess } from './ports/profile-access.port.js';
 
 export class ProfileApplication implements ProfileAccess {
   constructor(

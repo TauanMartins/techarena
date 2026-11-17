@@ -1,19 +1,19 @@
 import { Module } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import type { ProfileAccess } from '../users/profile/application/ports/profile-access.port.js';
+import { PROFILE_ACCESS } from '../users/profile/application/ports/profile-access.port.js';
 import { ProfileModule } from '../users/profile/profile.module.js';
-import { PROFILE_ACCESS } from '../users/profile/application/profile-access.port.js';
-import type { ProfileAccess } from '../users/profile/application/profile-access.port.js';
-import { APPOINTMENTS_REPOSITORY } from './domain/appointments.port.js';
-import type { AppointmentsRepository } from './domain/appointments.port.js';
+import {
+  AppointmentsController,
+  AvailabilityController,
+} from './adapters/http/controllers/appointments.controller.js';
 import { TypeormAppointmentsRepository } from './adapters/persistence/typeorm-appointments.repository.js';
 import {
   AppointmentsApplication,
   AvailabilityApplication,
 } from './application/appointments.application.js';
-import {
-  AppointmentsController,
-  AvailabilityController,
-} from './adapters/http/appointments.controller.js';
+import type { AppointmentsRepository } from './application/ports/appointments.port.js';
+import { APPOINTMENTS_REPOSITORY } from './application/ports/appointments.port.js';
 @Module({
   imports: [ProfileModule],
   controllers: [AppointmentsController, AvailabilityController],

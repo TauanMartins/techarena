@@ -1,5 +1,5 @@
-import { applyDecorators, SetMetadata } from '@nestjs/common';
 import type { Type } from '@nestjs/common';
+import { applyDecorators, SetMetadata } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 
 export const RESPONSE_CONTRACT = Symbol('RESPONSE_CONTRACT');

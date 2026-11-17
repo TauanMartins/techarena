@@ -32,11 +32,13 @@ export const leagueScoreSchema = z.object({
   homeScore: z
     .string()
     .regex(/^\d+$/, 'Informe um placar inteiro e não negativo.')
-    .transform(Number),
+    .transform(Number)
+    .pipe(z.number().int().min(0).max(100000, 'O placar máximo é 100000.')),
   awayScore: z
     .string()
     .regex(/^\d+$/, 'Informe um placar inteiro e não negativo.')
-    .transform(Number),
+    .transform(Number)
+    .pipe(z.number().int().min(0).max(100000, 'O placar máximo é 100000.')),
 });
 
 export type LeagueCreateFormInput = z.input<typeof leagueCreateFormSchema>;

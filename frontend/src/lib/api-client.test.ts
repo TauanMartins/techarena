@@ -145,3 +145,27 @@ describe('apiRequest', () => {
     });
   });
 });
+
+it('serializes discovery and personal history filters without hiding past chat memberships', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ items: [] }), { status: 200 }),
+      ),
+    );
+  vi.stubGlobal('fetch', fetchMock);
+  await api.listArenas('token', {
+    lat: 0,
+    longitude: 0,
+    radiusKm: 5,
+    page: 2,
+    sportId: '1',
+  });
+  await api.listPersonalAppointments('token', { period: 'past', page: 3 });
+  await api.listMyAppointments('token', 2);
+  expect(fetchMock.mock.calls[0][0]).toContain('lat=0&longitude=0&radiusKm=5');
+  expect(fetchMock.mock.calls[1][0]).toContain('period=past');
+  expect(fetchMock.mock.calls[2][0]).not.toContain('from=');
+  expect(fetchMock.mock.calls[2][0]).toContain('page=2');
+});

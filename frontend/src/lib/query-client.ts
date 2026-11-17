@@ -13,6 +13,8 @@ export const queryClient = new QueryClient({
   },
 });
 
+queryClient.setQueryDefaults(['arenaDiscoveryState'], { gcTime: 30 * 60_000 });
+
 export const queryKeys = {
   profile: (userId: string) => ['profile', userId] as const,
   theme: (userId: string) => ['theme', userId] as const,

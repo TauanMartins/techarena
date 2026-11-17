@@ -1,12 +1,12 @@
-import { createRemoteJWKSet, errors, jwtVerify } from 'jose';
 import type { JWTVerifyGetKey } from 'jose';
-import {
-  IdentityProviderUnavailable,
-  InvalidAccessToken,
-} from '../../domain/access-token-verifier.port.js';
+import { createRemoteJWKSet, errors, jwtVerify } from 'jose';
 import type {
   AccessTokenVerifier,
   AuthenticatedUser,
+} from '../../domain/access-token-verifier.port.js';
+import {
+  IdentityProviderUnavailable,
+  InvalidAccessToken,
 } from '../../domain/access-token-verifier.port.js';
 
 export class SupabaseTokenVerifier implements AccessTokenVerifier {

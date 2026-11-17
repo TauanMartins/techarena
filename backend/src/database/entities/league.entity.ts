@@ -9,8 +9,8 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import type { User } from './users.entity.js';
 import type { Sport } from './sport.entity.js';
+import type { User } from './users.entity.js';
 
 @Entity({ name: 'league', schema: 'public' })
 @Unique('league_league_number_key', ['leagueNumber'])

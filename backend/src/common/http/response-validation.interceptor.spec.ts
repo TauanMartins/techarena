@@ -1,5 +1,5 @@
-import { InternalServerErrorException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { lastValueFrom, of } from 'rxjs';
 import { HealthResponseDto } from '../../health/health-response.dto.js';

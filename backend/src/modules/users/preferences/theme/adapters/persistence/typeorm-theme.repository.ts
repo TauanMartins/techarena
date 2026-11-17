@@ -4,7 +4,7 @@ import {
   Preference,
   UserPreference,
 } from '../../../../../../database/entities/index.js';
-import type { ThemeRepository } from '../../domain/theme-repository.port.js';
+import type { ThemeRepository } from '../../application/ports/theme-repository.port.js';
 
 import { userDatabaseWrite } from '../../../../shared/persistence/database-errors.js';
 

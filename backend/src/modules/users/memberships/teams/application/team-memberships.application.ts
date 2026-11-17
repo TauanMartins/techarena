@@ -1,9 +1,9 @@
 import { assertPageRequest } from '../../../shared/domain/pagination.js';
 import { UserError } from '../../../shared/domain/user-error.js';
-import type { TeamMembershipsRepository } from '../domain/team-memberships-repository.port.js';
+import type { TeamMembershipsRepository } from './ports/team-memberships-repository.port.js';
 
+import type { ProfileAccess } from '../../../profile/application/ports/profile-access.port.js';
 import type { TeamMembershipQuery } from '../domain/team-membership.js';
-import type { ProfileAccess } from '../../../profile/application/profile-access.port.js';
 export class TeamMembershipsApplication {
   constructor(
     private readonly repository: TeamMembershipsRepository,

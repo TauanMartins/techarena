@@ -37,7 +37,7 @@ export function useLeaguesData({
     queryKey: queryKeys.leagueInvitations(userId),
     queryFn: () => leaguesApi.invitations(token),
   });
-  const resolvedLeagueId = leagueId || leaguesQuery.data?.items[0]?.id || '';
+  const resolvedLeagueId = leagueId;
   const detailsQuery = useQuery({
     queryKey: queryKeys.leagueDetails(userId, resolvedLeagueId),
     queryFn: async () => {
@@ -68,7 +68,7 @@ export function useLeaguesData({
   const teamSearchQuery = useQuery({
     queryKey: queryKeys.leagueTeams(userId, teamSearch),
     queryFn: () => leaguesApi.searchTeams(token, teamSearch),
-    enabled: teamSearchEnabled,
+    enabled: teamSearchEnabled && teamSearch.trim().length >= 2,
   });
   const queryError = [
     leaguesQuery.error,
@@ -97,7 +97,7 @@ export function useLeaguesData({
       myTeamsQuery.isPending ||
       invitationsQuery.isPending,
     isLoadingDetails: detailsQuery.isPending,
-    isSearchingTeams: teamSearchQuery.isPending,
+    isSearchingTeams: teamSearchQuery.isFetching,
     error: queryError?.message ?? null,
     invalidateCatalog: () =>
       Promise.all([

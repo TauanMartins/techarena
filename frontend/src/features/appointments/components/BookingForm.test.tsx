@@ -140,3 +140,48 @@ describe('BookingForm', () => {
     ).toBeEnabled();
   });
 });
+
+it('limits sports to the selected arena and never clears it when switching supported modalities', async () => {
+  const user = userEvent.setup();
+  const initialArena = {
+    id: '42',
+    address: 'Quadra poliesportiva',
+    lat: 0,
+    longitude: 0,
+    sportIds: ['1', '2'],
+    image: null,
+    distanceKm: null,
+    isLeagueOnly: false,
+  };
+  vi.spyOn(appointmentApi, 'sports').mockResolvedValue({
+    items: [
+      { id: '1', name: 'Futebol' },
+      { id: '2', name: 'Vôlei' },
+      { id: '3', name: 'Natação' },
+    ],
+  } as never);
+  vi.spyOn(appointmentApi, 'arenas').mockResolvedValue({ items: [] } as never);
+  vi.spyOn(appointmentApi, 'availability').mockResolvedValue({
+    items: [{ id: '1', horary: '18:00' }],
+  });
+  renderWithProviders(
+    <BookingForm
+      onCreated={vi.fn()}
+      initialArena={initialArena}
+      initialSportId="3"
+    />,
+  );
+  await screen.findByRole('option', { name: 'Futebol' });
+  expect(
+    screen.queryByRole('option', { name: 'Natação' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Esporte')).toHaveValue('');
+  expect(screen.getByLabelText('Arena')).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText('Esporte'), '1');
+  expect(screen.getByLabelText('Arena')).toHaveValue('42');
+  await user.selectOptions(screen.getByLabelText('Esporte'), '2');
+  expect(screen.getByLabelText('Arena')).toHaveValue('42');
+  expect(
+    screen.queryByLabelText('Buscar arena pelo endereço'),
+  ).not.toBeInTheDocument();
+});

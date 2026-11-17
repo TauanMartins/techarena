@@ -56,7 +56,7 @@ describe('ConversationDetailsModal', () => {
         onHide={vi.fn()}
       />,
     );
-    expect(screen.getByText('Seu papel: captain')).toBeInTheDocument();
+    expect(screen.getByText('Você participa como capitão')).toBeInTheDocument();
   });
 
   it('formats appointment description, schedule, status, and image details', () => {

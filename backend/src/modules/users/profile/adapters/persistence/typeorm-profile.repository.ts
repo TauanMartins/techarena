@@ -1,9 +1,9 @@
 import { DataSource } from 'typeorm';
 
 import { User } from '../../../../../database/entities/index.js';
-import type { ProfileRepository } from '../../domain/profile-repository.port.js';
 import { UserError } from '../../../shared/domain/user-error.js';
 import { userDatabaseWrite } from '../../../shared/persistence/database-errors.js';
+import type { ProfileRepository } from '../../application/ports/profile-repository.port.js';
 
 import type { ProfileChanges, UserProfile } from '../../domain/profile.js';
 

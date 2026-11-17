@@ -5,10 +5,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
-import { Public } from '../modules/auth/adapters/http/auth.decorators.js';
 import { ResponseContract } from '../common/http/response-contract.js';
-import { HealthResponseDto } from './health-response.dto.js';
 import { APPLICATION_VERSION } from '../config/application-version.js';
+import { Public } from '../modules/auth/adapters/http/auth.decorators.js';
+import { HealthResponseDto } from './health-response.dto.js';
 
 @ApiTags('health')
 @Controller('health')

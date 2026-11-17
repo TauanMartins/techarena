@@ -1,12 +1,10 @@
-import { isInt64Identifier } from '../../../../../common/domain/int64-identifier.js';
-import {
-  MAX_FAVORITE_SPORTS,
-  favoriteSportsResult,
-} from '../domain/favorite-sports.js';
-import type { FavoriteSportsRepository } from '../domain/favorite-sports-repository.port.js';
 import { UserError } from '../../../shared/domain/user-error.js';
+import { assertFavoriteSelection } from '../domain/assert-favorite-selection.js';
+import { assertFavoriteSportsExist } from '../domain/assert-favorite-sports-exist.js';
+import { favoriteSportsResult } from '../domain/favorite-sports.js';
+import type { FavoriteSportsRepository } from './ports/favorite-sports-repository.port.js';
 
-import type { ProfileAccess } from '../../../profile/application/profile-access.port.js';
+import type { ProfileAccess } from '../../../profile/application/ports/profile-access.port.js';
 export class FavoriteSportsApplication {
   constructor(
     private readonly repository: FavoriteSportsRepository,
@@ -18,19 +16,20 @@ export class FavoriteSportsApplication {
   }
   async replaceSports(id: string, sportIds: string[]) {
     await this.profiles.ensureExists(id);
-    if (
-      sportIds.length > MAX_FAVORITE_SPORTS ||
-      new Set(sportIds).size !== sportIds.length ||
-      sportIds.some((value) => !isInt64Identifier(value))
-    ) {
-      throw new UserError(
-        'invalid',
-        'INVALID_FAVORITE_SPORTS',
-        `Choose up to ${MAX_FAVORITE_SPORTS} distinct sports`,
+    assertFavoriteSelection(sportIds);
+    return this.repository.transaction(async (store) => {
+      if (!(await store.lockOwner(id)))
+        throw new UserError(
+          'not_found',
+          'PROFILE_NOT_FOUND',
+          'Profile not found',
+        );
+      assertFavoriteSportsExist(
+        sportIds.length,
+        await store.countSports(sportIds),
       );
-    }
-    return favoriteSportsResult(
-      await this.repository.replaceSports(id, sportIds),
-    );
+      await store.replace(id, sportIds);
+      return favoriteSportsResult(await store.sports(id));
+    });
   }
 }

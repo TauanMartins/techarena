@@ -1,8 +1,8 @@
 import { DataSource } from 'typeorm';
 import { User } from '../../../../../database/entities/index.js';
-import type { DirectoryRepository } from '../../domain/directory-repository.port.js';
-import type { DirectoryQuery } from '../../domain/directory.js';
 import { paginate } from '../../../shared/domain/pagination.js';
+import type { DirectoryRepository } from '../../application/ports/directory-repository.port.js';
+import type { DirectoryQuery } from '../../domain/directory.js';
 export class TypeormDirectoryRepository implements DirectoryRepository {
   constructor(private readonly dataSource: DataSource) {}
   async search(query: DirectoryQuery) {

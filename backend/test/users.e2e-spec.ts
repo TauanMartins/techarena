@@ -435,13 +435,11 @@ describe('Users HTTP and PostgreSQL integration', () => {
   it('filters team memberships while returning the details needed for team cards', async () => {
     await seedProfile();
     await seedProfile(bobToken);
-    const first = await db
-      .getRepository(Team)
-      .save({
-        name: 'Alpha',
-        description: 'Public team description',
-        image: 'https://example.test/team.png',
-      });
+    const first = await db.getRepository(Team).save({
+      name: 'Alpha',
+      description: 'Public team description',
+      image: 'https://example.test/team.png',
+    });
     const second = await db.getRepository(Team).save({ name: 'Beta' });
     const hidden = await db
       .getRepository(Team)
@@ -490,39 +488,31 @@ describe('Users HTTP and PostgreSQL integration', () => {
     await adult(bobToken);
     const firstDate = new Date(Date.now() + 86400000);
     const lastDate = new Date(Date.now() + 172800000);
-    const reserve = await db
-      .getRepository(Appointment)
-      .save({
-        organizerId: alice,
-        title: 'Reserve match',
-        description: 'Bring water',
-        scheduledAt: firstDate,
-        maxPlayers: 4,
-      });
-    const starter = await db
-      .getRepository(Appointment)
-      .save({
-        organizerId: bob,
-        title: 'Starter match',
-        scheduledAt: lastDate,
-        maxPlayers: 6,
-      });
-    const finished = await db
-      .getRepository(Appointment)
-      .save({
-        organizerId: bob,
-        title: 'Finished match',
-        scheduledAt: new Date(Date.now() - 86400000),
-        status: 'finished',
-      });
-    const deleted = await db
-      .getRepository(Appointment)
-      .save({
-        organizerId: bob,
-        title: 'Deleted match',
-        scheduledAt: lastDate,
-        deletedAt: new Date(),
-      });
+    const reserve = await db.getRepository(Appointment).save({
+      organizerId: alice,
+      title: 'Reserve match',
+      description: 'Bring water',
+      scheduledAt: firstDate,
+      maxPlayers: 4,
+    });
+    const starter = await db.getRepository(Appointment).save({
+      organizerId: bob,
+      title: 'Starter match',
+      scheduledAt: lastDate,
+      maxPlayers: 6,
+    });
+    const finished = await db.getRepository(Appointment).save({
+      organizerId: bob,
+      title: 'Finished match',
+      scheduledAt: new Date(Date.now() - 86400000),
+      status: 'finished',
+    });
+    const deleted = await db.getRepository(Appointment).save({
+      organizerId: bob,
+      title: 'Deleted match',
+      scheduledAt: lastDate,
+      deletedAt: new Date(),
+    });
     await db.getRepository(UserAppointment).insert([
       { userId: alice, appointmentId: reserve.id, holder: false },
       { userId: alice, appointmentId: starter.id, holder: true },

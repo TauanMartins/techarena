@@ -10,6 +10,8 @@ export const teamsApi = {
   listTeamRequests: api.listTeamRequests,
   searchUsers: api.searchUsers,
   create: api.createTeam,
+  update: api.updateTeam,
+  nameExists: api.teamNameExists,
   requestToJoin: api.requestToJoinTeam,
   invite: api.inviteToTeam,
   decideRequest: api.decideTeamRequest,
@@ -20,6 +22,7 @@ export function useTeamCatalog(token: string, userId: string, search = '') {
   return useQuery({
     queryKey: queryKeys.teams(userId, search),
     queryFn: () => teamsApi.list(token, search),
+    enabled: search.trim().length >= 2,
   });
 }
 

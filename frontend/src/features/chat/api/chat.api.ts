@@ -19,7 +19,14 @@ export function useChatConversations(token: string, userId: string) {
         chatApi.teams(token),
         chatApi.appointments(token),
       ]);
-      return buildConversations(friends, teams.items, appointments.items);
+      const allAppointments = [...appointments.items];
+      let currentPage = appointments;
+      let page = 1;
+      while (currentPage.hasNextPage) {
+        currentPage = await chatApi.appointments(token, ++page);
+        allAppointments.push(...currentPage.items);
+      }
+      return buildConversations(friends, teams.items, allAppointments);
     },
   });
 }

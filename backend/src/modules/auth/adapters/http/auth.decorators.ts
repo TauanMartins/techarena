@@ -1,9 +1,9 @@
+import type { ExecutionContext } from '@nestjs/common';
 import {
   createParamDecorator,
   SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { ExecutionContext } from '@nestjs/common';
 import type { Request } from 'express';
 import type { AuthenticatedUser } from '../../domain/access-token-verifier.port.js';
 

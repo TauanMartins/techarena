@@ -3,7 +3,7 @@ export const navigation = [
     to: '/',
     label: 'Início',
     mobileLabel: 'Início',
-    icon: 'bi-grid-1x2-fill',
+    icon: 'bi-map',
     end: true,
   },
   {

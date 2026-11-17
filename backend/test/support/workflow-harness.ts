@@ -7,7 +7,7 @@ import { configureHttp } from '../../src/bootstrap/configure-http.js';
 import { loadConfiguration } from '../../src/config/environment.js';
 import { ACCESS_TOKEN_VERIFIER } from '../../src/modules/auth/domain/access-token-verifier.port.js';
 import { SupabaseTokenVerifier } from '../../src/modules/auth/adapters/supabase/supabase-token-verifier.js';
-import { CHAT_ACCESS } from '../../src/modules/chat/application/chat-access.port.js';
+import { CHAT_ACCESS } from '../../src/modules/chat/application/ports/chat-access.port.js';
 import {
   Arena,
   Permission,

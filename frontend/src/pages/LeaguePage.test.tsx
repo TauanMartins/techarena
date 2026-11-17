@@ -1,3 +1,5 @@
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { LeagueDetailsPage } from './LeagueDetailsPage';
 import {
   cleanup,
   fireEvent,
@@ -60,13 +62,24 @@ const league = {
 describe('LeaguePage', () => {
   afterEach(cleanup);
 
-  function renderLeaguePage() {
+  function renderLeaguePage(path = '/ligas') {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
     });
     return render(
       <QueryClientProvider client={queryClient}>
-        <LeaguePage />
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route
+              path="/ligas"
+              element={<LeaguePage />}
+            />
+            <Route
+              path="/ligas/:leagueId"
+              element={<LeagueDetailsPage />}
+            />
+          </Routes>
+        </MemoryRouter>
       </QueryClientProvider>,
     );
   }
@@ -118,19 +131,20 @@ describe('LeaguePage', () => {
     });
   });
 
-  it('reloads details when the already selected league is clicked', async () => {
+  it('opens one league on its own route without fetching details on the catalog', async () => {
     renderLeaguePage();
-
     await screen.findByRole('button', { name: 'Ver liga' });
-    await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(1));
-
+    expect(api.getLeague).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Ver liga' }));
-
-    await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
-    await waitFor(() => expect(api.getLeague).toHaveBeenCalledTimes(2));
+    await screen.findByRole('heading', { name: 'Liga de teste' });
+    expect(api.getLeague).toHaveBeenCalledWith('test-token', '1');
     expect(
-      screen.getAllByRole('heading', { name: 'Liga de teste' }),
-    ).toHaveLength(2);
+      screen.queryByRole('button', { name: 'Ver liga' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('link', { name: /Voltar para ligas/ }));
+    expect(
+      await screen.findByRole('button', { name: 'Ver liga' }),
+    ).toBeInTheDocument();
   });
 
   it('opens and closes the league creation form and surfaces validation errors', async () => {
@@ -156,7 +170,7 @@ describe('LeaguePage', () => {
     vi.mocked(api.updateLeague).mockResolvedValue({ success: true });
     vi.mocked(api.setLeagueStatus).mockResolvedValue({ success: true });
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
-    renderLeaguePage();
+    renderLeaguePage('/ligas/1');
     await screen.findByRole('button', { name: 'Salvar configurações' });
     fireEvent.click(
       screen.getByRole('button', { name: 'Salvar configurações' }),
@@ -198,7 +212,7 @@ describe('LeaguePage', () => {
       hasNextPage: false,
       hasPreviousPage: false,
     });
-    renderLeaguePage();
+    renderLeaguePage('/ligas/1');
 
     await screen.findByRole('heading', { name: 'Convidar outra equipe' });
     fireEvent.change(screen.getByLabelText('Buscar equipe para convidar'), {
@@ -254,7 +268,7 @@ describe('LeaguePage', () => {
     vi.mocked(api.getLeagueAvailability).mockResolvedValue({
       items: [{ id: 'schedule-1', horary: '20:00:00' }],
     });
-    renderLeaguePage();
+    renderLeaguePage('/ligas/1');
 
     await screen.findByRole('heading', { name: 'Agendar partida' });
     await screen.findAllByRole('option', { name: '20:00' });

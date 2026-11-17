@@ -9,6 +9,8 @@ export type {
 } from '../../../shared/types';
 
 export interface AppointmentListParams {
+  period?: 'upcoming' | 'past';
+  radiusKm?: number;
   page?: number;
   limit?: number;
   sportId?: string;

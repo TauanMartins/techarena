@@ -1,11 +1,16 @@
 import { z } from 'zod';
 
-function localDateInputValue() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function isAdult(value: string) {
+  const now = new Date();
+  const birth = new Date(`${value}T00:00:00.000Z`);
+  let age = now.getUTCFullYear() - birth.getUTCFullYear();
+  if (
+    now.getUTCMonth() < birth.getUTCMonth() ||
+    (now.getUTCMonth() === birth.getUTCMonth() &&
+      now.getUTCDate() < birth.getUTCDate())
+  )
+    age--;
+  return age >= 18;
 }
 
 export const profileFormSchema = z.object({
@@ -24,11 +29,9 @@ export const profileFormSchema = z.object({
       /^[a-z0-9_]+$/,
       'Use apenas letras minúsculas, números e sublinhado.',
     ),
-  birthDate: z.iso
-    .date({ error: 'Informe uma data válida.' })
-    .refine((value) => value <= localDateInputValue(), {
-      message: 'A data de nascimento não pode estar no futuro.',
-    }),
+  birthDate: z.iso.date({ error: 'Informe uma data válida.' }).refine(isAdult, {
+    message: 'Você precisa ter pelo menos 18 anos.',
+  }),
   gender: z.enum(['', 'M', 'F', 'O']),
 });
 

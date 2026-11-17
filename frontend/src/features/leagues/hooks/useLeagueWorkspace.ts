@@ -68,7 +68,12 @@ type LeagueAction =
       };
     };
 
-export function useLeagueWorkspace(token: string, userId: string) {
+export function useLeagueWorkspace(
+  token: string,
+  userId: string,
+  routeLeagueId = '',
+  onCreated?: (id: string) => void,
+) {
   const client = useQueryClient();
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
@@ -88,7 +93,7 @@ export function useLeagueWorkspace(token: string, userId: string) {
   const data = useLeaguesData({
     token,
     userId,
-    leagueId: selectedLeagueId,
+    leagueId: routeLeagueId || selectedLeagueId,
     arenaId,
     date: matchDate,
     teamSearch: submittedTeamSearch,
@@ -212,7 +217,8 @@ export function useLeagueWorkspace(token: string, userId: string) {
     );
     if (created) {
       setShowCreate(false);
-      setSelectedLeagueId(created.id);
+      if (onCreated) onCreated(created.id);
+      else setSelectedLeagueId(created.id);
       await client.invalidateQueries({ queryKey: queryKeys.leagues(userId) });
     }
   }
@@ -239,8 +245,15 @@ export function useLeagueWorkspace(token: string, userId: string) {
         kind: 'update',
         leagueId: details.league.id,
         payload: {
-          ...parsed.data,
+          name: parsed.data.name,
           description: parsed.data.description ?? null,
+          ...(details.league.matchCount === 0
+            ? {
+                tournamentFormat: parsed.data.tournamentFormat,
+                groupCount: parsed.data.groupCount,
+                qualifiersPerGroup: parsed.data.qualifiersPerGroup,
+              }
+            : {}),
         },
       },
       'Configurações da liga atualizadas.',
