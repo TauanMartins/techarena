@@ -16,6 +16,9 @@ export function useTeamsActions(token: string, userId: string) {
       client.invalidateQueries({ queryKey: ['teams', userId] }),
       client.invalidateQueries({ queryKey: queryKeys.myTeams(userId) }),
       client.invalidateQueries({ queryKey: queryKeys.teamRequests(userId) }),
+      client.invalidateQueries({
+        queryKey: queryKeys.chatConversations(userId),
+      }),
     ]);
   const createMutation = useMutation({
     mutationFn: (values: TeamFormValues) =>

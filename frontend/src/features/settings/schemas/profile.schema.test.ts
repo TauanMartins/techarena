@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { profileFormSchema } from './profile.schema';
 
 const validProfile = {
@@ -16,6 +16,27 @@ describe('profileFormSchema', () => {
       birthDate: '1990-05-12',
       gender: 'O',
     });
+  });
+
+  it('uses the same UTC eighteenth-birthday boundary as the API', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-17T00:01:00Z'));
+    try {
+      expect(
+        profileFormSchema.safeParse({
+          ...validProfile,
+          birthDate: '2008-11-17',
+        }).success,
+      ).toBe(true);
+      expect(
+        profileFormSchema.safeParse({
+          ...validProfile,
+          birthDate: '2008-11-18',
+        }).success,
+      ).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('accepts undisclosed gender and rejects invalid profile values', () => {

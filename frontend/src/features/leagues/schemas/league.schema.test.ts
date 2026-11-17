@@ -54,11 +54,18 @@ describe('league schemas', () => {
     ).toBe(false);
   });
 
+  it('accepts the maximum score accepted by the API', () => {
+    expect(
+      leagueScoreSchema.parse({ homeScore: '100000', awayScore: '0' })
+        .homeScore,
+    ).toBe(100000);
+  });
+
   it('converts non-negative integer score strings and rejects malformed scores', () => {
     expect(leagueScoreSchema.parse({ homeScore: '3', awayScore: '0' })).toEqual(
       { homeScore: 3, awayScore: 0 },
     );
-    for (const score of ['-1', '1.5', ''])
+    for (const score of ['-1', '1.5', '', '100001', '9007199254740993'])
       expect(
         leagueScoreSchema.safeParse({ homeScore: score, awayScore: '0' })
           .success,

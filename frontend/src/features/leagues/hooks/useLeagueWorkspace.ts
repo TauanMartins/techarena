@@ -239,8 +239,15 @@ export function useLeagueWorkspace(token: string, userId: string) {
         kind: 'update',
         leagueId: details.league.id,
         payload: {
-          ...parsed.data,
+          name: parsed.data.name,
           description: parsed.data.description ?? null,
+          ...(details.league.matchCount === 0
+            ? {
+                tournamentFormat: parsed.data.tournamentFormat,
+                groupCount: parsed.data.groupCount,
+                qualifiersPerGroup: parsed.data.qualifiersPerGroup,
+              }
+            : {}),
         },
       },
       'Configurações da liga atualizadas.',

@@ -39,7 +39,15 @@ export function useJoinAppointment(
       appointmentApi.join(token, appointmentId),
     onSuccess: () => {
       onJoined?.();
-      return client.invalidateQueries({ queryKey: ['appointments', userId] });
+      return Promise.all([
+        client.invalidateQueries({ queryKey: ['appointments', userId] }),
+        client.invalidateQueries({
+          queryKey: queryKeys.myAppointments(userId),
+        }),
+        client.invalidateQueries({
+          queryKey: queryKeys.chatConversations(userId),
+        }),
+      ]);
     },
   });
 }
@@ -55,6 +63,10 @@ export function useCreateAppointment(token: string, userId: string) {
         client.invalidateQueries({
           queryKey: queryKeys.myAppointments(userId),
         }),
+        client.invalidateQueries({
+          queryKey: queryKeys.chatConversations(userId),
+        }),
+        client.invalidateQueries({ queryKey: ['availability', userId] }),
       ]),
   });
 }

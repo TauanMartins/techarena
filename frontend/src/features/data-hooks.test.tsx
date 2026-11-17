@@ -77,6 +77,12 @@ describe('feature data hooks', () => {
     expect(invalidate).toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: ['appointments', 'user-1'] }),
     );
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['myAppointments', 'user-1'],
+    });
+    expect(invalidate).toHaveBeenCalledWith({
+      queryKey: ['chatConversations', 'user-1'],
+    });
   });
 
   it('combines chat sources into a conversation list', async () => {
