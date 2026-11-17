@@ -15,6 +15,27 @@ export const teamsClient = {
     ),
   listMyTeams: (token: string) =>
     apiRequest<Page<TeamMembership>>('/users/me/teams?page=1&limit=50', token),
+  teamNameExists: (token: string, name: string) =>
+    apiRequest<{ exists: boolean }>(
+      `/team/exist${queryString({ name })}`,
+      token,
+    ),
+  updateTeam: (
+    token: string,
+    teamId: string,
+    name: string,
+    description: string,
+    image: string | null,
+  ) =>
+    apiRequest<Team>('/team', token, {
+      method: 'PUT',
+      body: JSON.stringify({
+        teamId,
+        name,
+        description,
+        ...(image ? { image } : {}),
+      }),
+    }),
   createTeam: (token: string, name: string, description?: string) =>
     apiRequest<Team>('/team', token, {
       method: 'POST',

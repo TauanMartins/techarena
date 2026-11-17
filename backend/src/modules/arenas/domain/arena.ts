@@ -1,6 +1,7 @@
 import type { GeoFilter } from '../../../common/domain/geo.js';
 import type { PageRequest } from '../../../common/domain/pagination.js';
 export interface ArenaQuery extends PageRequest, GeoFilter {
+  arenaId?: string;
   search?: string;
   sportId?: string;
 }

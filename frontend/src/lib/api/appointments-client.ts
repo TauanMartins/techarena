@@ -1,3 +1,4 @@
+import type { AppointmentListParams } from '../../features/appointments/types/appointments.types';
 import type {
   Appointment,
   AppointmentMembership,
@@ -7,27 +8,22 @@ import type {
 import { apiRequest } from './api-request';
 import { queryString } from './query-string';
 export const appointmentsClient = {
-  listAppointments: (
+  listAppointments: (token: string, params: AppointmentListParams = {}) =>
+    apiRequest<Page<Appointment>>(
+      `/appointments${queryString({ page: 1, limit: 20, orderByTime: 'recent', ...params })}`,
+      token,
+    ),
+  listPersonalAppointments: (
     token: string,
-    params: {
-      page?: number;
-      limit?: number;
-      sportId?: string;
-      arenaId?: string;
-      orderByTime?: 'recent' | 'future';
-      distance?: 'near' | 'far';
-      preferSports?: boolean;
-      lat?: number;
-      longitude?: number;
-    } = {},
+    params: AppointmentListParams = {},
   ) =>
     apiRequest<Page<Appointment>>(
-      `/appointments${queryString({ page: 1, limit: 20, orderByTime: 'future', ...params })}`,
+      `/appointments/user${queryString({ page: 1, limit: 20, ...params })}`,
       token,
     ),
   listMyAppointments: (token: string, page = 1) =>
     apiRequest<Page<AppointmentMembership>>(
-      `/users/me/appointments${queryString({ page, limit: 20, from: new Date().toISOString(), sortOrder: 'asc' })}`,
+      `/users/me/appointments${queryString({ page, limit: 20, sortOrder: 'desc' })}`,
       token,
     ),
   joinAppointment: (token: string, appointmentId: string, holder = true) =>

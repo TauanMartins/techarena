@@ -1,3 +1,5 @@
+import { EditTeamForm } from './EditTeamForm';
+import type { Team } from '../../../shared/types';
 import type { SubmitEvent } from 'react';
 import Button from 'react-bootstrap/Button';
 import Image from 'react-bootstrap/Image';
@@ -23,6 +25,7 @@ interface TeamDetailsModalProps {
   invitingUserId: string | null;
   joined: boolean;
   requestPending: boolean;
+  onUpdated?: (team: Team) => void;
   onClose: () => void;
   onSearchChange: (value: string) => void;
   onSearchSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
@@ -89,6 +92,13 @@ export function TeamDetailsModal(props: TeamDetailsModalProps) {
                   Conversar com a equipe
                 </Button>
               </div>
+            )}
+            {team.role === 'captain' && props.onUpdated && (
+              <EditTeamForm
+                key={team.id}
+                team={team}
+                onSaved={props.onUpdated}
+              />
             )}
             <hr />
             <TeamMembersList

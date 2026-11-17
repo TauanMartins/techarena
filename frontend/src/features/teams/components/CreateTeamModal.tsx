@@ -1,3 +1,4 @@
+import { TeamNameAvailability } from './TeamNameAvailability';
 import type { SubmitEvent } from 'react';
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
 import Button from 'react-bootstrap/Button';
@@ -7,6 +8,8 @@ import type { TeamFormInput } from '../schemas/team.schema';
 
 export function CreateTeamModal({
   show,
+  name = '',
+  error,
   busy,
   errors,
   register,
@@ -14,6 +17,8 @@ export function CreateTeamModal({
   onSubmit,
 }: {
   show: boolean;
+  name?: string;
+  error?: string | null;
   busy: boolean;
   errors: FieldErrors<TeamFormInput>;
   register: UseFormRegister<TeamFormInput>;
@@ -34,6 +39,14 @@ export function CreateTeamModal({
         noValidate
       >
         <Modal.Body>
+          {error && (
+            <p
+              role="alert"
+              className="text-danger"
+            >
+              {error}
+            </p>
+          )}
           <Form.Group className="mb-3">
             <Form.Label htmlFor="create-team-name">Nome</Form.Label>
             <Form.Control
@@ -44,6 +57,7 @@ export function CreateTeamModal({
             <Form.Control.Feedback type="invalid">
               {errors.name?.message}
             </Form.Control.Feedback>
+            {show && <TeamNameAvailability name={name} />}
           </Form.Group>
           <Form.Group>
             <Form.Label htmlFor="create-team-description">Descrição</Form.Label>

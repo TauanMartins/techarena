@@ -248,7 +248,7 @@ export function AppShell() {
             as="main"
             id="main-content"
             tabIndex={-1}
-            className="flex-grow-1 min-h-0 overflow-auto p-3 p-md-4 p-xl-5"
+            className="flex-grow-1 min-h-0 overflow-auto p-3 p-md-4"
           >
             <Outlet />
           </Container>

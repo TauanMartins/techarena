@@ -1,5 +1,5 @@
 import { useState, type SubmitEvent } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
@@ -47,6 +47,7 @@ export function TeamsPage() {
   const [submittedInviteSearch, setSubmittedInviteSearch] = useState('');
   const {
     register,
+    control,
     handleSubmit,
     reset,
     formState: { errors },
@@ -54,6 +55,7 @@ export function TeamsPage() {
     resolver: zodResolver(teamFormSchema),
     defaultValues: { name: '', description: '' },
   });
+  const teamName = useWatch({ control, name: 'name' });
   const actions = useTeamsActions(token, userId);
   const data = useTeamsData({
     token,
@@ -218,6 +220,8 @@ export function TeamsPage() {
       </section>
       <CreateTeamModal
         show={showCreate}
+        name={teamName}
+        error={actions.error}
         busy={actions.isCreating}
         errors={errors}
         register={register}
@@ -228,6 +232,11 @@ export function TeamsPage() {
         onSubmit={(event) => void submitCreate(event)}
       />
       <TeamDetailsModal
+        onUpdated={(updated) =>
+          setSelectedTeam((current) =>
+            current ? { ...current, ...updated } : current,
+          )
+        }
         team={selectedTeam}
         members={data.members}
         requests={data.teamRequests}

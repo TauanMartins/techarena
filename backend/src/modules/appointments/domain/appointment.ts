@@ -1,6 +1,7 @@
 import type { GeoFilter } from '../../../common/domain/geo.js';
 import type { PageRequest } from '../../../common/domain/pagination.js';
 export interface AppointmentQuery extends PageRequest, GeoFilter {
+  period?: 'upcoming' | 'past';
   sportId?: string;
   arenaId?: string;
   preferSports: boolean;

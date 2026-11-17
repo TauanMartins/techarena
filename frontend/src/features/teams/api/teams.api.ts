@@ -10,6 +10,8 @@ export const teamsApi = {
   listTeamRequests: api.listTeamRequests,
   searchUsers: api.searchUsers,
   create: api.createTeam,
+  update: api.updateTeam,
+  nameExists: api.teamNameExists,
   requestToJoin: api.requestToJoinTeam,
   invite: api.inviteToTeam,
   decideRequest: api.decideTeamRequest,

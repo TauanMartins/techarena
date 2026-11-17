@@ -11,9 +11,23 @@ export const catalogClient = {
       `/sports${queryString({ page: 1, limit: 50, search })}`,
       token,
     ),
-  listArenas: (token: string, sportId?: string) =>
+  listArenas: (
+    token: string,
+    filters?:
+      | string
+      | {
+          page?: number;
+          limit?: number;
+          sportId?: string;
+          arenaId?: string;
+          search?: string;
+          lat?: number;
+          longitude?: number;
+          radiusKm?: number;
+        },
+  ) =>
     apiRequest<Page<Arena>>(
-      `/arenas${queryString({ page: 1, limit: 50, sportId })}`,
+      `/arenas${queryString({ page: 1, limit: 50, ...(typeof filters === 'string' ? { sportId: filters } : filters) })}`,
       token,
     ),
 };

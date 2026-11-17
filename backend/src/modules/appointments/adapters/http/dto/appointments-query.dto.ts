@@ -5,6 +5,10 @@ import { IsBigintId } from '../../../../../common/http/bigint-id.validator.js';
 import { GeoPageQueryDto } from '../../../../../common/http/dto/geo-query.dto.js';
 
 export class AppointmentsQueryDto extends GeoPageQueryDto {
+  @ApiPropertyOptional({ enum: ['upcoming', 'past'] })
+  @IsOptional()
+  @IsIn(['upcoming', 'past'])
+  period?: 'upcoming' | 'past';
   @IsOptional() @IsBigintId() sportId?: string;
   @IsOptional() @IsBigintId() arenaId?: string;
   @ApiPropertyOptional({ default: false })

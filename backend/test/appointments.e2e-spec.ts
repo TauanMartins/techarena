@@ -71,6 +71,47 @@ describe('appointments migration workflows', () => {
     expect(mine.body.total).toBe(1);
     expect((await h.get('/appointments/user', 'bob')).body.total).toBe(0);
   });
+  it('filters personal history before pagination without exposing another user bookings', async () => {
+    const created = await h.post('/appointments').send(booking()).expect(201);
+    const upcoming = await h
+      .get('/appointments/user')
+      .query({ period: 'upcoming', limit: 1 })
+      .expect(200);
+    expect(upcoming.body.total).toBe(1);
+    expect(
+      (await h.get('/appointments/user').query({ period: 'past' }).expect(200))
+        .body.total,
+    ).toBe(0);
+    await h.db
+      .getRepository(Appointment)
+      .update(created.body.id, {
+        scheduledAt: new Date('2020-01-01T18:00:00Z'),
+        status: 'finished',
+      });
+    const past = await h
+      .get('/appointments/user')
+      .query({ period: 'past', limit: 1 })
+      .expect(200);
+    expect(past.body.total).toBe(1);
+    expect(past.body.items[0].participants[0].id).toBe(actors.alice);
+    expect(
+      (
+        await h
+          .get('/appointments/user')
+          .query({ period: 'upcoming' })
+          .expect(200)
+      ).body.total,
+    ).toBe(0);
+    expect(
+      (
+        await h
+          .get('/appointments/user', 'bob')
+          .query({ period: 'past' })
+          .expect(200)
+      ).body.total,
+    ).toBe(0);
+    await h.get('/appointments/user').query({ period: 'invalid' }).expect(400);
+  });
   it('allows one concurrent reservation and rolls back the losing organizer membership', async () => {
     const results = await Promise.all([
       h.post('/appointments').send(booking()),

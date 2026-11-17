@@ -63,6 +63,18 @@ describe('catalogs migration workflows', () => {
   });
   it('filters arenas and computes distance with bound coordinates', async () => {
     await h.get('/arenas').expect(200);
+    const selected = await h
+      .get('/arenas')
+      .query({ arenaId: fixture.arena.id })
+      .expect(200);
+    expect(
+      selected.body.items.map((arena: { id: string }) => arena.id),
+    ).toEqual([fixture.arena.id]);
+    expect(
+      (await h.get('/arenas').query({ arenaId: '99999' }).expect(200)).body
+        .total,
+    ).toBe(0);
+    await h.get('/arenas').query({ arenaId: 'invalid' }).expect(400);
     const filtered = await h
       .get('/arenas/sports')
       .query({ sportId: '1' })

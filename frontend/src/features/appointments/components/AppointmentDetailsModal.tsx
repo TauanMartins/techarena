@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../components/ui/Feedback';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
@@ -65,7 +66,18 @@ export function AppointmentDetailsModal({
             })}
           </dd>
           <dt>Local</dt>
-          <dd>{appointment.arenaAddress ?? 'Local a confirmar'}</dd>
+          <dd>
+            {appointment.arenaAddress ?? 'Local a confirmar'}
+            {appointment.arenaId && (
+              <Link
+                className="d-block"
+                to={`/?arenaId=${encodeURIComponent(appointment.arenaId)}`}
+                onClick={onHide}
+              >
+                Ver arena no mapa
+              </Link>
+            )}
+          </dd>
           <dt>Participantes</dt>
           <dd>
             {appointment.players} pessoas · {appointment.startingPlayers}

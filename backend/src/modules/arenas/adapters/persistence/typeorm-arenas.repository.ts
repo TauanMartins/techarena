@@ -36,6 +36,8 @@ export class TypeormArenasRepository implements ArenasRepository {
   async list(query: ArenaQuery, admin: boolean) {
     const q = this.source.getRepository(Arena).createQueryBuilder('arena');
     if (!admin) q.where('arena.isLeagueOnly = false');
+    if (query.arenaId)
+      q.andWhere('arena.id = :arenaId', { arenaId: query.arenaId });
     if (query.search)
       q.andWhere('arena.address ILIKE :search', {
         search: `%${escapeLike(query.search)}%`,

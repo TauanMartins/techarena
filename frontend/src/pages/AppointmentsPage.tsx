@@ -1,9 +1,12 @@
+import { AppointmentFilters } from '../features/appointments/components/AppointmentFilters';
+import { PageControls } from '../components/ui/PageControls';
+import { useLocation } from '../features/arenas/hooks/useLocation';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
-import { BookingModal } from '../features/appointments/components/BookingForm';
+import { BookingModal } from '../features/appointments/components/BookingModal';
 import {
   EmptyState,
   ErrorState,
@@ -22,12 +25,50 @@ export function AppointmentsPage() {
   const userId = session!.user.id;
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
-  const appointmentsQuery = useAppointments(token, userId, {
-    page: 1,
-    limit: 30,
-    orderByTime: 'future',
-    preferSports: false,
-  });
+  const [params, setParams] = useSearchParams();
+  const location = useLocation();
+  const mine = params.get('view') === 'mine';
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const sort = params.get('sort') ?? 'soon';
+  const period = params.get('period') ?? 'upcoming';
+  const radius = Number(params.get('radius'));
+  const useDistance = sort === 'near' || sort === 'far';
+  function changeFilter(name: string, value: string) {
+    setParams((current) => {
+      const next = new URLSearchParams(current);
+      if (value) next.set(name, value);
+      else next.delete(name);
+      if (name === 'sort' && value !== 'near' && value !== 'far')
+        next.delete('radius');
+      if (name === 'radius' && value) next.set('sort', 'near');
+      if (name !== 'page') next.delete('page');
+      return next;
+    });
+  }
+  const appointmentsQuery = useAppointments(
+    token,
+    userId,
+    {
+      page,
+      limit: 20,
+      sportId: params.get('sportId') || undefined,
+      arenaId: params.get('arenaId') || undefined,
+      period:
+        mine && (period === 'upcoming' || period === 'past')
+          ? period
+          : undefined,
+      orderByTime: sort === 'later' ? 'future' : 'recent',
+      preferSports: params.get('favorites') === 'true',
+      ...(location.point && useDistance
+        ? {
+            ...location.point,
+            distance: sort as 'near' | 'far',
+            radiusKm: radius > 0 && radius <= 1000 ? radius : undefined,
+          }
+        : {}),
+    },
+    mine,
+  );
   const appointments = appointmentsQuery.data?.items ?? [];
   const joinMutation = useJoinAppointment(token, userId, () =>
     setNotice('Você entrou no agendamento.'),
@@ -40,12 +81,91 @@ export function AppointmentsPage() {
         title="Agendamentos"
         description="Encontre uma partida na sua modalidade e participe."
         action={
-          <Button onClick={() => setShowBooking(true)}>
-            <i className="bi bi-plus-lg me-2" />
-            Criar agendamento
-          </Button>
+          <div className="d-flex flex-wrap gap-2">
+            <Link
+              to="/"
+              className="btn btn-outline-secondary"
+            >
+              <i
+                className="bi bi-map me-2"
+                aria-hidden="true"
+              />
+              Ver quadras
+            </Link>
+            <Button onClick={() => setShowBooking(true)}>
+              <i className="bi bi-plus-lg me-2" />
+              Criar agendamento
+            </Button>
+          </div>
         }
       />
+      <div
+        className="d-flex flex-wrap gap-2 mb-3"
+        role="group"
+        aria-label="Visão dos agendamentos"
+      >
+        <Button
+          variant={!mine ? 'primary' : 'outline-primary'}
+          aria-pressed={!mine}
+          onClick={() => changeFilter('view', '')}
+        >
+          Explorar partidas
+        </Button>
+        <Button
+          variant={mine ? 'primary' : 'outline-primary'}
+          aria-pressed={mine}
+          onClick={() => changeFilter('view', 'mine')}
+        >
+          Meus agendamentos
+        </Button>
+        <Button
+          className="ms-auto"
+          aria-label="Atualizar"
+          variant="outline-secondary"
+          disabled={appointmentsQuery.isFetching}
+          onClick={() => void appointmentsQuery.refetch()}
+        >
+          <i
+            className="bi bi-arrow-clockwise"
+            aria-hidden="true"
+          />
+        </Button>
+      </div>
+      {params.get('arenaId') && (
+        <div className="alert alert-primary d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span>Exibindo partidas da quadra selecionada.</span>
+          <Link to={`/?arenaId=${encodeURIComponent(params.get('arenaId')!)}`}>
+            Voltar à quadra
+          </Link>
+        </div>
+      )}
+      <AppointmentFilters
+        token={token}
+        userId={userId}
+        params={params}
+        onChange={changeFilter}
+        location={location}
+        mine={mine}
+      />
+      <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+        {appointmentsQuery.data && (
+          <span className="small text-body-secondary">
+            {appointmentsQuery.data.total ?? appointments.length} agendamentos
+            encontrados
+          </span>
+        )}
+        {Array.from(params.keys()).some(
+          (key) => key !== 'view' && key !== 'page',
+        ) && (
+          <Button
+            size="sm"
+            variant="link"
+            onClick={() => setParams(mine ? { view: 'mine' } : {})}
+          >
+            Limpar filtros
+          </Button>
+        )}
+      </div>
       {notice && (
         <div
           className="alert alert-success d-flex align-items-center gap-2"
@@ -143,6 +263,14 @@ export function AppointmentsPage() {
             );
           })}
         </div>
+      )}
+      {appointmentsQuery.data && (
+        <PageControls
+          page={page}
+          hasNext={appointmentsQuery.data.hasNextPage}
+          busy={appointmentsQuery.isFetching}
+          onChange={(value) => changeFilter('page', String(value))}
+        />
       )}
       <BookingModal
         show={showBooking}

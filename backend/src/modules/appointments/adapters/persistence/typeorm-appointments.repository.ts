@@ -85,6 +85,12 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       q.andWhere(
         "appointment.status='scheduled' AND appointment.scheduledAt > CURRENT_TIMESTAMP",
       );
+    if (query.period)
+      q.andWhere(
+        query.period === 'past'
+          ? 'appointment.scheduledAt <= CURRENT_TIMESTAMP'
+          : 'appointment.scheduledAt > CURRENT_TIMESTAMP',
+      );
     if (query.sportId)
       q.andWhere('appointment.sportId=:sportId', { sportId: query.sportId });
     if (query.arenaId)
