@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
     branches: [main]
-    types: [opened, synchronize, reopened, edited, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
   workflow_dispatch:
@@ -16,39 +16,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pr-title:
-    name: Conventional PR title
-    if: github.event_name == 'pull_request'
+  changes:
+    name: Select affected components
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    outputs:
+      frontend: ${{ steps.select.outputs.frontend }}
+      backend: ${{ steps.select.outputs.backend }}
+      matrix: ${{ steps.select.outputs.matrix }}
     steps:
-      - name: Validate the squash commit title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import re
-          import sys
-
-          pattern = r"^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-zA-Z0-9_./-]+\))?!?: \S.*$"
-          if not re.fullmatch(pattern, os.environ["PR_TITLE"]):
-              print("::error::Use a Conventional Commit title, e.g. feat(frontend): add arena filters")
-              sys.exit(1)
-          PY
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select checks
+        id: select
+        run: python3 .github/scripts/select_checks.py
 
   checks:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
     name: ${{ matrix.component }} / lint, test, build
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - component: frontend
-            test-command: npm run test:coverage
-          - component: backend
-            test-command: npm run test:cov
+      matrix: ${{ fromJSON(needs.changes.outputs.matrix) }}
     defaults:
       run:
         working-directory: ${{ matrix.component }}
@@ -63,7 +56,7 @@ jobs:
           cache-dependency-path: ${{ matrix.component }}/package-lock.json
       - name: Install npm and dependencies
         run: |
-          npm install --global npm@11.20.0
+          npm install --global "npm@$(cat ../.npm-version)"
           npm ci --include=dev
       - name: Lint
         run: npm run lint
@@ -84,6 +77,8 @@ jobs:
           retention-days: 7
 
   integration:
+    needs: [changes]
+    if: needs.changes.outputs.backend == 'true'
     name: Backend / integration
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -121,7 +116,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - name: Install npm and dependencies
         run: |
-          npm install --global npm@11.20.0
+          npm install --global "npm@$(cat ../.npm-version)"
           npm ci --include=dev
       - name: Prepare disposable database
         run: |
@@ -139,6 +134,11 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: backend/.nvmrc
+      - name: Lint GitHub Actions workflows
+        run: bash .github/scripts/lint_workflows.sh
       - name: Validate release configuration and deployment logic
         run: |
           python3 -m json.tool release-please-config.json > /dev/null
@@ -148,38 +148,17 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [pr-title, checks, integration, automation]
+    needs: [changes, checks, integration, automation]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - name: Summarize and require successful checks
         env:
-          TITLE_RESULT: ${{ needs.pr-title.result }}
-          CHECKS_RESULT: ${{ needs.checks.result }}
-          INTEGRATION_RESULT: ${{ needs.integration.result }}
-          AUTOMATION_RESULT: ${{ needs.automation.result }}
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import sys
-
-          results = {
-              "Conventional PR title": os.environ["TITLE_RESULT"],
-              "Frontend/backend lint, tests and build": os.environ["CHECKS_RESULT"],
-              "Backend integration": os.environ["INTEGRATION_RESULT"],
-              "Release/deploy automation": os.environ["AUTOMATION_RESULT"],
-          }
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
-              summary.write("| Check | Result |\n|---|---|\n")
-              for name, result in results.items():
-                  summary.write(f"| {name} | {result} |\n")
-          title_ok = os.environ["TITLE_RESULT"] == "success" or (
-              os.environ["EVENT_NAME"] != "pull_request" and os.environ["TITLE_RESULT"] == "skipped"
-          )
-          if not (title_ok and os.environ["CHECKS_RESULT"] == "success" and os.environ["INTEGRATION_RESULT"] == "success" and os.environ["AUTOMATION_RESULT"] == "success"):
-              sys.exit("Required CI checks did not pass.")
-          PY
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: python3 .github/scripts/require_checks.py
 
   auto-merge:
     name: Enable auto-merge after CI
@@ -212,7 +191,7 @@ jobs:
             if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main' ||
                 pr.user.login !== context.repo.owner ||
                 pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
-                pr.head.sha !== expected.head.sha || pr.title !== expected.title) {
+                pr.head.sha !== expected.head.sha) {
               core.info('PR changed or is no longer eligible. Its current CI must approve it.');
               return;
             }
@@ -223,13 +202,29 @@ jobs:
             const {data: rules} = await github.request(
               'GET /repos/{owner}/{repo}/rules/branches/main', context.repo
             );
-            if (!rules.some(rule => rule.type === 'required_status_checks' &&
-                rule.parameters.required_status_checks.some(check => check.context === 'CI'))) {
-              throw new Error('Require CI in the main ruleset first. No merge was requested.');
+            if (!['CI', 'Conventional PR title'].every(name => rules.some(rule =>
+                rule.type === 'required_status_checks' &&
+                rule.parameters.required_status_checks.some(check => check.context === name)))) {
+              throw new Error('Require CI and Conventional PR title in the main ruleset first. No merge was requested.');
             }
-            await github.graphql(`mutation($id: ID!) {
-              enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
-                pullRequest { number }
-              }
-            }`, {id: pr.node_id});
-            await core.summary.addRaw(`Auto-merge enabled for PR #${pr.number}, subject to branch protections.`).write();
+            try {
+              await github.graphql(`mutation($id: ID!) {
+                enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
+                  pullRequest { number }
+                }
+              }`, {id: pr.node_id});
+              await core.summary.addRaw(`Auto-merge enabled for PR #${pr.number}, subject to branch protections.`).write();
+            } catch (error) {
+              // GitHub can report UNSTABLE while this optional job is running,
+              // even after both required checks have passed. Never bypass rules.
+              const unstable = error.errors?.some(item =>
+                item.type === 'UNPROCESSABLE' && /unstable status/i.test(item.message));
+              if (!unstable) throw error;
+              const {data: result} = await github.rest.pulls.merge({
+                ...context.repo, pull_number: pr.number, sha: expected.head.sha,
+                merge_method: 'squash', commit_title: `${pr.title} (#${pr.number})`,
+                commit_message: pr.body || ''
+              });
+              if (!result.merged) throw new Error('Protected squash merge was not accepted.');
+              await core.summary.addRaw(`PR #${pr.number} merged at the validated SHA under branch protections.`).write();
+            }

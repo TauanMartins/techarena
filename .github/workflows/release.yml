@@ -105,9 +105,10 @@ jobs:
           github-token: ${{ steps.app.outputs.token }}
           script: |
             const {data: rules} = await github.request('GET /repos/{owner}/{repo}/rules/branches/main', context.repo);
-            if (!rules.some(rule => rule.type === 'required_status_checks' &&
-                rule.parameters.required_status_checks.some(check => check.context === 'CI'))) {
-              throw new Error('Require the CI status check in the main ruleset before enabling auto-merge.');
+            if (!['CI', 'Conventional PR title'].every(name => rules.some(rule =>
+                rule.type === 'required_status_checks' &&
+                rule.parameters.required_status_checks.some(check => check.context === name)))) {
+              throw new Error('Require CI and Conventional PR title in the main ruleset before enabling auto-merge.');
             }
             for (const pr of JSON.parse(process.env.RELEASE_PRS || '[]')) {
               const {data: details} = await github.rest.pulls.get({...context.repo, pull_number: pr.number});
@@ -160,23 +161,22 @@ jobs:
         with:
           ref: ${{ needs.release.outputs.sha }}
           persist-credentials: false
-      - name: Check Google Maps configuration
-        if: needs.release.outputs.frontend_tag != ''
+      - name: Validate all deployment configuration
         env:
-          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-        run: |
-          if [ -z "$VITE_GOOGLE_MAPS_API_KEY" ]; then
-            echo '::error::Configure the GitHub Actions secret VITE_GOOGLE_MAPS_API_KEY before deploying the frontend.'
-            exit 1
-          fi
-      - name: Publish backend and wait for health
-        if: needs.release.outputs.backend_tag != ''
-        env:
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+          BACKEND_TAG: ${{ needs.release.outputs.backend_tag }}
+          FRONTEND_TAG: ${{ needs.release.outputs.frontend_tag }}
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
           BACKEND_URL: ${{ vars.BACKEND_URL }}
-          RELEASE_SHA: ${{ needs.release.outputs.sha }}
-        run: python3 .github/scripts/render_deploy.py
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: python3 .github/scripts/validate_deploy_config.py
       - uses: actions/setup-node@v6
         if: needs.release.outputs.frontend_tag != ''
         with:
@@ -195,9 +195,19 @@ jobs:
           RELEASE_TAG: ${{ needs.release.outputs.frontend_tag }}
         run: |
           test -n "$VITE_API_BASE_URL" && test -n "$VITE_SUPABASE_URL" && test -n "$VITE_SUPABASE_PUBLISHABLE_KEY"
+          npm install --global "npm@$(cat ../.npm-version)"
           npm ci --include=dev
           npm run build
           node -e 'require("fs").writeFileSync("dist/version.json", JSON.stringify({tag: process.env.RELEASE_TAG, sha: process.env.RELEASE_SHA}))'
+      - name: Publish backend and wait for health
+        if: needs.release.outputs.backend_tag != ''
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ vars.RENDER_SERVICE_ID }}
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+          BACKEND_TAG: ${{ needs.release.outputs.backend_tag }}
+          RELEASE_SHA: ${{ needs.release.outputs.sha }}
+        run: python3 .github/scripts/render_deploy.py
       - name: Publish frontend
         if: needs.release.outputs.frontend_tag != ''
         working-directory: frontend
