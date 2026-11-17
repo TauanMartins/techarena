@@ -1,6 +1,6 @@
 # Laravel → NestJS: rastreabilidade de comportamento
 
-Referência A: `backend.old/routes/api.php`, controllers de `backend.old/app/Http/Controllers` e funcionalidades de `backend.old/TechArena/Funcionalities`. Referência B: backend Nest na base da branch `codex/backend-hexagonal-zod`. C é a implementação em andamento nesta branch; a tabela descreve critérios de aceitação, não certifica que todas as etapas já foram implementadas.
+Referência A: `backend.old/routes/api.php`, controllers de `backend.old/app/Http/Controllers` e funcionalidades de `backend.old/TechArena/Funcionalities`. Referência B: backend Nest na base da branch `codex/backend-hexagonal`. C é a implementação desta branch. A tabela registra a intenção preservada, as substituições deliberadas e os critérios exercitados pelos testes locais; não representa uma auditoria do ambiente de produção.
 
 ## Decisões transversais
 
@@ -24,7 +24,7 @@ Referência A: `backend.old/routes/api.php`, controllers de `backend.old/app/Htt
 | POST /appointments | Criar evento + organizador participante + acesso ao chat atomicamente | POST /appointments | Caso de uso transacional; política de horário/capacidade/defaults; acesso ao chat decorrente da participação |
 | GET /sports | Catálogo de modalidades | GET /sports | Query simples com paginação e contrato de resposta |
 | GET /sports/arena | Modalidades da arena | GET /sports/arena | Id validado e consulta do relacionamento |
-| GET /sports/material | Materiais exigidos para modalidade | GET /sports/material | Preservar vínculo e projeção paginada |
+| GET /sports/material | Materiais exigidos para modalidade | GET /sports/material | Restaurar filtro related_to_local=false do Laravel: listar materiais providenciados pelo jogador, com paginação |
 | GET /team | Buscar equipes pelo nome | GET /team | Busca escapada, ordenação estável, resposta documentada |
 | GET /team/exist | Verificar disponibilidade de nome | GET /team/exist | Boolean explícito; unicidade normalizada garantida também no banco |
 | POST /team | Equipe + capitão + chat; imagem via S3 | POST /team | Transação para equipe/capitão; URL de imagem segura, preservar acesso do capitão ao chat |
@@ -62,7 +62,7 @@ Referência A: `backend.old/routes/api.php`, controllers de `backend.old/app/Htt
 
 ## Capacidades acrescentadas em B
 
-Ligas/torneios não possuem rotas em A. Não remover essas funcionalidades nem inventar uma intenção Laravel: manter cadastro/edição, inscrições, convites, arenas/horários, calendário, avanço de rodada, resultados, classificação, reagendamento, cancelamento e encerramento. Extrair as decisões de negócio hoje misturadas no repositório de 1.797 linhas. Manter testes das restrições de chave, ordem de locks e transições de estado.
+Ligas/torneios não possuem rotas em A. Não remover essas funcionalidades nem inventar uma intenção Laravel: manter cadastro/edição, inscrições, convites, arenas/horários, calendário, avanço de rodada, resultados, classificação, reagendamento, cancelamento e encerramento. O repositório monolítico foi substituído por operações de aplicação, políticas de domínio e consultas SQL por operação. Manter testes das restrições de chave, ordem de locks e transições de estado.
 
 ## Validação e arquitetura verificáveis
 
@@ -71,3 +71,38 @@ Ligas/torneios não possuem rotas em A. Não remover essas funcionalidades nem i
 - Comparar OpenAPI e respostas com os testes HTTP existentes, incluindo null/undefined/defaults e status de erro.
 - Casos de uso devem ser testáveis com portas em memória. Testes de integração verificam locks, rollback, constraints e consultas contra PostgreSQL descartável.
 - Registrar desvios e etapas pendentes; não afirmar equivalência de comportamento só porque o endpoint tem o mesmo nome.
+
+## Organização implementada
+
+- `domain/`: modelos, regras de estado, cálculo de resultados e geração de confrontos, sem NestJS, TypeORM, DTOs HTTP ou dependências da aplicação.
+- `application/`: casos de uso e coordenação de transações. `application/ports/` contém as interfaces usadas pela aplicação; nas ligas, `application/operations/` separa cada operação.
+- `adapters/http/controllers/`: entrada HTTP, autenticação e composição com os casos de uso. `adapters/http/dto/`: uma classe de entrada ou saída por arquivo, mantendo o sufixo `.dto.ts` exigido pelo plugin Swagger.
+- `adapters/persistence/`: consultas e gravações TypeORM, locks, tradução de falhas de banco e implementação das transações. Nas ligas, `queries/` separa as consultas por operação.
+- `adapters/supabase/`: provisionamento e revogação remotos. A aplicação revalida a participação depois do provisionamento e revoga o acesso se a participação mudou durante a chamada.
+- Arquivos antigos de agrupamento são apenas reexports para preservar imports; não contêm múltiplas implementações.
+- `test/architecture.spec.ts` impede dependências externas em domínio/aplicação, SQL nessas camadas, múltiplas classes, múltiplas funções públicas independentes e arquivos com 1000 linhas ou mais. Funções auxiliares da operação principal são permitidas. O maior arquivo de produção do backend tem 270 linhas nesta revisão.
+
+## Diferenças deliberadas em relação ao Laravel
+
+- Favoritos priorizam eventos, não eliminam os demais. A prioridade interna derivada da ordem não garantida dos registros PHP não foi restaurada: favoritos possuem o mesmo peso, com desempates estáveis.
+- O catálogo de equipes retorna o nome da equipe; não concatena o username do capitão dentro desse campo como o PHP fazia. A identidade e o papel do capitão continuam disponíveis na consulta de membros.
+- Upload binário para S3 e login Google dentro do PHP não foram reintroduzidos. A API Nest mantém URLs de imagem e autenticação Supabase usadas pelo frontend atual. Isso é uma substituição de contrato, não equivalência literal desses endpoints.
+- A consulta PHP de horários verificava ocupação por modalidade; reservas agora respeitam a exclusividade da arena também entre modalidades, com transação/lock e constraints.
+- O método PHP de arenas por coordenadas recebia latitude/longitude, mas retornava todas as arenas sem cálculo. A busca atual aplica proximidade e raio de forma parametrizada.
+- Mensagens/realtime continuam no Supabase. Os testes locais cobrem a política de participação e a compensação de permissões remotas com doubles; não certificam as políticas RLS instaladas em produção.
+
+## Correções funcionais e alinhamento do frontend
+
+- Materiais: restaurado o filtro de equipamentos que o jogador providencia; teste HTTP compara a resposta com os vínculos persistidos.
+- Edição de liga: campo `description` omitido preserva o valor; string vazia ou `null` limpa a descrição. O frontend não reenvia configurações de torneio bloqueadas após a criação de partidas.
+- Horários: admissão e mutações de partidas consultam o relógio depois dos locks relevantes, evitando decisões com o horário anterior à espera pela transação.
+- Favoritos: limite de quatro distintos permanece no domínio; a substituição só grava depois de verificar a existência de todos os esportes dentro da transação.
+- Frontend: valida idade mínima de 18 anos usando a mesma fronteira UTC e limita placares a 100000, como os DTOs HTTP. Participação/criação de eventos e alterações de equipes invalidam os caches relacionados a participação e chat.
+- O transporte HTTP do frontend está em `lib/api/`, separado dos clientes por domínio; `api-client.ts` mantém a interface pública usada pelas features.
+
+## Validação local
+
+- Backend: compilação TypeScript, build Nest com plugin Swagger, lint, 126 testes unitários/arquiteturais e suíte HTTP/PostgreSQL descartável.
+- Frontend: TypeScript, build Vite, lint e 126 testes.
+- A suíte HTTP verifica rotas, respostas e documentação OpenAPI, além de conflitos, autorização, transações e fluxos de torneios. O novo caso de materiais aumenta a suíte de 37 para 38 testes.
+- Sem mudanças de schema, sem migrações em produção e sem deploy. O build backend foi executado em uma cópia temporária porque o diretório `dist` do checkout pertence ao ambiente de containers.
