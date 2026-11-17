@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       release_sha:
-        description: 'Full SHA of a CI-approved release commit (retry deployment only)'
+        description: "Full SHA of a CI-approved release commit (retry deployment only)"
         required: true
         type: string
 
@@ -73,11 +73,11 @@ jobs:
       - name: Check release bot configuration
         if: github.event_name != 'workflow_dispatch'
         env:
-          APP_ID: ${{ vars.RELEASE_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID }}
           APP_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
         run: |
-          if [ -z "$APP_ID" ] || [ -z "$APP_KEY" ]; then
-            echo '::error::Configure repository variable RELEASE_APP_ID and secret RELEASE_APP_PRIVATE_KEY.'
+          if [ -z "$APP_CLIENT_ID" ] || [ -z "$APP_KEY" ]; then
+            echo '::error::Configure repository variable RELEASE_APP_CLIENT_ID and secret RELEASE_APP_PRIVATE_KEY.'
             exit 1
           fi
       - name: Create release bot token
@@ -85,7 +85,7 @@ jobs:
         id: app
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.RELEASE_APP_ID }}
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
       - name: Update release PR and create component releases
         if: github.event_name != 'workflow_dispatch'

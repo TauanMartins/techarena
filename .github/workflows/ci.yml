@@ -106,7 +106,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:ci-only-password@127.0.0.1:5432/techarena_test
       CORS_ORIGINS: http://localhost:4200
       SUPABASE_URL: https://project.supabase.co
-      SUPABASE_SERVICE_ROLE_KEY: ''
+      SUPABASE_SERVICE_ROLE_KEY: ""
     defaults:
       run:
         working-directory: backend
@@ -180,3 +180,56 @@ jobs:
           if not (title_ok and os.environ["CHECKS_RESULT"] == "success" and os.environ["INTEGRATION_RESULT"] == "success" and os.environ["AUTOMATION_RESULT"] == "success"):
               sys.exit("Required CI checks did not pass.")
           PY
+
+  auto-merge:
+    name: Enable auto-merge after CI
+    needs: [ci]
+    # Only trusted same-repository PRs receive an App token. No checkout here.
+    if: >-
+      github.event_name == 'pull_request' &&
+      needs.ci.result == 'success' &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.user.login == github.repository_owner &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Create auto-merge token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+      - name: Enable protected squash merge
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          github-token: ${{ steps.app.outputs.token }}
+          script: |
+            const expected = context.payload.pull_request;
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo, pull_number: expected.number
+            });
+            if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main' ||
+                pr.user.login !== context.repo.owner ||
+                pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}` ||
+                pr.head.sha !== expected.head.sha || pr.title !== expected.title) {
+              core.info('PR changed or is no longer eligible. Its current CI must approve it.');
+              return;
+            }
+            if (pr.auto_merge) {
+              core.info('Auto-merge is already enabled.');
+              return;
+            }
+            const {data: rules} = await github.request(
+              'GET /repos/{owner}/{repo}/rules/branches/main', context.repo
+            );
+            if (!rules.some(rule => rule.type === 'required_status_checks' &&
+                rule.parameters.required_status_checks.some(check => check.context === 'CI'))) {
+              throw new Error('Require CI in the main ruleset first. No merge was requested.');
+            }
+            await github.graphql(`mutation($id: ID!) {
+              enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
+                pullRequest { number }
+              }
+            }`, {id: pr.node_id});
+            await core.summary.addRaw(`Auto-merge enabled for PR #${pr.number}, subject to branch protections.`).write();
