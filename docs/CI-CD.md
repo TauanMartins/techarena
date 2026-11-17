@@ -12,6 +12,9 @@
    execução habilita squash automático para PRs do dono do repositório, criados
    no próprio repositório e fora de draft. Esse job não faz checkout nem executa
    código do PR. Revalida o SHA e estado atuais antes de habilitar o merge.
+   Se o GitHub recusar a habilitação com estado `unstable`, tenta o squash com
+   o SHA validado pela API normal, que continua sujeita aos dois checks e demais
+   regras da branch. A App não tem bypass. Outros erros não acionam essa tentativa.
    Contribuições externas exigem habilitação manual.
 4. A proteção da `main` exige `CI`, `Conventional PR title` e branch atualizada.
    O título bloqueia o merge independentemente do resultado dos testes.

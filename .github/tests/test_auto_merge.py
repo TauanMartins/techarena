@@ -19,17 +19,31 @@ class AutoMergeTests(unittest.TestCase):
             'auto_merge': None,
         }
 
-    def run_script(self, current=None, protected=True):
+    def run_script(self, current=None, protected=True, graphql_error=None, merge_error=False):
         harness = r'''
 const input = JSON.parse(require('fs').readFileSync(0, 'utf8'));
 const calls = [];
 const context = {repo: {owner: 'owner', repo: 'repo'}, payload: {pull_request: input.expected}};
 const core = {info() {}, summary: {addRaw() { return this; }, async write() {}}};
 const github = {
-  rest: {pulls: {async get() {return {data: input.current};}}},
+  rest: {pulls: {
+    async get() {return {data: input.current};},
+    async merge(args) {
+      calls.push({merge: args});
+      if (input.merge_error) throw new Error('Branch protections rejected merge');
+      return {data: {merged: true}};
+    }
+  }},
   async request() {return {data: input.protected ? [{type: 'required_status_checks',
     parameters: {required_status_checks: input.protected === 'ci-only' ? [{context: 'CI'}] : [{context: 'CI'}, {context: 'Conventional PR title'}]}}] : []};},
-  async graphql(query, variables) {calls.push({query, variables});}
+  async graphql(query, variables) {
+    if (input.graphql_error) {
+      const error = new Error(input.graphql_error);
+      error.errors = [{type: 'UNPROCESSABLE', message: input.graphql_error}];
+      throw error;
+    }
+    calls.push({query, variables});
+  }
 };
 (async () => {
   try {
@@ -42,7 +56,7 @@ const github = {
         result = subprocess.run(['node', '-e', harness], input=json.dumps({
             'script': self.script, 'expected': self.pr,
             'current': current if current is not None else self.pr,
-            'protected': protected,
+            'protected': protected, 'graphql_error': graphql_error, 'merge_error': merge_error,
         }), text=True, capture_output=True, check=True)
         return json.loads(result.stdout)
 
@@ -85,3 +99,20 @@ const github = {
         current = copy.deepcopy(self.pr)
         current['title'] = 'ci: corrected title'
         self.assertEqual(len(self.run_script(current)['calls']), 1)
+
+    def test_unstable_falls_back_to_sha_bound_protected_merge(self):
+        result = self.run_script(graphql_error='Pull request is in unstable status')
+        merge = result['calls'][0]['merge']
+        self.assertEqual(merge['sha'], 'approved')
+        self.assertEqual(merge['merge_method'], 'squash')
+        self.assertEqual(merge['pull_number'], 8)
+        self.assertNotIn('error', result)
+
+    def test_other_api_errors_do_not_attempt_merge(self):
+        result = self.run_script(graphql_error='Resource not accessible')
+        self.assertEqual(result['calls'], [])
+        self.assertIn('Resource not accessible', result['error'])
+
+    def test_unstable_fallback_does_not_ignore_branch_rejection(self):
+        result = self.run_script(graphql_error='Pull request is in unstable status', merge_error=True)
+        self.assertIn('Branch protections rejected', result['error'])

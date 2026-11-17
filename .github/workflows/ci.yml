@@ -207,9 +207,24 @@ jobs:
                 rule.parameters.required_status_checks.some(check => check.context === name)))) {
               throw new Error('Require CI and Conventional PR title in the main ruleset first. No merge was requested.');
             }
-            await github.graphql(`mutation($id: ID!) {
-              enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
-                pullRequest { number }
-              }
-            }`, {id: pr.node_id});
-            await core.summary.addRaw(`Auto-merge enabled for PR #${pr.number}, subject to branch protections.`).write();
+            try {
+              await github.graphql(`mutation($id: ID!) {
+                enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) {
+                  pullRequest { number }
+                }
+              }`, {id: pr.node_id});
+              await core.summary.addRaw(`Auto-merge enabled for PR #${pr.number}, subject to branch protections.`).write();
+            } catch (error) {
+              // GitHub can report UNSTABLE while this optional job is running,
+              // even after both required checks have passed. Never bypass rules.
+              const unstable = error.errors?.some(item =>
+                item.type === 'UNPROCESSABLE' && /unstable status/i.test(item.message));
+              if (!unstable) throw error;
+              const {data: result} = await github.rest.pulls.merge({
+                ...context.repo, pull_number: pr.number, sha: expected.head.sha,
+                merge_method: 'squash', commit_title: `${pr.title} (#${pr.number})`,
+                commit_message: pr.body || ''
+              });
+              if (!result.merged) throw new Error('Protected squash merge was not accepted.');
+              await core.summary.addRaw(`PR #${pr.number} merged at the validated SHA under branch protections.`).write();
+            }
