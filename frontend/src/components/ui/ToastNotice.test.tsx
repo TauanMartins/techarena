@@ -30,3 +30,30 @@ it('keeps errors and important confirmations until acknowledged', () => {
   act(() => vi.advanceTimersByTime(60000));
   expect(screen.getByText('Liga cancelada')).toBeInTheDocument();
 });
+
+it('positions mobile feedback above navigation and desktop feedback at the bottom right', () => {
+  const media = vi.spyOn(window, 'matchMedia');
+  media.mockReturnValue({
+    matches: false,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  } as unknown as MediaQueryList);
+  const { unmount } = render(<ToastNotice message="Salvo no celular" />);
+  expect(screen.getByRole('status').parentElement).toHaveClass(
+    'top-0',
+    'start-50',
+  );
+  expect(screen.getByRole('status')).toHaveClass('bg-body', 'overflow-hidden');
+  unmount();
+  media.mockReturnValue({
+    matches: true,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  } as unknown as MediaQueryList);
+  render(<ToastNotice message="Salvo no desktop" />);
+  expect(screen.getByRole('status').parentElement).toHaveClass(
+    'bottom-0',
+    'end-0',
+  );
+  media.mockRestore();
+});

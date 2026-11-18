@@ -1,3 +1,4 @@
+import { useDesktopViewport } from '../../shared/hooks/useDesktopViewport';
 import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Toast from 'react-bootstrap/Toast';
@@ -15,6 +16,7 @@ export function ToastNotice({
   requiresAcknowledgment?: boolean;
   onClose?: () => void;
 }) {
+  const desktop = useDesktopViewport();
   const [dismissed, setDismissed] = useState<string | null>(null);
   // React Bootstrap 2 fixes these attributes to "alert/assertive". Routine
   // confirmations should be polite and must not interrupt screen readers.
@@ -32,10 +34,12 @@ export function ToastNotice({
   if (dismissed === message) return null;
   return createPortal(
     <ToastContainer
-      position="top-center"
+      position={desktop ? 'bottom-end' : 'top-center'}
       className="position-fixed px-2 pb-2"
       style={{
-        paddingTop: 'max(.5rem, env(safe-area-inset-top))',
+        paddingTop: desktop
+          ? undefined
+          : 'max(.5rem, env(safe-area-inset-top))',
       }}
     >
       <Toast
@@ -45,7 +49,7 @@ export function ToastNotice({
         onClose={close}
         autohide={!requiresAcknowledgment}
         delay={6000}
-        className="shadow"
+        className="shadow bg-body text-body border overflow-hidden"
         animation={false}
       >
         <Toast.Header
@@ -60,7 +64,7 @@ export function ToastNotice({
             {error ? 'Não foi possível concluir' : 'Concluído'}
           </strong>
         </Toast.Header>
-        <Toast.Body className="bg-body text-body text-break">
+        <Toast.Body className="text-break">
           {message}
           {requiresAcknowledgment && (
             <div className="text-end mt-2">
