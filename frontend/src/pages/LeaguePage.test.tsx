@@ -2,6 +2,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { LeagueDetailsPage } from './LeagueDetailsPage';
 import {
   cleanup,
+  within,
   fireEvent,
   render,
   screen,
@@ -191,6 +192,12 @@ describe('LeaguePage', () => {
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Editar liga' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar liga' }));
+    expect(api.setLeagueStatus).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancelar liga',
+      }),
+    );
     await waitFor(() =>
       expect(api.setLeagueStatus).toHaveBeenCalledWith(
         'test-token',
@@ -198,7 +205,7 @@ describe('LeaguePage', () => {
         'canceled',
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Fechar aviso' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entendi' }));
     expect(screen.queryByText('Liga cancelada.')).not.toBeInTheDocument();
   });
 

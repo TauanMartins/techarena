@@ -7,6 +7,7 @@ interface Confirmation {
   title: string;
   message: string;
   label: string;
+  variant?: 'danger' | 'primary';
   onConfirm: () => Promise<unknown> | void;
 }
 export function useConfirmation() {
@@ -43,7 +44,10 @@ export function useConfirmation() {
         backdrop={busy ? 'static' : true}
         keyboard={!busy}
       >
-        <Modal.Header closeButton={!busy}>
+        <Modal.Header
+          closeButton={!busy}
+          closeLabel="Fechar confirmação"
+        >
           <Modal.Title>{action?.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>{action?.message}</Modal.Body>
@@ -56,7 +60,7 @@ export function useConfirmation() {
             Cancelar
           </Button>
           <Button
-            variant="danger"
+            variant={action?.variant ?? 'danger'}
             onClick={() => void confirm()}
             disabled={busy}
           >

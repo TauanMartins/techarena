@@ -22,6 +22,7 @@ export function LeagueDetailsPage() {
   const details = data.details;
   return (
     <>
+      {page.confirmationDialog}
       <Link
         to="/ligas"
         className="btn btn-link px-0 mb-3"
@@ -29,7 +30,12 @@ export function LeagueDetailsPage() {
         ← Voltar para ligas
       </Link>
       {page.error && <ErrorState message={page.error} />}
-      {page.notice && <ToastNotice message={page.notice} />}
+      {page.notice && (
+        <ToastNotice
+          message={page.notice}
+          requiresAcknowledgment={page.noticeRequiresAcknowledgment}
+        />
+      )}
       {data.isLoadingDetails ? (
         <LoadingState label="Carregando detalhes da liga..." />
       ) : !details ? (

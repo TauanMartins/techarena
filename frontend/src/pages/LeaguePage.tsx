@@ -29,6 +29,7 @@ export function LeaguePage() {
 
   return (
     <>
+      {page.confirmationDialog}
       <PageHeading
         eyebrow="COMPETIÇÃO E COMUNIDADE"
         title="Ligas e torneios"
@@ -44,7 +45,12 @@ export function LeaguePage() {
         }
       />
       {page.error && <ErrorState message={page.error} />}
-      {page.notice && <ToastNotice message={page.notice} />}
+      {page.notice && (
+        <ToastNotice
+          message={page.notice}
+          requiresAcknowledgment={page.noticeRequiresAcknowledgment}
+        />
+      )}
       <LeagueInvitations
         invitations={data.teamInvitations}
         saving={page.saving}

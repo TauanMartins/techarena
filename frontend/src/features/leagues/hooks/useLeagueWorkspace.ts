@@ -1,3 +1,4 @@
+import { useConfirmation } from '../../../components/ui/useConfirmation';
 import { useState, type SubmitEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { leaguesApi } from '../api/leagues.api';
@@ -75,6 +76,9 @@ export function useLeagueWorkspace(
   onCreated?: (id: string) => void,
 ) {
   const client = useQueryClient();
+  const confirmation = useConfirmation();
+  const [noticeRequiresAcknowledgment, setNoticeRequiresAcknowledgment] =
+    useState(false);
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
   const [teamSearchPerformed, setTeamSearchPerformed] = useState(false);
@@ -175,6 +179,9 @@ export function useLeagueWorkspace(
     setNotice(null);
     try {
       const result = await mutation.mutateAsync(action);
+      setNoticeRequiresAcknowledgment(
+        ['status', 'cancelMatch', 'remove'].includes(action.kind),
+      );
       setNotice(success);
       return result as unknown as T;
     } catch (cause) {
@@ -285,13 +292,21 @@ export function useLeagueWorkspace(
       status === 'canceled'
         ? 'Cancelar a liga e todas as partidas futuras?'
         : 'Encerrar esta liga? Verifique se todas as partidas foram concluídas.';
-    if (!window.confirm(prompt)) return;
-    const updated = await run(
-      { kind: 'status', leagueId: details.league.id, status },
-      status === 'completed' ? 'Liga encerrada.' : 'Liga cancelada.',
-    );
-    if (updated) await refresh();
+    confirmation.request({
+      title: status === 'canceled' ? 'Cancelar liga' : 'Encerrar liga',
+      message: prompt,
+      label: status === 'canceled' ? 'Cancelar liga' : 'Encerrar liga',
+      variant: status === 'canceled' ? 'danger' : 'primary',
+      onConfirm: async () => {
+        const updated = await run(
+          { kind: 'status', leagueId: details.league.id, status },
+          status === 'completed' ? 'Liga encerrada.' : 'Liga cancelada.',
+        );
+        if (updated) await refresh();
+      },
+    });
   }
+
   async function generateFixtures(
     event: SubmitEvent<HTMLFormElement>,
     nextRound = false,
@@ -423,13 +438,23 @@ export function useLeagueWorkspace(
     if (saved) await refresh();
   }
   async function cancelMatch(matchId: string) {
-    if (!data.details || !window.confirm('Cancelar esta partida?')) return;
-    const canceled = await run(
-      { kind: 'cancelMatch', leagueId: data.details.league.id, matchId },
-      'Partida cancelada.',
-    );
-    if (canceled) await refresh();
+    const details = data.details;
+    if (!details) return;
+    confirmation.request({
+      title: 'Cancelar partida',
+      message:
+        'Cancelar esta partida? Os participantes verão o cancelamento no agendamento.',
+      label: 'Cancelar partida',
+      onConfirm: async () => {
+        const canceled = await run(
+          { kind: 'cancelMatch', leagueId: details.league.id, matchId },
+          'Partida cancelada.',
+        );
+        if (canceled) await refresh();
+      },
+    });
   }
+
   async function rescheduleMatch(
     event: SubmitEvent<HTMLFormElement>,
     match: LeagueMatch,
@@ -493,6 +518,8 @@ export function useLeagueWorkspace(
     setScoreInputs,
     error: error ?? data.error,
     notice,
+    noticeRequiresAcknowledgment,
+    confirmationDialog: confirmation.dialog,
     setNotice,
     saving: mutation.isPending,
     eligibleTeams,

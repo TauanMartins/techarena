@@ -1,4 +1,11 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import {
+  act,
+  renderHook,
+  waitFor,
+  render,
+  screen,
+  fireEvent,
+} from '@testing-library/react';
 import type { SubmitEvent } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -154,9 +161,12 @@ describe('useLeagueWorkspace', () => {
     await act(() => result.current.updateStatus('canceled'));
     expect(setStatus).not.toHaveBeenCalled();
 
-    vi.mocked(window.confirm).mockReturnValue(true);
     await act(() => result.current.updateStatus('completed'));
-    expect(setStatus).toHaveBeenCalledWith('token', 'league-1', 'completed');
+    render(result.current.confirmationDialog);
+    fireEvent.click(screen.getByRole('button', { name: 'Encerrar liga' }));
+    await waitFor(() =>
+      expect(setStatus).toHaveBeenCalledWith('token', 'league-1', 'completed'),
+    );
     expect(result.current.notice).toBe('Liga encerrada.');
   });
 
