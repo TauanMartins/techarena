@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/TauanMartins/techarena/compare/frontend-v1.1.0...frontend-v1.2.0) (2026-11-18)
+
+
+### Features
+
+* improve mobile chat, arena bookings and social management ([#10](https://github.com/TauanMartins/techarena/issues/10)) ([74b7e36](https://github.com/TauanMartins/techarena/commit/74b7e3609c4f44f5ba7142571a9ae491ed24889f))
+
 ## [1.1.0](https://github.com/TauanMartins/techarena/compare/frontend-v1.0.0...frontend-v1.1.0) (2026-11-17)
 
 
