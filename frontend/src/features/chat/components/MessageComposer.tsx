@@ -1,6 +1,7 @@
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import type { SubmitEvent } from 'react';
+import { useLayoutEffect, useRef, type SubmitEvent } from 'react';
+import styles from '../styles/Chat.module.scss';
 
 export function MessageComposer({
   text,
@@ -8,19 +9,31 @@ export function MessageComposer({
   onSubmit,
   sending,
   connected,
+  onBlur,
 }: {
   text: string;
   onTextChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   sending: boolean;
   connected: boolean;
+  onBlur?: () => void;
 }) {
+  const input = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    if (!input.current) return;
+    input.current.style.height = 'auto';
+    input.current.style.height = `${Math.min((input.current.scrollHeight || 42) + 2, 144)}px`;
+  }, [text]);
   return (
     <Form
       onSubmit={onSubmit}
-      className="d-flex gap-2 p-3 border-top flex-shrink-0"
+      className={`d-flex align-items-end gap-2 p-2 p-md-3 border-top flex-shrink-0 ${styles.composer}`}
     >
       <Form.Control
+        as="textarea"
+        rows={1}
+        ref={input}
+        onBlur={onBlur}
         aria-label="Mensagem"
         placeholder="Escreva uma mensagem..."
         value={text}

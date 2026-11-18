@@ -1,3 +1,4 @@
+import styles from '../styles/Chat.module.scss';
 import Button from 'react-bootstrap/Button';
 import type { RefObject } from 'react';
 import { ErrorState, LoadingState } from '../../../components/ui/Feedback';
@@ -27,7 +28,7 @@ export function MessageList({
   return (
     <>
       <div
-        className="d-flex flex-column gap-3 flex-grow-1 overflow-auto p-3 bg-body-tertiary"
+        className="d-flex flex-column gap-3 flex-grow-1 min-h-0 overflow-auto p-2 p-md-3 bg-body-tertiary"
         aria-live="polite"
         ref={listRef}
       >
@@ -59,7 +60,7 @@ export function MessageList({
           const own = message.userId === userId;
           return (
             <div
-              className={`d-flex flex-column gap-1 w-75 flex-shrink-0 ${own ? 'align-self-end' : 'align-self-start'}`}
+              className={`d-flex flex-column gap-1 flex-shrink-0 ${styles.bubble} ${own ? 'align-self-end' : 'align-self-start'}`}
               key={message.id}
             >
               {!own && (
@@ -70,7 +71,7 @@ export function MessageList({
               <div
                 className={`d-flex flex-column gap-1 p-3 border rounded-4 text-break ${own ? 'bg-primary-subtle text-primary-emphasis border-primary-subtle' : 'bg-body text-body'}`}
               >
-                <span>{message.text}</span>
+                <span className={styles.message}>{message.text}</span>
                 <time className="small align-self-end">
                   {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
                     hour: '2-digit',

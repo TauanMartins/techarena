@@ -54,6 +54,7 @@ export function useChatThread({
   const [draft, setDraft] = useState<ThreadDraft>(() => emptyDraft(''));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
+  const stickToBottom = useRef(true);
   const previousScrollHeightRef = useRef<number | null>(null);
   const generationRef = useRef(0);
   const selectedTopic = useMemo(
@@ -88,7 +89,7 @@ export function useChatThread({
     token,
     userId,
     displayName,
-    onMessage: (message) =>
+      onMessage: (message) =>
       updateDraft((current) => ({
         messages: mergeChatMessages(current.messages, [message]),
       })),
@@ -108,6 +109,7 @@ export function useChatThread({
   useEffect(() => {
     generationRef.current += 1;
     previousScrollHeightRef.current = null;
+    stickToBottom.current = true;
   }, [draftKey, realtime.retryCount]);
 
   const messages = useMemo(
@@ -136,8 +138,29 @@ export function useChatThread({
       previousScrollHeightRef.current = null;
       return;
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (stickToBottom.current) messageList.scrollTop = messageList.scrollHeight;
   }, [messages]);
+
+  useEffect(() => {
+    const list = messageListRef.current;
+    if (!list) return;
+    const onScroll = () => {
+      stickToBottom.current =
+        list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+    };
+    const resize =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            if (stickToBottom.current) list.scrollTop = list.scrollHeight;
+          })
+        : null;
+    list.addEventListener('scroll', onScroll);
+    resize?.observe(list);
+    return () => {
+      list.removeEventListener('scroll', onScroll);
+      resize?.disconnect();
+    };
+  }, [draftKey]);
 
   async function loadOlderMessages() {
     if (
@@ -189,6 +212,7 @@ export function useChatThread({
     )
       return;
     const generation = generationRef.current;
+    stickToBottom.current = true;
     updateDraft({ sending: true, error: null });
     try {
       const message = await createChatMessage(
@@ -200,7 +224,7 @@ export function useChatThread({
       if (generation !== generationRef.current) return;
       updateDraft((current) => ({
         messages: mergeChatMessages(current.messages, [message]),
-        text: '',
+        text: current.text.trim() === messageText ? '' : current.text,
       }));
     } catch {
       if (generation === generationRef.current)

@@ -1,3 +1,5 @@
+import styles from '../features/chat/styles/Chat.module.scss';
+import { useChatViewport } from '../features/chat/hooks/useChatViewport';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useMemo, useState } from 'react';
@@ -38,8 +40,12 @@ export function ChatPage() {
     displayName: profile?.name ?? profile?.username ?? 'Atleta',
   });
 
+  const viewportRef = useChatViewport(Boolean(routeId));
   return (
-    <div className="d-flex flex-column h-100 overflow-hidden">
+    <div
+      ref={viewportRef}
+      className={`d-flex flex-column h-100 overflow-hidden ${styles.thread} ${routeId ? styles.fullscreen : ''}`}
+    >
       <div
         className={
           selected ? 'd-none d-md-block flex-shrink-0' : 'flex-shrink-0'
@@ -62,7 +68,7 @@ export function ChatPage() {
           />
         </div>
       )}
-      <Row className="g-0 border rounded-4 bg-body shadow-sm flex-grow-1 overflow-hidden flex-nowrap">
+      <Row className="g-0 border rounded-4 bg-body shadow-sm flex-grow-1 min-h-0 overflow-hidden flex-nowrap">
         <Col
           xs={12}
           md={4}
