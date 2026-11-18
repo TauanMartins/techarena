@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -16,13 +16,10 @@ import { LeagueInvitations } from '../features/leagues/components/LeagueInvitati
 import { useLeagueWorkspace } from '../features/leagues/hooks/useLeagueWorkspace';
 
 export function LeaguePage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const page = useLeagueWorkspace(
-    session!.access_token,
-    session!.user.id,
-    '',
-    (id) => navigate(`/ligas/${id}`),
+  const page = useLeagueWorkspace(token, userId, '', (id) =>
+    navigate(`/ligas/${id}`),
   );
   const { data } = page;
   const [showAll, setShowAll] = useState(false);

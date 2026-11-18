@@ -6,7 +6,7 @@ import type { Arena } from '../../../shared/types';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useAuth } from '../../../auth/useAuth';
+import { useAuthenticatedSession } from '../../../auth/useAuthenticatedSession';
 import { ApiError } from '../../../lib/api-client';
 import {
   bookingFormSchema,
@@ -38,9 +38,7 @@ export function BookingForm({
   initialSportId?: string;
   onCreated: () => void;
 }) {
-  const { session } = useAuth();
-  const token = session!.access_token;
-  const userId = session!.user.id;
+  const { token, userId } = useAuthenticatedSession();
   const [today] = useState(dateInputToday);
   const [values, setValues] = useState<BookingFormInput>(() => ({
     sportId:

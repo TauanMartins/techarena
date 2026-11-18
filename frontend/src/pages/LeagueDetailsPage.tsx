@@ -1,5 +1,5 @@
 import { ToastNotice } from '../components/ui/ToastNotice';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -15,13 +15,9 @@ import { useLeagueWorkspace } from '../features/leagues/hooks/useLeagueWorkspace
 
 import { Link, useParams } from 'react-router-dom';
 export function LeagueDetailsPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const { leagueId = '' } = useParams();
-  const page = useLeagueWorkspace(
-    session!.access_token,
-    session!.user.id,
-    leagueId,
-  );
+  const page = useLeagueWorkspace(token, userId, leagueId);
   const { data } = page;
   const details = data.details;
   return (

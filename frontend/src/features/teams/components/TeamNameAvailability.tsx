@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../../../auth/useAuth';
+import { useAuthenticatedSession } from '../../../auth/useAuthenticatedSession';
 import { teamsApi } from '../api/teams.api';
 export function TeamNameAvailability({
   name,
@@ -9,7 +9,7 @@ export function TeamNameAvailability({
   name: string;
   currentName?: string;
 }) {
-  const { session } = useAuth();
+  const { userId, token } = useAuthenticatedSession();
   const [checkedName, setCheckedName] = useState('');
   const value = name.trim();
   useEffect(() => {
@@ -19,10 +19,9 @@ export function TeamNameAvailability({
   const unchanged =
     value.toLocaleLowerCase() === currentName.trim().toLocaleLowerCase();
   const query = useQuery({
-    queryKey: ['teamName', session?.user.id, checkedName],
-    queryFn: () => teamsApi.nameExists(session!.access_token, checkedName),
+    queryKey: ['teamName', userId, checkedName],
+    queryFn: () => teamsApi.nameExists(token, checkedName),
     enabled: Boolean(
-      session &&
       checkedName &&
       checkedName.length <= 45 &&
       checkedName === value &&

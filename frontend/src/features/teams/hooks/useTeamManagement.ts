@@ -2,13 +2,13 @@ import { useConfirmation } from '../../../components/ui/useConfirmation';
 import { useEffect } from 'react';
 import { notifyFeedback } from '../../../components/ui/notify-feedback';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../../auth/useAuth';
+import { useAuthenticatedSession } from '../../../auth/useAuthenticatedSession';
 import { api } from '../../../lib/api-client';
 export function useTeamManagement(
   teamId: string | undefined,
   onClose: () => void,
 ) {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const confirmation = useConfirmation();
   const client = useQueryClient();
   const mutation = useMutation({
@@ -16,12 +16,12 @@ export function useTeamManagement(
       kind: 'leave' | 'delete' | 'remove';
       userId?: string;
     }) => {
-      if (!teamId || !session) throw new Error('Equipe indisponível.');
+      if (!teamId) throw new Error('Equipe indisponível.');
       return action.kind === 'delete'
-        ? api.deleteTeam(session.access_token, teamId)
+        ? api.deleteTeam(token, teamId)
         : action.kind === 'leave'
-          ? api.leaveTeam(session.access_token, teamId)
-          : api.removeTeamMember(session.access_token, teamId, action.userId!);
+          ? api.leaveTeam(token, teamId)
+          : api.removeTeamMember(token, teamId, action.userId!);
     },
     onSuccess: async (_result, action) => {
       await Promise.all(
@@ -32,7 +32,7 @@ export function useTeamManagement(
           'chatConversations',
           'conversationMembers',
           'teamRequests',
-        ].map((key) => client.invalidateQueries({ queryKey: [key] })),
+        ].map((key) => client.invalidateQueries({ queryKey: [key, userId] })),
       );
       notifyFeedback(
         action.kind === 'delete'

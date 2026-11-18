@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
-import { useAuth } from '../../../auth/useAuth';
+import { useAuthenticatedSession } from '../../../auth/useAuthenticatedSession';
 import { api } from '../../../lib/api-client';
 import type { LocationPoint } from '../types/location';
 import type { Arena } from '../../../shared/types';
@@ -25,9 +25,7 @@ interface DiscoveryState {
   savedAt: number;
 }
 export function ArenaDiscovery() {
-  const { session } = useAuth();
-  const token = session!.access_token;
-  const userId = session!.user.id;
+  const { token, userId } = useAuthenticatedSession();
   const client = useQueryClient();
   const [saved] = useState(() => {
     const state = client.getQueryData<DiscoveryState>([

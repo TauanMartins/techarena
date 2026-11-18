@@ -5,7 +5,7 @@ import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import { EmptyState, ErrorState, PageHeading } from '../components/ui/Feedback';
 import { ConversationDetailsModal } from '../features/chat/components/ConversationDetailsModal';
 import { ConversationHeader } from '../features/chat/components/ConversationHeader';
@@ -19,12 +19,10 @@ import { useChatThread } from '../features/chat/hooks/useChatThread';
 const EMPTY_CONVERSATIONS: Conversation[] = [];
 
 export function ChatPage() {
-  const { session, profile } = useAuth();
+  const { profile, token, userId } = useAuthenticatedSession();
   const { kind: routeKind, id: routeId } = useParams();
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const conversationsQuery = useChatConversations(token, userId);
   const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
   const selected = useMemo(

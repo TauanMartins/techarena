@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingModal';
 import {
@@ -16,9 +16,7 @@ import { useHomeDashboard } from '../features/appointments/api/appointments.api'
 import { SportIcon } from '../components/ui/SportIcon';
 
 export function HomePage() {
-  const { session, profile } = useAuth();
-  const token = session!.access_token;
-  const userId = session!.user.id;
+  const { profile, token, userId } = useAuthenticatedSession();
   const [showBooking, setShowBooking] = useState(false);
   const dashboardQuery = useHomeDashboard(token, userId);
   const appointments = dashboardQuery.data?.appointments ?? [];
@@ -137,7 +135,7 @@ export function HomePage() {
               >
                 <AppointmentCard
                   appointment={appointment}
-                  token={session!.access_token}
+                  token={token}
                 />
               </div>
             ))}

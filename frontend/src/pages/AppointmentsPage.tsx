@@ -5,7 +5,7 @@ import { useLocation } from '../features/arenas/hooks/useLocation';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingModal';
 import {
@@ -20,10 +20,8 @@ import {
 } from '../features/appointments/api/appointments.api';
 
 export function AppointmentsPage() {
-  const { session } = useAuth();
+  const { session, token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
   const [params, setParams] = useSearchParams();
@@ -217,7 +215,7 @@ export function AppointmentsPage() {
               >
                 <AppointmentCard
                   appointment={appointment}
-                  token={session!.access_token}
+                  token={token}
                   joined={joined}
                   error={
                     isCurrentMutation ? joinMutation.error?.message : undefined

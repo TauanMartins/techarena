@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   ErrorState,
   PageHeading,
@@ -35,10 +35,8 @@ import type {
 } from '../features/teams/types/teams.types';
 
 export function TeamsPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const [search, setSearch] = useState('');
   const [catalogSearch, setCatalogSearch] = useState('');
   const [catalogPage, setCatalogPage] = useState(1);

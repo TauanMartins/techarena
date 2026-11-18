@@ -3,7 +3,7 @@ import { ToastNotice } from '../components/ui/ToastNotice';
 import { useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from 'react-bootstrap/Card';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -21,11 +21,9 @@ import {
 import type { UserCard } from '../features/community/types/community.types';
 
 export function CommunityPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
   const confirmation = useConfirmation();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
