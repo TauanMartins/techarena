@@ -1,38 +1,57 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
+import Button from 'react-bootstrap/Button';
 
 export function ToastNotice({
   message,
   error = false,
+  requiresAcknowledgment = error,
   onClose,
 }: {
   message: string;
   error?: boolean;
+  requiresAcknowledgment?: boolean;
   onClose?: () => void;
 }) {
   const [dismissed, setDismissed] = useState<string | null>(null);
-  useEffect(() => {
-    if (error) return;
-    const timer = window.setTimeout(() => setDismissed(message), 7000);
-    return () => window.clearTimeout(timer);
-  }, [message, error]);
+  // React Bootstrap 2 fixes these attributes to "alert/assertive". Routine
+  // confirmations should be polite and must not interrupt screen readers.
+  const accessibleToast = useCallback(
+    (element: HTMLDivElement | null) => {
+      element?.setAttribute('role', error ? 'alert' : 'status');
+      element?.setAttribute('aria-live', error ? 'assertive' : 'polite');
+    },
+    [error],
+  );
+  const close = () => {
+    setDismissed(message);
+    onClose?.();
+  };
   if (dismissed === message) return null;
   return createPortal(
-    <div
-      className="position-fixed top-0 start-50 translate-middle-x p-2"
+    <ToastContainer
+      position="top-center"
+      className="position-fixed px-2 pb-2"
       style={{
-        zIndex: 1100,
-        width: 'min(100%, 34rem)',
         paddingTop: 'max(.5rem, env(safe-area-inset-top))',
       }}
     >
-      <div
-        className="toast show w-100 shadow border"
-        role={error ? 'alert' : 'status'}
-        aria-live={error ? 'assertive' : 'polite'}
-        aria-atomic="true"
+      <Toast
+        key={message}
+        ref={accessibleToast}
+        show
+        onClose={close}
+        autohide={!requiresAcknowledgment}
+        delay={6000}
+        className="shadow"
+        animation={false}
       >
-        <div className="toast-header">
+        <Toast.Header
+          closeLabel="Fechar aviso"
+          closeButton={!requiresAcknowledgment}
+        >
           <i
             className={`bi ${error ? 'bi-exclamation-circle text-danger' : 'bi-check-circle text-success'} me-2`}
             aria-hidden="true"
@@ -40,19 +59,23 @@ export function ToastNotice({
           <strong className="me-auto">
             {error ? 'Não foi possível concluir' : 'Concluído'}
           </strong>
-          <button
-            type="button"
-            className="btn-close"
-            aria-label="Fechar aviso"
-            onClick={() => {
-              setDismissed(message);
-              onClose?.();
-            }}
-          />
-        </div>
-        <div className="toast-body bg-body text-body text-break">{message}</div>
-      </div>
-    </div>,
+        </Toast.Header>
+        <Toast.Body className="bg-body text-body text-break">
+          {message}
+          {requiresAcknowledgment && (
+            <div className="text-end mt-2">
+              <Button
+                size="sm"
+                variant={error ? 'outline-danger' : 'outline-primary'}
+                onClick={close}
+              >
+                Entendi
+              </Button>
+            </div>
+          )}
+        </Toast.Body>
+      </Toast>
+    </ToastContainer>,
     document.body,
   );
 }
