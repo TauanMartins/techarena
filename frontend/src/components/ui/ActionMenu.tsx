@@ -1,3 +1,4 @@
+import { IconButton } from './IconButton';
 import Dropdown from 'react-bootstrap/Dropdown';
 
 export function ActionMenu({
@@ -14,6 +15,19 @@ export function ActionMenu({
     danger?: boolean;
   }[];
 }) {
+  if (!actions.length) return null;
+  if (actions.length === 1) {
+    const action = actions[0];
+    return (
+      <IconButton
+        label={action.label}
+        icon={action.icon}
+        onClick={action.onClick}
+        disabled={disabled}
+        variant={action.danger ? 'outline-danger' : 'outline-secondary'}
+      />
+    );
+  }
   return (
     <Dropdown align="end">
       <Dropdown.Toggle

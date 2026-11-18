@@ -120,11 +120,6 @@ export function FriendSections({
                   label={`Ações para ${friend.user.name}`}
                   disabled={busy}
                   actions={[
-                    {
-                      label: 'Ver perfil',
-                      icon: 'bi-person',
-                      onClick: () => onDetails(friend.user),
-                    },
                     ...(onRemove
                       ? [
                           {

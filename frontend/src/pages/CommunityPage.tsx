@@ -28,6 +28,8 @@ export function CommunityPage() {
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeRequiresAcknowledgment, setNoticeRequiresAcknowledgment] =
+    useState(false);
   const [selectedPerson, setSelectedPerson] = useState<UserCard | null>(null);
   const groupsQuery = useFriendGroups(token, userId);
   const directoryQuery = useAthleteDirectory(token, userId, submittedSearch);
@@ -58,6 +60,7 @@ export function CommunityPage() {
   async function requestFriend(id: string) {
     try {
       await mutations.request.mutateAsync(id);
+      setNoticeRequiresAcknowledgment(false);
       setNotice('Solicitação de amizade enviada.');
     } catch {
       setNotice(null);
@@ -66,6 +69,7 @@ export function CommunityPage() {
   async function decideFriend(friendId: string, action: 'accept' | 'block') {
     try {
       await mutations.decide.mutateAsync({ friendId, action });
+      setNoticeRequiresAcknowledgment(action === 'block');
       setNotice(
         action === 'accept'
           ? 'Solicitação aceita. Vocês já podem conversar.'
@@ -83,7 +87,12 @@ export function CommunityPage() {
         title="Comunidade"
         description="Encontre atletas, construa amizades e combine o próximo jogo."
       />
-      {notice && <ToastNotice message={notice} />}
+      {notice && (
+        <ToastNotice
+          message={notice}
+          requiresAcknowledgment={noticeRequiresAcknowledgment}
+        />
+      )}
       {error && (
         <ErrorState
           message={
@@ -158,6 +167,7 @@ export function CommunityPage() {
             label: 'Desfazer amizade',
             onConfirm: async () => {
               await mutations.remove.mutateAsync(id);
+              setNoticeRequiresAcknowledgment(true);
               setNotice('Amizade desfeita.');
             },
           })

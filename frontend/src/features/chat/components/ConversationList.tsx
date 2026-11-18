@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Dropdown from 'react-bootstrap/Dropdown';
+import Button from 'react-bootstrap/Button';
 import { useCurrentTimestamp } from '../../../shared/clock';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { IconButton } from '../../../components/ui/IconButton';
@@ -60,7 +60,7 @@ export function ConversationList({
             ['team', 'Equipes'],
             ['appointment', 'Agendamentos'],
           ].map(([value, label]) => (
-            <button
+            <Button
               key={value}
               type="button"
               className={`btn btn-sm rounded-pill ${kind === value ? 'btn-primary' : 'btn-outline-secondary'}`}
@@ -68,35 +68,18 @@ export function ConversationList({
               onClick={() => setKind(value)}
             >
               {label}
-            </button>
+            </Button>
           ))}
         </div>
-        <Dropdown align="end">
-          <Dropdown.Toggle
-            variant="link"
-            className="text-body p-1"
-            aria-label="Opções das conversas"
-          >
-            <i
-              className="bi bi-three-dots-vertical"
-              aria-hidden="true"
-            />
-          </Dropdown.Toggle>
-          <Dropdown.Menu>
-            <Dropdown.Item
-              as="button"
-              role="menuitemcheckbox"
-              aria-checked={showAll}
-              onClick={() => setShowAll(!showAll)}
-            >
-              <i
-                className={`bi ${showAll ? 'bi-check-square' : 'bi-square'} me-2`}
-                aria-hidden="true"
-              />
-              Incluir encerrados
-            </Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
+        {(kind === 'all' || kind === 'appointment') && (
+          <IconButton
+            icon="bi-clock-history"
+            label="Incluir encerrados"
+            aria-pressed={showAll}
+            variant={showAll ? 'primary' : 'outline-secondary'}
+            onClick={() => setShowAll(!showAll)}
+          />
+        )}
       </div>
       {loading && <LoadingState label="Carregando..." />}
       {!loading && !visible.length && (

@@ -1,4 +1,3 @@
-import { ActionMenu } from '../../../components/ui/ActionMenu';
 import { useTeamManagement } from '../hooks/useTeamManagement';
 import { EditTeamForm } from './EditTeamForm';
 import type { Team } from '../../../shared/types';
@@ -148,25 +147,19 @@ export function TeamDetailsModal(props: TeamDetailsModalProps) {
         </Modal.Body>
         {team && joined && (
           <Modal.Footer>
-            <ActionMenu
-              label="Gerenciar equipe"
+            <Button
+              variant="outline-danger"
               disabled={management.isPending}
-              actions={[
-                team.role === 'captain'
-                  ? {
-                      label: 'Excluir equipe',
-                      icon: 'bi-trash',
-                      danger: true,
-                      onClick: () => management.run('delete'),
-                    }
-                  : {
-                      label: 'Sair da equipe',
-                      icon: 'bi-box-arrow-right',
-                      danger: true,
-                      onClick: () => management.run('leave'),
-                    },
-              ]}
-            />
+              onClick={() =>
+                management.run(team.role === 'captain' ? 'delete' : 'leave')
+              }
+            >
+              <i
+                className={`bi ${team.role === 'captain' ? 'bi-trash' : 'bi-box-arrow-right'} me-2`}
+                aria-hidden="true"
+              />
+              {team.role === 'captain' ? 'Excluir equipe' : 'Sair da equipe'}
+            </Button>
             <Button
               variant="outline-primary"
               onClick={() => onOpenChat(team.id)}

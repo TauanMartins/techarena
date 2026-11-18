@@ -44,10 +44,7 @@ it('keeps friendships and teams visible while hiding old or canceled appointment
   expect(screen.getByText('Equipe')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Agendamentos' }));
   expect(screen.queryByText('Equipe')).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Opções das conversas' }));
-  fireEvent.click(
-    screen.getByRole('menuitemcheckbox', { name: 'Incluir encerrados' }),
-  );
+  fireEvent.click(screen.getByRole('button', { name: 'Incluir encerrados' }));
   expect(screen.getByText('Anterior')).toBeVisible();
   expect(screen.getByText('Cancelado')).toBeVisible();
 });

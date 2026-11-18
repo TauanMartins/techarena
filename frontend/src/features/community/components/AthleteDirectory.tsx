@@ -1,4 +1,3 @@
-import { IconButton } from '../../../components/ui/IconButton';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import type { SubmitEvent } from 'react';
@@ -63,11 +62,6 @@ export function AthleteDirectory({
               }
               onDetails={() => onDetails(person)}
             >
-              <IconButton
-                icon="bi-person"
-                label="Detalhes"
-                onClick={() => onDetails(person)}
-              />
               <Button
                 size="sm"
                 variant={isFriend ? 'outline-success' : 'outline-primary'}

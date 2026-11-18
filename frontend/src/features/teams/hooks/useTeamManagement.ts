@@ -40,6 +40,8 @@ export function useTeamManagement(
           : action.kind === 'leave'
             ? 'Você saiu da equipe.'
             : 'Membro removido.',
+        false,
+        true,
       );
       if (action.kind !== 'remove') onClose();
     },
@@ -51,7 +53,7 @@ export function useTeamManagement(
   const run = (kind: 'leave' | 'delete' | 'remove', userId?: string) => {
     const prompt =
       kind === 'delete'
-        ? 'Excluir definitivamente esta equipe e seus convites?'
+        ? 'Excluir esta equipe? Ela sairá das buscas e os membros perderão acesso. Resultados de competições encerradas serão preservados.'
         : kind === 'leave'
           ? 'Sair desta equipe? Você perderá acesso à conversa.'
           : 'Remover este membro da equipe e da conversa?';
