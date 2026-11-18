@@ -67,7 +67,7 @@ it('searches, filters, paginates and discovers nearby arenas without Places API'
   const list = vi.spyOn(api, 'listArenas').mockResolvedValue(page);
   renderWithProviders(<ArenaDiscovery />);
   await screen.findByText(
-    '21 arenas encontradas. Resultados desta página na lista.',
+    /21 arenas encontradas\. Resultados paginados apenas na lista/,
   );
   await user.click(screen.getByRole('button', { name: 'Lista' }));
   await user.click(screen.getByRole('button', { name: 'Próxima' }));

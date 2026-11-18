@@ -5,6 +5,7 @@ import type { Arena } from '../../../shared/types';
 export async function listRegionArenas(
   token: string,
   filters: {
+    arenaId?: string;
     lat?: number;
     longitude?: number;
     radiusKm?: number;

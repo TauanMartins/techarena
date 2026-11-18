@@ -24,7 +24,7 @@ interface DiscoveryState {
   view: 'map' | 'list';
   savedAt: number;
 }
-export function ArenaDiscovery() {
+export function ArenaDiscovery({ suspended = false }: { suspended?: boolean }) {
   const { token, userId } = useAuthenticatedSession();
   const client = useQueryClient();
   const [saved] = useState(() => {
@@ -76,7 +76,7 @@ export function ArenaDiscovery() {
     search: submittedSearch || undefined,
     ...(location.point ? { ...location.point, radiusKm } : {}),
   };
-  const regionMap = view === 'map' && Boolean(location.point) && !arenaId;
+  const regionMap = view === 'map';
   const arenasQuery = useQuery({
     enabled: !regionMap,
     queryKey: ['arenas', userId, filters],
@@ -269,7 +269,7 @@ export function ArenaDiscovery() {
         </p>
       )}
       <div hidden={view !== 'map'}>
-        {mapActivated && (
+        {mapActivated && !suspended && !booking && (
           <ArenaMap
             arenas={arenas}
             point={location.point}
@@ -308,8 +308,8 @@ export function ArenaDiscovery() {
             className="small text-body-secondary mt-3 mb-2"
           >
             {results.data.total} arenas encontradas
-            {location.point ? ` em até ${radiusKm} km` : ''}. Resultados desta
-            página na lista.{' '}
+            {location.point ? ` em até ${radiusKm} km` : ''}. Resultados
+            paginados apenas na lista.{' '}
             {regionMap && mapQuery.data
               ? `${mapQuery.data.items.length} quadras exibidas no mapa.`
               : ''}

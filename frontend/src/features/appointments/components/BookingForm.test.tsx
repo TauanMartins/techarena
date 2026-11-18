@@ -4,6 +4,30 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { appointmentApi } from '../api/appointments.api';
 import { BookingForm } from './BookingForm';
+import { api } from '../../../lib/api-client';
+import type { Arena } from '../../../shared/types';
+
+vi.mock('../../arenas/components/ArenaMap', () => ({
+  ArenaMap: ({
+    arenas,
+    onSelect,
+  }: {
+    arenas: Arena[];
+    onSelect: (arena: Arena) => void;
+  }) => (
+    <div>
+      {arenas.map((arena) => (
+        <button
+          key={arena.id}
+          onClick={() => onSelect(arena)}
+          type="button"
+        >
+          Mapa: {arena.address}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 
 vi.mock('../../../auth/useAuth', () => ({
   useAuth: () => ({
@@ -42,9 +66,11 @@ describe('BookingForm', () => {
     const onCreated = vi.fn();
     renderWithProviders(<BookingForm onCreated={onCreated} />);
 
+    await screen.findByRole('option', { name: 'Arena Central' });
+    expect(screen.getByLabelText('Esporte')).toBeDisabled();
+    await user.selectOptions(screen.getByLabelText('Arena'), 'arena-1');
     await screen.findByRole('option', { name: 'Futebol' });
     await user.selectOptions(screen.getByLabelText('Esporte'), 'sport-1');
-    await user.selectOptions(screen.getByLabelText('Arena'), 'arena-1');
     await waitFor(() =>
       expect(screen.getByRole('option', { name: '20:00' })).toBeInTheDocument(),
     );
@@ -63,8 +89,14 @@ describe('BookingForm', () => {
       await screen.findByText('O limite mínimo é 1 participante.'),
     ).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('Nome do evento'), 'Jogo de sábado');
-    await user.type(screen.getByLabelText('Descrição'), 'Partida amistosa');
+    await user.type(
+      screen.getByLabelText('Nome do evento (opcional)'),
+      'Jogo de sábado',
+    );
+    await user.type(
+      screen.getByLabelText('Descrição (opcional)'),
+      'Partida amistosa',
+    );
     await user.clear(
       screen.getByLabelText('Limite de participantes (opcional)'),
     );
@@ -120,9 +152,11 @@ describe('BookingForm', () => {
     );
     renderWithProviders(<BookingForm onCreated={vi.fn()} />);
 
+    await screen.findByRole('option', { name: 'Arena Central' });
+    expect(screen.getByLabelText('Esporte')).toBeDisabled();
+    await user.selectOptions(screen.getByLabelText('Arena'), 'arena-1');
     await screen.findByRole('option', { name: 'Futebol' });
     await user.selectOptions(screen.getByLabelText('Esporte'), 'sport-1');
-    await user.selectOptions(screen.getByLabelText('Arena'), 'arena-1');
     await screen.findByRole('option', { name: '20:00' });
     await user.selectOptions(
       screen.getByLabelText('Horário disponível'),
@@ -181,6 +215,56 @@ it('limits sports to the selected arena and never clears it when switching suppo
   expect(screen.getByLabelText('Arena')).toHaveValue('42');
   await user.selectOptions(screen.getByLabelText('Esporte'), '2');
   expect(screen.getByLabelText('Arena')).toHaveValue('42');
+  expect(
+    screen.queryByLabelText('Buscar arena pelo endereço'),
+  ).not.toBeInTheDocument();
+});
+
+it('selects a quadra outside the short list on the map and preserves the booking draft', async () => {
+  const user = userEvent.setup();
+  const arena = {
+    id: 'map-arena',
+    address: 'Quadra do mapa',
+    lat: 0,
+    longitude: 0,
+    sportIds: ['volley'],
+    image: null,
+    distanceKm: 12,
+    isLeagueOnly: false,
+  };
+  vi.spyOn(appointmentApi, 'sports').mockResolvedValue({
+    items: [
+      { id: 'football', name: 'Futebol' },
+      { id: 'volley', name: 'Vôlei' },
+    ],
+  } as never);
+  vi.spyOn(appointmentApi, 'arenas').mockResolvedValue({ items: [] } as never);
+  vi.spyOn(appointmentApi, 'availability').mockResolvedValue({
+    items: [{ id: 'slot', horary: '10:00' }],
+  });
+  vi.spyOn(api, 'listArenas').mockResolvedValue({
+    items: [arena],
+    total: 1,
+    totalPages: 1,
+    hasNextPage: false,
+  } as never);
+  renderWithProviders(<BookingForm onCreated={vi.fn()} />);
+  await user.type(
+    screen.getByLabelText('Nome do evento (opcional)'),
+    'Meu jogo',
+  );
+  await user.click(screen.getByRole('button', { name: 'Ver quadras no mapa' }));
+  await user.click(
+    await screen.findByRole('button', { name: 'Mapa: Quadra do mapa' }),
+  );
+  expect(screen.getByLabelText('Arena')).toHaveValue('map-arena');
+  expect(screen.getByLabelText('Esporte')).toHaveValue('volley');
+  expect(
+    screen.queryByRole('option', { name: 'Futebol' }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Nome do evento (opcional)')).toHaveValue(
+    'Meu jogo',
+  );
   expect(
     screen.queryByLabelText('Buscar arena pelo endereço'),
   ).not.toBeInTheDocument();

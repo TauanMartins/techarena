@@ -39,7 +39,7 @@ export function HomePage() {
           Criar agendamento
         </Button>
       </header>
-      <ArenaDiscovery />
+      <ArenaDiscovery suspended={showBooking} />
 
       <section className="my-4">
         <SectionHeading

@@ -1,7 +1,7 @@
 import { ToastNotice } from '../../../components/ui/ToastNotice';
-import { Link } from 'react-router-dom';
+import { useLocation } from '../../arenas/hooks/useLocation';
+import { BookingArenaPicker } from './BookingArenaPicker';
 import { useState, type SubmitEvent } from 'react';
-import { PageControls } from '../../../components/ui/PageControls';
 import type { Arena } from '../../../shared/types';
 import Alert from 'react-bootstrap/Alert';
 import Button from 'react-bootstrap/Button';
@@ -27,13 +27,11 @@ function dateInputToday() {
 
 export function BookingForm({
   titlePrefix = 'Partida de',
-  onChooseMap,
   initialArena,
   initialSportId,
   onCreated,
 }: {
   titlePrefix?: string;
-  onChooseMap?: () => void;
   initialArena?: Arena;
   initialSportId?: string;
   onCreated: () => void;
@@ -60,13 +58,12 @@ export function BookingForm({
   const [selectedArena, setSelectedArena] = useState(initialArena);
   const [holder, setHolder] = useState(true);
   const [success, setSuccess] = useState(false);
-  const [arenaSearch, setArenaSearch] = useState('');
-  const [arenaPage, setArenaPage] = useState(1);
-  const optionsQuery = useBookingOptions(token, userId, {
-    sportId: values.sportId || undefined,
-    search: arenaSearch || undefined,
-    page: arenaPage,
-  });
+  const location = useLocation();
+  const optionsQuery = useBookingOptions(
+    token,
+    userId,
+    location.point ? { ...location.point, radiusKm: 100 } : {},
+  );
   const availabilityQuery = useAppointmentAvailability(
     token,
     userId,
@@ -76,22 +73,26 @@ export function BookingForm({
   );
   const createMutation = useCreateAppointment(token, userId);
   const allSports = optionsQuery.data?.sports ?? [];
-  const sports = initialArena
-    ? allSports.filter((sport) => initialArena.sportIds.includes(sport.id))
-    : allSports;
+  const sports = selectedArena
+    ? allSports.filter((sport) => selectedArena.sportIds.includes(sport.id))
+    : [];
   const fetchedArenas = optionsQuery.data?.arenas ?? [];
   const arenas =
     selectedArena &&
     !fetchedArenas.some((arena) => arena.id === selectedArena.id)
       ? [selectedArena, ...fetchedArenas]
       : fetchedArenas;
-  const availableArenas = (initialArena ? [initialArena] : arenas).filter(
-    (arena) => !values.sportId || arena.sportIds.includes(values.sportId),
-  );
   const slots = availabilityQuery.data?.items ?? [];
 
   function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!slots.some((slot) => slot.id === values.scheduleId)) {
+      setErrors((current) => ({
+        ...current,
+        scheduleId: 'Selecione um horário disponível.',
+      }));
+      return;
+    }
     const parsed = bookingFormSchema.safeParse(values);
     if (!parsed.success) {
       const nextErrors: Partial<Record<keyof BookingFormInput, string>> = {};
@@ -155,54 +156,43 @@ export function BookingForm({
       )}
       {!optionsQuery.isPending && arenas.length === 0 && (
         <Alert variant="info">
-          Nenhuma arena disponível para este esporte no momento.
+          Nenhuma quadra disponível nesta região no momento.
         </Alert>
       )}
-      {onChooseMap && (
-        <Link
-          to={
-            values.arenaId
-              ? `/?arenaId=${encodeURIComponent(values.arenaId)}`
-              : '/'
-          }
-          onClick={onChooseMap}
-        >
-          Escolher arena no mapa
-        </Link>
-      )}
-      {!initialArena && (
-        <>
-          <Form.Group controlId="booking-arena-search">
-            <Form.Label>Buscar arena pelo endereço</Form.Label>
-            <Form.Control
-              value={arenaSearch}
-              onChange={(event) => {
-                setArenaSearch(event.target.value);
-                setArenaPage(1);
-              }}
-            />
-          </Form.Group>
-          <PageControls
-            page={arenaPage}
-            hasNext={optionsQuery.data?.hasNextPage ?? false}
-            busy={optionsQuery.isFetching}
-            onChange={setArenaPage}
-            label="Páginas das arenas para agendar"
-          />
-        </>
-      )}
+      <BookingArenaPicker
+        arenas={initialArena ? [initialArena] : arenas}
+        selected={selectedArena}
+        locked={Boolean(initialArena)}
+        loading={optionsQuery.isPending}
+        location={location}
+        error={errors.arenaId}
+        onSelect={(arena) => {
+          setSelectedArena(arena);
+          setValues((current) => ({
+            ...current,
+            arenaId: arena.id,
+            sportId: arena.sportIds.includes(current.sportId)
+              ? current.sportId
+              : arena.sportIds.length === 1
+                ? arena.sportIds[0]
+                : '',
+            scheduleId: '',
+          }));
+          setErrors((current) => ({
+            ...current,
+            arenaId: undefined,
+            sportId: undefined,
+            scheduleId: undefined,
+          }));
+        }}
+      />
       <BookingFields
-        lockedArena={Boolean(initialArena)}
         sports={sports}
-        availableArenas={availableArenas}
         slots={slots}
         values={values}
         today={today}
         titlePrefix={titlePrefix}
         onChange={(name, value) => {
-          if (name === 'sportId') setArenaPage(1);
-          if (name === 'arenaId')
-            setSelectedArena(arenas.find((arena) => arena.id === value));
           setValues((current) => ({ ...current, [name]: value }));
           setErrors((current) => {
             const next = { ...current };
@@ -225,7 +215,7 @@ export function BookingForm({
           createMutation.isPending ||
           optionsQuery.isPending ||
           availabilityQuery.isFetching ||
-          !values.scheduleId
+          !slots.some((slot) => slot.id === values.scheduleId)
         }
       >
         {createMutation.isPending

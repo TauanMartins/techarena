@@ -29,7 +29,6 @@ export function BookingModal({
       </Modal.Header>
       <Modal.Body>
         <BookingForm
-          onChooseMap={onHide}
           initialArena={initialArena}
           initialSportId={initialSportId}
           onCreated={() => {

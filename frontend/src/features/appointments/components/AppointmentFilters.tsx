@@ -82,7 +82,7 @@ export function AppointmentFilters({
               value={params.get('period') ?? 'upcoming'}
               onChange={(event) => onChange('period', event.target.value)}
             >
-              <option value="upcoming">Ativos</option>
+              <option value="upcoming">Em breve</option>
               <option value="past">Anteriores</option>
               <option value="all">Todos</option>
             </Form.Select>
