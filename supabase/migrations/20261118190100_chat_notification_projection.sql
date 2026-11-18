@@ -1,5 +1,6 @@
+-- Function definitions are replaceable so this migration can be retried safely.
 -- Resolve recipients from current business membership, not only users who opened the chat before.
-CREATE FUNCTION notification_private.chat_recipients(topic text, sender uuid)
+CREATE OR REPLACE FUNCTION notification_private.chat_recipients(topic text, sender uuid)
 RETURNS TABLE(recipient_id uuid) LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE parts text[] := string_to_array(topic,':'); first_user uuid; second_user uuid; entity bigint;
 BEGIN
@@ -22,7 +23,7 @@ BEGIN
         AND (a.organizer_id=sender OR EXISTS(SELECT 1 FROM public.user_appointment own WHERE own.appointment_id=entity AND own.user_id=sender));
   END IF;
 END $$;
-CREATE FUNCTION notification_private.project_chat(event_id uuid, payload jsonb) RETURNS void
+CREATE OR REPLACE FUNCTION notification_private.project_chat(event_id uuid, payload jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE msg public.chat_messages%ROWTYPE; parts text[];
 BEGIN
@@ -41,7 +42,7 @@ END $$;
 REVOKE ALL ON FUNCTION notification_private.chat_recipients(text,uuid), notification_private.project_chat(uuid,jsonb) FROM PUBLIC,anon,authenticated;
 
 -- Opening a visible conversation acknowledges only that account's chat notices.
-CREATE FUNCTION public.mark_chat_notifications_read(conversation_path text) RETURNS integer
+CREATE OR REPLACE FUNCTION public.mark_chat_notifications_read(conversation_path text) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE affected integer;
 BEGIN
