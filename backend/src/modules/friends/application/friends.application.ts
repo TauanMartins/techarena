@@ -1,3 +1,4 @@
+import { assertFriendRemoval } from '../domain/assert-friend-removal.js';
 import type { PageRequest } from '../../../common/domain/pagination.js';
 import { assertPageRequest } from '../../../common/domain/pagination.js';
 import type { ChatAccessPort } from '../../chat/application/ports/chat-access.port.js';
@@ -14,6 +15,26 @@ export class FriendsApplication {
     private readonly profiles: ProfileAccess,
     private readonly chatAccess: ChatAccessPort,
   ) {}
+  async remove(actor: string, id: string) {
+    await this.profiles.ensureExists(actor);
+    const removedFriend = await this.repository.transaction(async (store) => {
+      const other = assertFriendRemoval(actor, await store.lock(id));
+      await store.remove(id);
+      const topic = directChatTopic(actor, other);
+      await Promise.all([
+        this.chatAccess.revokeParticipant(topic, actor),
+        this.chatAccess.revokeParticipant(topic, other),
+      ]);
+      return other;
+    });
+    // The committed relationship must also win over concurrent chat grants.
+    const topic = directChatTopic(actor, removedFriend);
+    await Promise.all([
+      this.chatAccess.revokeParticipant(topic, actor),
+      this.chatAccess.revokeParticipant(topic, removedFriend),
+    ]);
+    return { success: true };
+  }
   async list(actor: string, query: PageRequest) {
     await this.profiles.ensureExists(actor);
     assertPageRequest(query);

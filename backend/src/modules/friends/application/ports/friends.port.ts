@@ -8,6 +8,7 @@ export interface FriendshipState {
   status: string;
 }
 export interface FriendshipTransaction {
+  remove(id: string): Promise<void>;
   userExists(id: string): Promise<boolean>;
   relationshipExists(first: string, second: string): Promise<boolean>;
   lock(id: string): Promise<FriendshipState | null>;

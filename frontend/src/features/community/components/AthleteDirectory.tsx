@@ -1,3 +1,4 @@
+import { IconButton } from '../../../components/ui/IconButton';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import type { SubmitEvent } from 'react';
@@ -62,19 +63,21 @@ export function AthleteDirectory({
               }
               onDetails={() => onDetails(person)}
             >
-              <Button
-                size="sm"
-                variant="outline-secondary"
+              <IconButton
+                icon="bi-person"
+                label="Detalhes"
                 onClick={() => onDetails(person)}
-              >
-                Detalhes
-              </Button>
+              />
               <Button
                 size="sm"
                 variant={isFriend ? 'outline-success' : 'outline-primary'}
                 disabled={isFriend || isRequested || busy}
                 onClick={() => onRequest(person.id)}
               >
+                <i
+                  className={`bi ${isFriend ? 'bi-person-check' : isRequested ? 'bi-clock' : 'bi-person-plus'} me-2`}
+                  aria-hidden="true"
+                />
                 {isFriend ? 'Amigos' : isRequested ? 'Solicitado' : 'Adicionar'}
               </Button>
             </PersonListItem>

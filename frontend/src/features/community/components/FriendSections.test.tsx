@@ -45,12 +45,17 @@ describe('FriendSections', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Aceitar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Bloquear' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Conversar' }));
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Ações para Ana' })[0],
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Bloquear' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Conversar com Ana' }));
     expect(onAccept).toHaveBeenCalledWith('friend-1');
     expect(onBlock).toHaveBeenCalledWith('friend-1');
     expect(onChat).toHaveBeenCalledWith(friend.user);
-    expect(screen.getAllByRole('button', { name: 'Detalhes' })).toHaveLength(1);
+    expect(
+      screen.getAllByRole('button', { name: 'Ações para Ana' }),
+    ).toHaveLength(2);
   });
 
   it('disables request decisions while a mutation is pending', () => {
@@ -66,6 +71,8 @@ describe('FriendSections', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Aceitar' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Bloquear' })).toBeDisabled();
+    expect(
+      screen.getAllByRole('button', { name: 'Ações para Ana' })[0],
+    ).toBeDisabled();
   });
 });

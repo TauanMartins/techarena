@@ -1,3 +1,5 @@
+import { useConfirmation } from '../components/ui/useConfirmation';
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from 'react-bootstrap/Card';
@@ -21,6 +23,7 @@ import type { UserCard } from '../features/community/types/community.types';
 export function CommunityPage() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const confirmation = useConfirmation();
   const token = session!.access_token;
   const userId = session!.user.id;
   const [search, setSearch] = useState('');
@@ -82,15 +85,7 @@ export function CommunityPage() {
         title="Comunidade"
         description="Encontre atletas, construa amizades e combine o próximo jogo."
       />
-      {notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {notice}
-        </div>
-      )}
+      {notice && <ToastNotice message={notice} />}
       {error && (
         <ErrorState
           message={
@@ -147,11 +142,32 @@ export function CommunityPage() {
         friends={friends}
         onDetails={setSelectedPerson}
         onAccept={(id) => void decideFriend(id, 'accept')}
-        onBlock={(id) => void decideFriend(id, 'block')}
+        onBlock={(id) =>
+          confirmation.request({
+            title: 'Bloquear atleta',
+            message:
+              'A conversa privada ficará indisponível e novas solicitações de amizade serão impedidas.',
+            label: 'Bloquear',
+            onConfirm: () => decideFriend(id, 'block'),
+          })
+        }
         onChat={(person) => navigate(`/chat/direct/${person.id}`)}
-        busy={mutations.decide.isPending}
+        onRemove={(id) =>
+          confirmation.request({
+            title: 'Desfazer amizade',
+            message:
+              'A conversa privada ficará indisponível. Vocês poderão enviar uma nova solicitação no futuro.',
+            label: 'Desfazer amizade',
+            onConfirm: async () => {
+              await mutations.remove.mutateAsync(id);
+              setNotice('Amizade desfeita.');
+            },
+          })
+        }
+        busy={mutations.decide.isPending || mutations.remove.isPending}
       />
       {groupsQuery.isPending && <LoadingState />}
+      {confirmation.dialog}
       <AthleteDetailsModal
         person={selectedPerson}
         onHide={() => setSelectedPerson(null)}

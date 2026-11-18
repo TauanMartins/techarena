@@ -1,3 +1,6 @@
+import { Delete, Param } from '@nestjs/common';
+import { ActionResultDto } from '../../../../../common/http/dto/action-result.dto.js';
+import { FriendIdDto } from '../dto/friend-id.dto.js';
 import {
   Body,
   Controller,
@@ -23,6 +26,14 @@ import {
 @Controller('friend')
 export class FriendsController {
   constructor(private readonly app: FriendsApplication) {}
+  @Delete(':friendId')
+  @ResponseContract(ActionResultDto)
+  remove(
+    @CurrentUser() actor: AuthenticatedUser,
+    @Param() params: FriendIdDto,
+  ) {
+    return this.app.remove(actor.id, params.friendId);
+  }
   @Get() @ResponseContract(FriendGroupsDto) list(
     @CurrentUser() a: AuthenticatedUser,
     @Query() q: PaginationQueryDto,
