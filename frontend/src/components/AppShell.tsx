@@ -1,3 +1,4 @@
+import { NotificationBell } from '../features/notifications/components/NotificationBell';
 import { FeedbackNotifications } from './FeedbackNotifications';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
@@ -207,6 +208,7 @@ export function AppShell() {
                 'TechArena'}
             </div>
             <div className="d-flex align-items-center gap-2 ms-auto">
+              <NotificationBell userId={session?.user.id ?? ''} />
               <ProfileAvatar
                 name={profile.name ?? profile.username}
                 image={profile.image}
