@@ -1,3 +1,5 @@
+import { useCurrentTimestamp } from '../../../shared/clock';
+import type { TypingParticipant } from '../components/TypingIndicator';
 import {
   useCallback,
   useEffect,
@@ -31,6 +33,7 @@ export function useChatRealtime({
   token,
   userId,
   displayName,
+  image = null,
   onMessage,
 }: {
   client: SupabaseClient | null;
@@ -38,8 +41,15 @@ export function useChatRealtime({
   token: string;
   userId: string;
   displayName: string;
+  image?: string | null;
   onMessage: (message: ChatMessage) => void;
 }) {
+  const now = useCurrentTimestamp();
+  const [typing, setTypingPeople] = useState<{
+    topic: string | null;
+    people: TypingParticipant[];
+  }>({ topic: null, people: [] });
+  const typingSender = useRef<(value: boolean) => void>(() => {});
   const [retryCount, setRetryCount] = useState(0);
   const [state, setState] = useState<RealtimeState>({
     client: null,
@@ -80,6 +90,29 @@ export function useChatRealtime({
     const channel = client.channel(`chat:${topic}`, {
       config: { private: true, presence: { key: userId } },
     });
+    let subscribed = false;
+    let lastTyping = 0;
+    let typingTimer: ReturnType<typeof setTimeout> | undefined;
+    const sendTyping = (value: boolean) => {
+      if (!subscribed || !active) return;
+      clearTimeout(typingTimer);
+      if (!value || Date.now() - lastTyping > 2000) {
+        lastTyping = value ? Date.now() : 0;
+        void channel
+          .send({
+            type: 'broadcast',
+            event: 'typing',
+            payload: { userId, name: displayName, image, typing: value },
+          })
+          .catch(() => {});
+      }
+      if (value) typingTimer = setTimeout(() => sendTyping(false), 3000);
+    };
+    typingSender.current = sendTyping;
+    const onVisibility = () => {
+      if (document.hidden) sendTyping(false);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     const updateState = (patch: Partial<RealtimeState>) =>
       setState((current) => {
         const sameIdentity =
@@ -119,6 +152,41 @@ export function useChatRealtime({
           if (active && message) onMessageRef.current(message);
         },
       )
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (
+          !active ||
+          !payload ||
+          typeof payload.userId !== 'string' ||
+          payload.userId === userId
+        )
+          return;
+        if (typeof payload.typing !== 'boolean') return;
+        const id = payload.userId;
+        setTypingPeople((current) => ({
+          topic,
+          people: [
+            ...(current.topic === topic
+              ? current.people.filter(
+                  (person) => person.id !== id && person.expiresAt > Date.now(),
+                )
+              : []),
+            ...(payload.typing
+              ? [
+                  {
+                    id,
+                    name:
+                      typeof payload.name === 'string'
+                        ? payload.name.slice(0, 80)
+                        : 'Atleta',
+                    image:
+                      typeof payload.image === 'string' ? payload.image : null,
+                    expiresAt: Date.now() + 5000,
+                  },
+                ]
+              : []),
+          ],
+        }));
+      })
       .on('presence', { event: 'sync' }, () => {
         if (!active) return;
         updateState({
@@ -142,12 +210,14 @@ export function useChatRealtime({
             if (!active) return;
             if (status === 'SUBSCRIBED') {
               cancelSubscribe = null;
+              subscribed = true;
               updateState({ connection: 'connected', connectedTopic: topic });
               resolve();
             } else if (
               ['CHANNEL_ERROR', 'TIMED_OUT', 'CLOSED'].includes(status)
             ) {
               cancelSubscribe = null;
+              subscribed = false;
               updateState({ connection: 'error', connectedTopic: null });
               reject(
                 cause ??
@@ -177,14 +247,23 @@ export function useChatRealtime({
     })();
 
     return () => {
+      sendTyping(false);
+      clearTimeout(typingTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      typingSender.current = () => {};
       active = false;
       cancelSubscribe?.();
       void client.removeChannel(channel);
     };
-  }, [client, displayName, retryCount, token, topic, userId]);
+  }, [client, displayName, image, retryCount, token, topic, userId]);
 
   const retry = useCallback(() => setRetryCount((count) => count + 1), []);
   return {
+    typingPeople:
+      connection === 'connected' && typing.topic === topic
+        ? typing.people.filter((person) => person.expiresAt > now)
+        : [],
+    setTyping: (value: boolean) => typingSender.current(value),
     connection,
     connectedTopic,
     error,

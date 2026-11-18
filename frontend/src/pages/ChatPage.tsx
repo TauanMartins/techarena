@@ -1,3 +1,4 @@
+import { TypingIndicator } from '../features/chat/components/TypingIndicator';
 import styles from '../features/chat/styles/Chat.module.scss';
 import { useChatViewport } from '../features/chat/hooks/useChatViewport';
 import Row from 'react-bootstrap/Row';
@@ -37,6 +38,7 @@ export function ChatPage() {
     conversation: selected,
     token,
     userId,
+    image: profile?.image,
     displayName: profile?.name ?? profile?.username ?? 'Atleta',
   });
 
@@ -116,7 +118,9 @@ export function ChatPage() {
                 listRef={thread.messageListRef}
                 endRef={thread.messagesEndRef}
               />
+              <TypingIndicator people={thread.typingPeople ?? []} />
               <MessageComposer
+                onBlur={thread.stopTyping}
                 text={thread.text}
                 onTextChange={thread.setText}
                 onSubmit={(event) => void thread.sendMessage(event)}

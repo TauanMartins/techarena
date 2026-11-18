@@ -45,11 +45,13 @@ export function useChatThread({
   token,
   userId,
   displayName,
+  image,
 }: {
   conversation: Conversation | undefined;
   token: string;
   userId: string;
   displayName: string;
+  image?: string | null;
 }) {
   const [draft, setDraft] = useState<ThreadDraft>(() => emptyDraft(''));
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,7 +91,8 @@ export function useChatThread({
     token,
     userId,
     displayName,
-      onMessage: (message) =>
+    image,
+    onMessage: (message) =>
       updateDraft((current) => ({
         messages: mergeChatMessages(current.messages, [message]),
       })),
@@ -213,6 +216,7 @@ export function useChatThread({
       return;
     const generation = generationRef.current;
     stickToBottom.current = true;
+    realtime.setTyping(false);
     updateDraft({ sending: true, error: null });
     try {
       const message = await createChatMessage(
@@ -245,7 +249,12 @@ export function useChatThread({
     onlineUserIds: realtime.onlineUserIds,
     presenceSynced: realtime.presenceSynced,
     text: currentDraft.text,
-    setText: (text: string) => updateDraft({ text }),
+    setText: (text: string) => {
+      updateDraft({ text });
+      realtime.setTyping(Boolean(text.trim()));
+    },
+    stopTyping: () => realtime.setTyping(false),
+    typingPeople: realtime.typingPeople,
     sending: currentDraft.sending,
     retry: realtime.retry,
     loadOlderMessages,
