@@ -81,15 +81,15 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       q.andWhere(
         'EXISTS(SELECT 1 FROM public.user_appointment ua WHERE ua.appointment_id=appointment.id AND ua.user_id=:actor)',
       );
-    else
+    else if (!query.period || query.period === 'upcoming')
       q.andWhere(
         "appointment.status='scheduled' AND appointment.scheduledAt > CURRENT_TIMESTAMP",
       );
-    if (query.period)
+    if (query.period && query.period !== 'all')
       q.andWhere(
         query.period === 'past'
           ? 'appointment.scheduledAt <= CURRENT_TIMESTAMP'
-          : 'appointment.scheduledAt > CURRENT_TIMESTAMP',
+          : "appointment.scheduledAt > CURRENT_TIMESTAMP AND appointment.status='scheduled'",
       );
     if (query.sportId)
       q.andWhere('appointment.sportId=:sportId', { sportId: query.sportId });
@@ -107,11 +107,12 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       });
       if (query.radiusKm !== undefined)
         q.andWhere(`${ARENA_DISTANCE_KM}<=:radius`, { radius: query.radiusKm });
-      q.addOrderBy(
-        'distance_km',
-        query.distance === 'far' ? 'DESC' : 'ASC',
-        'NULLS LAST',
-      );
+      if (query.distance !== 'none')
+        q.addOrderBy(
+          'distance_km',
+          query.distance === 'far' ? 'DESC' : 'ASC',
+          'NULLS LAST',
+        );
     }
     q.addOrderBy(
       'appointment.scheduledAt',

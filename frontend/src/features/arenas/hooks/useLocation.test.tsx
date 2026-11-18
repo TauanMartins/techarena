@@ -1,7 +1,11 @@
+import { deviceLocation } from './device-location';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { useLocation } from './useLocation';
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  deviceLocation.set(null);
+  vi.unstubAllGlobals();
+});
 it('uses device coordinates only after consent and allows a manual location', () => {
   const getCurrentPosition = vi.fn();
   vi.stubGlobal('navigator', { geolocation: { getCurrentPosition } });
@@ -48,4 +52,21 @@ it('ignores a late GPS response after selecting a region manually', () => {
   act(() => result.current.locate());
   unmount();
   getCurrentPosition.mock.calls[1][1]({ code: 3 });
+});
+
+it('reuses granted device location across screens without sharing map search regions', () => {
+  const getCurrentPosition = vi.fn();
+  vi.stubGlobal('navigator', { geolocation: { getCurrentPosition } });
+  const first = renderHook(() => useLocation());
+  const second = renderHook(() => useLocation());
+  act(() => first.result.current.locate());
+  act(() =>
+    getCurrentPosition.mock.calls[0][0]({
+      coords: { latitude: -23, longitude: -46 },
+    }),
+  );
+  expect(second.result.current.point).toEqual({ lat: -23, longitude: -46 });
+  act(() => first.result.current.selectPoint({ lat: 1, longitude: 2 }));
+  expect(second.result.current.point).toEqual({ lat: -23, longitude: -46 });
+  expect(getCurrentPosition).toHaveBeenCalledTimes(1);
 });

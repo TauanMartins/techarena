@@ -1,3 +1,4 @@
+import { deviceLocation } from '../features/arenas/hooks/device-location';
 import {
   useCallback,
   useEffect,
@@ -45,7 +46,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!nextSession) queryClient.clear();
+      if (!nextSession) {
+        queryClient.clear();
+        deviceLocation.set(null);
+      }
       setSession(nextSession);
       setAuthError(null);
     });

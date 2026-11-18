@@ -1,8 +1,20 @@
-import { useRef, useState, useEffect } from 'react';
+import { deviceLocation } from './device-location';
+import {
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  useSyncExternalStore,
+} from 'react';
 import type { LocationPoint } from '../types/location';
 
 export function useLocation(initialPoint: LocationPoint | null = null) {
-  const [point, setPoint] = useState<LocationPoint | null>(initialPoint);
+  const cached = useSyncExternalStore(
+    deviceLocation.subscribe,
+    deviceLocation.get,
+    deviceLocation.get,
+  );
+  const [manualPoint, setPoint] = useState<LocationPoint | null>(initialPoint);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef(0);
@@ -18,7 +30,7 @@ export function useLocation(initialPoint: LocationPoint | null = null) {
     setError(null);
     setPoint(value);
   }
-  function locate() {
+  const locate = useCallback(() => {
     if (!navigator.geolocation) {
       setError('Localização indisponível. Escolha uma região no mapa.');
       return;
@@ -29,7 +41,11 @@ export function useLocation(initialPoint: LocationPoint | null = null) {
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         if (id !== requestId.current) return;
-        setPoint({ lat: coords.latitude, longitude: coords.longitude });
+        deviceLocation.set({
+          lat: coords.latitude,
+          longitude: coords.longitude,
+        });
+        setPoint(null);
         setPending(false);
       },
       (cause) => {
@@ -43,6 +59,19 @@ export function useLocation(initialPoint: LocationPoint | null = null) {
       },
       { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
     );
-  }
-  return { point, pending, error, locate, selectPoint };
+  }, []);
+  useEffect(() => {
+    if (cached || manualPoint || !navigator.permissions) return;
+    let active = true;
+    void navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((permission) => {
+        if (active && permission.state === 'granted') locate();
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [cached, manualPoint, locate]);
+  return { point: manualPoint ?? cached, pending, error, locate, selectPoint };
 }

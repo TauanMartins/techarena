@@ -1,3 +1,4 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { AppointmentFilters } from '../features/appointments/components/AppointmentFilters';
 import { PageControls } from '../components/ui/PageControls';
 import { useLocation } from '../features/arenas/hooks/useLocation';
@@ -29,7 +30,7 @@ export function AppointmentsPage() {
   const location = useLocation();
   const mine = params.get('view') === 'mine';
   const page = Math.max(1, Number(params.get('page')) || 1);
-  const sort = params.get('sort') ?? 'soon';
+  const sort = params.get('sort') ?? (location.point ? 'near' : 'soon');
   const period = params.get('period') ?? 'upcoming';
   const radius = Number(params.get('radius'));
   const useDistance = sort === 'near' || sort === 'far';
@@ -54,15 +55,15 @@ export function AppointmentsPage() {
       sportId: params.get('sportId') || undefined,
       arenaId: params.get('arenaId') || undefined,
       period:
-        mine && (period === 'upcoming' || period === 'past')
+        period === 'upcoming' || period === 'past' || period === 'all'
           ? period
           : undefined,
       orderByTime: sort === 'later' ? 'future' : 'recent',
       preferSports: params.get('favorites') === 'true',
-      ...(location.point && useDistance
+      ...(location.point
         ? {
             ...location.point,
-            distance: sort as 'near' | 'far',
+            distance: useDistance ? (sort as 'near' | 'far') : 'none',
             radiusKm: radius > 0 && radius <= 1000 ? radius : undefined,
           }
         : {}),
@@ -166,15 +167,7 @@ export function AppointmentsPage() {
           </Button>
         )}
       </div>
-      {notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {notice}
-        </div>
-      )}
+      {notice && <ToastNotice message={notice} />}
       {appointmentsQuery.isPending && (
         <LoadingState label="Carregando agendamentos..." />
       )}
