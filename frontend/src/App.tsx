@@ -14,6 +14,11 @@ const AppointmentsPage = lazy(() =>
     default: module.AppointmentsPage,
   })),
 );
+const NotificationsPage = lazy(() =>
+  import('./pages/NotificationsPage').then((module) => ({
+    default: module.NotificationsPage,
+  })),
+);
 const ChatPage = lazy(() =>
   import('./pages/ChatPage').then((module) => ({
     default: module.ChatPage,
@@ -106,6 +111,10 @@ function ApplicationRoutes() {
           <Route
             path="chat/:kind?/:id?"
             element={<ChatPage />}
+          />
+          <Route
+            path="notificacoes"
+            element={<NotificationsPage />}
           />
           <Route
             path="configuracoes"
