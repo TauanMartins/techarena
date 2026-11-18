@@ -1,4 +1,4 @@
-CREATE FUNCTION notification_private.project_friend(event_id uuid, event_kind text, payload jsonb) RETURNS void
+CREATE OR REPLACE FUNCTION notification_private.project_friend(event_id uuid, event_kind text, payload jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE f public.friend%ROWTYPE; actor uuid; recipient uuid; actor_name text;
 BEGIN
@@ -15,7 +15,7 @@ BEGIN
       '/social' WHERE recipient<>actor AND EXISTS(SELECT 1 FROM auth.users WHERE id=recipient)
     ON CONFLICT(recipient_id,event_key) DO NOTHING;
 END $$;
-CREATE FUNCTION notification_private.project_team(event_id uuid, event_kind text, payload jsonb) RETURNS void
+CREATE OR REPLACE FUNCTION notification_private.project_team(event_id uuid, event_kind text, payload jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE r public.team_membership_request%ROWTYPE; team_name text; actor_name text;
 BEGIN

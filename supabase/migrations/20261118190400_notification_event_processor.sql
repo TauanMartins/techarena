@@ -1,4 +1,4 @@
-CREATE FUNCTION public.process_notification_events(batch_size integer DEFAULT 100) RETURNS integer
+CREATE OR REPLACE FUNCTION public.process_notification_events(batch_size integer DEFAULT 100) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE ev notification_private.events%ROWTYPE; processed integer := 0;
 BEGIN

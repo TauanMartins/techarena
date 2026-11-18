@@ -55,6 +55,17 @@ A base `20261118180000_notification_inbox.sql` já foi aplicada e validada. **N�
    where pubname = 'supabase_realtime' and tablename = 'notifications';
    ```
 
+O retorno de `cron.schedule` é o ID do job, não a confirmação de entrega. Antes de testar uma nova ação, confirme que o processador foi criado:
+
+   ```sql
+   select to_regprocedure('public.process_notification_events(integer)');
+   select public.process_notification_events(100);
+   ```
+
+Se a primeira consulta retornar `NULL`, aplique e confirme com `COMMIT` a migration `20261118190400_notification_event_processor.sql`. Um retorno `0` na segunda consulta indica que nenhum evento foi concluído nessa chamada; o Cron pode já ter consumido a fila. Confira as tentativas e erros na seção de monitoramento.
+
+As migrations de funções `190100`, `190200`, `190300` e `190400` permitem reexecução com `CREATE OR REPLACE FUNCTION`. Isso não se aplica às migrations anteriores de tabelas e gatilhos.
+
 5. Publique o código pelo fluxo normal. Não há variável nova. Permanecem `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` no build frontend, `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` no runtime backend. A service role nunca vai para o frontend.
 
 Esses arquivos são migrações do **Supabase**, não do TypeORM. O deploy atual não as aplica automaticamente. Não é necessário adicionar a fila privada ao Realtime, expô-la na API ou criar webhook. As migrações pressupõem todas as migrações atuais do backend, inclusive `archived_at` de equipes.
@@ -82,16 +93,16 @@ from notification_private.events
 where processed_at is null
  group by kind, attempts order by kind, attempts;
 
-select id, kind, attempts, available_at, last_error_code
-from notification_private.events
-where processed_at is null order by created_at limit 100;
+  select id, kind, attempts, available_at, last_error_code
+  from notification_private.events
+  where processed_at is null order by created_at limit 100;
 
--- Somente após corrigir a causa, use o UUID específico do evento afetado:
--- update notification_private.events set attempts=0, available_at=now(), last_error_code=null
--- where id='UUID-DO-EVENTO' and processed_at is null;
+  -- Somente após corrigir a causa, use o UUID específico do evento afetado:
+  -- update notification_private.events set attempts=0, available_at=now(), last_error_code=null
+  -- where id='UUID-DO-EVENTO' and processed_at is null;
 
--- Processamento manual seguro/idempotente, sem depender do próximo tick:
-select public.process_notification_events(100);
+  -- Processamento manual seguro/idempotente, sem depender do próximo tick:
+  select public.process_notification_events(100);
 ```
 
 As falhas guardam apenas SQLSTATE, sem corpo de mensagem ou segredo. Novas tentativas usam espera crescente até cinco minutos, com limite de dez falhas. Lotes usam locks com `SKIP LOCKED`, permitindo execução concorrente sem processar a mesma linha duas vezes. Cada lote confirma suas notificações e o estado da fila na mesma transação.

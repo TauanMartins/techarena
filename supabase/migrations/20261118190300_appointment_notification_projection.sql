@@ -1,4 +1,4 @@
-CREATE FUNCTION notification_private.project_appointment(event_id uuid, event_kind text, payload jsonb) RETURNS void
+CREATE OR REPLACE FUNCTION notification_private.project_appointment(event_id uuid, event_kind text, payload jsonb) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a public.appointment%ROWTYPE; actor uuid; actor_name text;
 BEGIN
