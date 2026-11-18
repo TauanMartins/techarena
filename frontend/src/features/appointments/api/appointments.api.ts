@@ -81,14 +81,14 @@ export function useCreateAppointment(token: string, userId: string) {
 export function useBookingOptions(
   token: string,
   userId: string,
-  filters: { sportId?: string; search?: string; page?: number } = {},
+  filters: { lat?: number; longitude?: number; radiusKm?: number } = {},
 ) {
   return useQuery({
     queryKey: ['bookingOptions', userId, filters],
     queryFn: async () => {
       const [sports, arenas] = await Promise.all([
         appointmentApi.sports(token),
-        appointmentApi.arenas(token, { ...filters, limit: 20 }),
+        appointmentApi.arenas(token, { ...filters, page: 1, limit: 10 }),
       ]);
       return {
         hasNextPage: arenas.hasNextPage,

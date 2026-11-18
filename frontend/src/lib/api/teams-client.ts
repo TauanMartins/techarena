@@ -8,6 +8,20 @@ import type {
 import { apiRequest } from './api-request';
 import { queryString } from './query-string';
 export const teamsClient = {
+  deleteTeam: (token: string, teamId: string) =>
+    apiRequest<{ success: boolean }>(`/team/${teamId}`, token, {
+      method: 'DELETE',
+    }),
+  leaveTeam: (token: string, teamId: string) =>
+    apiRequest<{ success: boolean }>(`/team/${teamId}/members/me`, token, {
+      method: 'DELETE',
+    }),
+  removeTeamMember: (token: string, teamId: string, userId: string) =>
+    apiRequest<{ success: boolean }>(
+      `/team/${teamId}/members/${userId}`,
+      token,
+      { method: 'DELETE' },
+    ),
   listTeams: (token: string, search = '', page = 1) =>
     apiRequest<Page<Team>>(
       `/team${queryString({ page, limit: 20, search: search.trim() || undefined })}`,

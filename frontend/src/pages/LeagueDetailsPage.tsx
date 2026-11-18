@@ -1,5 +1,5 @@
-import Alert from 'react-bootstrap/Alert';
-import { useAuth } from '../auth/useAuth';
+import { ToastNotice } from '../components/ui/ToastNotice';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -15,17 +15,14 @@ import { useLeagueWorkspace } from '../features/leagues/hooks/useLeagueWorkspace
 
 import { Link, useParams } from 'react-router-dom';
 export function LeagueDetailsPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const { leagueId = '' } = useParams();
-  const page = useLeagueWorkspace(
-    session!.access_token,
-    session!.user.id,
-    leagueId,
-  );
+  const page = useLeagueWorkspace(token, userId, leagueId);
   const { data } = page;
   const details = data.details;
   return (
     <>
+      {page.confirmationDialog}
       <Link
         to="/ligas"
         className="btn btn-link px-0 mb-3"
@@ -34,13 +31,10 @@ export function LeagueDetailsPage() {
       </Link>
       {page.error && <ErrorState message={page.error} />}
       {page.notice && (
-        <Alert
-          variant="success"
-          dismissible
-          onClose={() => page.setNotice(null)}
-        >
-          {page.notice}
-        </Alert>
+        <ToastNotice
+          message={page.notice}
+          requiresAcknowledgment={page.noticeRequiresAcknowledgment}
+        />
       )}
       {data.isLoadingDetails ? (
         <LoadingState label="Carregando detalhes da liga..." />
@@ -58,7 +52,7 @@ export function LeagueDetailsPage() {
               <LeagueSettingsPanel
                 league={details.league}
                 saving={page.saving}
-                onSubmit={(event) => void page.updateLeague(event)}
+                onSubmit={page.updateLeague}
                 onStatus={(status) => void page.updateStatus(status)}
               />
             )}

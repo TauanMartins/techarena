@@ -1,9 +1,10 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { useState, type SubmitEvent } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   ErrorState,
   PageHeading,
@@ -34,10 +35,8 @@ import type {
 } from '../features/teams/types/teams.types';
 
 export function TeamsPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const [search, setSearch] = useState('');
   const [catalogSearch, setCatalogSearch] = useState('');
   const [catalogPage, setCatalogPage] = useState(1);
@@ -144,15 +143,7 @@ export function TeamsPage() {
           </Button>
         }
       />
-      {actions.notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {actions.notice}
-        </div>
-      )}
+      {actions.notice && <ToastNotice message={actions.notice} />}
       {(actions.error || data.error) && (
         <ErrorState
           message={

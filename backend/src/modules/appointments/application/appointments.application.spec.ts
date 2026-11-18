@@ -54,7 +54,7 @@ it('creates the organizer as a reserve with sport defaults inside the transactio
       title: 'Futebol',
       maxPlayers: 10,
       holder: false,
-      scheduledAt: new Date('2026-11-20T12:00:00Z'),
+      scheduledAt: new Date('2026-11-20T15:00:00Z'),
     }),
   );
 });
@@ -62,7 +62,7 @@ it('evaluates time after the persistence adapter has acquired the arena lock', a
   const f = fixture();
   f.store.context.mockImplementation(async () => {
     expect(f.clock).not.toHaveBeenCalled();
-    f.clock.mockReturnValue(new Date('2026-11-20T12:00:01Z'));
+    f.clock.mockReturnValue(new Date('2026-11-20T15:00:01Z'));
     return context;
   });
   await expect(f.application.create('organizer', input)).rejects.toMatchObject({

@@ -1,3 +1,4 @@
+import { venueTime } from '../../../common/domain/venue-time.js';
 import { DomainError } from '../../../common/domain/domain-error.js';
 import { assertBookingVenue } from './assert-booking-venue.js';
 import { assertCalendarDate } from './assert-calendar-date.js';
@@ -17,7 +18,7 @@ export function planBooking(
       'SCHEDULE_NOT_FOUND',
       'Schedule not found',
     );
-  const scheduledAt = new Date(`${input.date}T${context.schedule.horary}Z`);
+  const scheduledAt = venueTime(input.date, context.schedule.horary);
   assertFutureSlot(scheduledAt, now);
   const maxPlayers = input.maxPlayers ?? context.sport!.defaultPlayers;
   if (!Number.isSafeInteger(maxPlayers) || maxPlayers < 1 || maxPlayers > 1000)

@@ -9,7 +9,6 @@ export function AppointmentFilters({
   params,
   onChange,
   location,
-  mine,
 }: {
   token: string;
   userId: string;
@@ -54,7 +53,7 @@ export function AppointmentFilters({
         >
           <Form.Label>Ordenar por</Form.Label>
           <Form.Select
-            value={params.get('sort') ?? 'soon'}
+            value={params.get('sort') ?? (location.point ? 'near' : 'soon')}
             onChange={(event) => onChange('sort', event.target.value)}
           >
             <option value="soon">Mais próximos na agenda</option>
@@ -73,7 +72,7 @@ export function AppointmentFilters({
             </option>
           </Form.Select>
         </Form.Group>
-        {mine && (
+        {
           <Form.Group
             className="col-md-4"
             controlId="appointment-period"
@@ -83,12 +82,12 @@ export function AppointmentFilters({
               value={params.get('period') ?? 'upcoming'}
               onChange={(event) => onChange('period', event.target.value)}
             >
-              <option value="upcoming">Próximos</option>
+              <option value="upcoming">Em breve</option>
               <option value="past">Anteriores</option>
               <option value="all">Todos</option>
             </Form.Select>
           </Form.Group>
-        )}
+        }
       </div>
       <details
         className="mt-3"
@@ -113,7 +112,10 @@ export function AppointmentFilters({
           <Button
             variant="outline-primary"
             disabled={location.pending}
-            onClick={location.locate}
+            onClick={() => {
+              location.locate();
+              onChange('sort', 'near');
+            }}
           >
             {location.pending
               ? 'Localizando...'

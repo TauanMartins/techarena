@@ -9,14 +9,14 @@ export type {
 } from '../../../shared/types';
 
 export interface AppointmentListParams {
-  period?: 'upcoming' | 'past';
+  period?: 'upcoming' | 'past' | 'all';
   radiusKm?: number;
   page?: number;
   limit?: number;
   sportId?: string;
   arenaId?: string;
   orderByTime?: 'recent' | 'future';
-  distance?: 'near' | 'far';
+  distance?: 'near' | 'far' | 'none';
   preferSports?: boolean;
   lat?: number;
   longitude?: number;

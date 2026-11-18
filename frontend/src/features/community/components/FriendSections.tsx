@@ -1,3 +1,5 @@
+import { ActionMenu } from '../../../components/ui/ActionMenu';
+import { IconButton } from '../../../components/ui/IconButton';
 import { SectionHeading } from '../../../components/ui/SectionHeading';
 import Button from 'react-bootstrap/Button';
 import type { Friend, UserCard } from '../types/community.types';
@@ -10,6 +12,7 @@ export function FriendSections({
   onAccept,
   onBlock,
   onChat,
+  onRemove,
   busy,
 }: {
   incoming: Friend[];
@@ -18,6 +21,7 @@ export function FriendSections({
   onAccept: (friendId: string) => void;
   onBlock: (friendId: string) => void;
   onChat: (person: UserCard) => void;
+  onRemove?: (id: string) => void;
   busy: boolean;
 }) {
   return (
@@ -55,16 +59,24 @@ export function FriendSections({
                   onClick={() => onAccept(friend.id)}
                   disabled={busy}
                 >
+                  <i
+                    className="bi bi-check-lg me-1"
+                    aria-hidden="true"
+                  />
                   Aceitar
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline-secondary"
-                  onClick={() => onBlock(friend.id)}
+                <ActionMenu
+                  label={`Ações para ${friend.user.name}`}
                   disabled={busy}
-                >
-                  Bloquear
-                </Button>
+                  actions={[
+                    {
+                      label: 'Bloquear',
+                      icon: 'bi-person-slash',
+                      danger: true,
+                      onClick: () => onBlock(friend.id),
+                    },
+                  ]}
+                />
               </PersonListItem>
             ))}
           </div>
@@ -99,19 +111,35 @@ export function FriendSections({
                 }
                 onDetails={() => onDetails(friend.user)}
               >
-                <Button
-                  size="sm"
-                  variant="outline-secondary"
-                  onClick={() => onDetails(friend.user)}
-                >
-                  Detalhes
-                </Button>
-                <Button
-                  size="sm"
+                <IconButton
+                  icon="bi-chat"
+                  variant="link"
+                  className="text-primary p-2"
+                  label={`Conversar com ${friend.user.name}`}
                   onClick={() => onChat(friend.user)}
-                >
-                  Conversar
-                </Button>
+                />
+                <ActionMenu
+                  label={`Ações para ${friend.user.name}`}
+                  disabled={busy}
+                  actions={[
+                    ...(onRemove
+                      ? [
+                          {
+                            label: 'Desfazer amizade',
+                            icon: 'bi-person-dash',
+                            danger: true,
+                            onClick: () => onRemove(friend.id),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: 'Bloquear',
+                      icon: 'bi-person-slash',
+                      danger: true,
+                      onClick: () => onBlock(friend.id),
+                    },
+                  ]}
+                />
               </PersonListItem>
             ))}
           </div>

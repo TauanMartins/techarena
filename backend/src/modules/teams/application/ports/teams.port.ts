@@ -19,6 +19,10 @@ export interface MembershipRecord {
   status: 'pending' | 'accepted' | 'declined';
 }
 export interface TeamTransaction {
+  memberIds(teamId: string): Promise<string[]>;
+  hasActiveCompetitions(teamId: string): Promise<boolean>;
+  removeMember(teamId: string, userId: string): Promise<void>;
+  removeTeam(teamId: string): Promise<void>;
   lockTeam(id: string): Promise<TeamView | null>;
   isCaptain(actor: string, teamId: string): Promise<boolean>;
   userExists(id: string): Promise<boolean>;

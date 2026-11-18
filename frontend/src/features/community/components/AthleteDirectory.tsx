@@ -64,17 +64,14 @@ export function AthleteDirectory({
             >
               <Button
                 size="sm"
-                variant="outline-secondary"
-                onClick={() => onDetails(person)}
-              >
-                Detalhes
-              </Button>
-              <Button
-                size="sm"
                 variant={isFriend ? 'outline-success' : 'outline-primary'}
                 disabled={isFriend || isRequested || busy}
                 onClick={() => onRequest(person.id)}
               >
+                <i
+                  className={`bi ${isFriend ? 'bi-person-check' : isRequested ? 'bi-clock' : 'bi-person-plus'} me-2`}
+                  aria-hidden="true"
+                />
                 {isFriend ? 'Amigos' : isRequested ? 'Solicitado' : 'Adicionar'}
               </Button>
             </PersonListItem>

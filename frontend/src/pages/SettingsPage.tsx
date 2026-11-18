@@ -1,13 +1,13 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Alert from 'react-bootstrap/Alert';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   ErrorState,
   LoadingState,
@@ -35,10 +35,9 @@ function dateInputToday() {
 }
 
 export function SettingsPage() {
-  const { session, profile, logout, refreshProfile } = useAuth();
+  const { session, profile, logout, refreshProfile, token, userId } =
+    useAuthenticatedSession();
   const { theme, saveTheme, error: themeError } = useThemePreference();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const settingsQuery = useSettingsData(token, userId);
   const [themeDraft, setThemeDraft] = useState<{
     source: ThemePreference;
@@ -155,12 +154,7 @@ export function SettingsPage() {
         title="Configurações"
         description="Atualize seus dados e personalize sua experiência no TechArena."
       />
-      {notice && (
-        <Alert variant="success">
-          <i className="bi bi-check-circle me-2" />
-          {notice}
-        </Alert>
-      )}
+      {notice && <ToastNotice message={notice} />}
       {errorMessage && <ErrorState message={errorMessage} />}
       {settingsQuery.isPending && (
         <LoadingState label="Carregando preferências..." />

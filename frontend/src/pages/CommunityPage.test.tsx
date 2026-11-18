@@ -100,3 +100,22 @@ describe('CommunityPage', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });
+
+it('automatically searches after typing and removes stale results when the query becomes short', async () => {
+  const user = userEvent.setup();
+  vi.spyOn(communityApi, 'listFriends').mockResolvedValue(groups as never);
+  const search = vi
+    .spyOn(communityApi, 'searchUsers')
+    .mockResolvedValue(
+      page([
+        { id: 'athlete-1', name: 'Ana', username: 'ana', image: null },
+      ]) as never,
+    );
+  renderWithProviders(<CommunityPage />);
+  const input = screen.getByRole('textbox', { name: 'Buscar atletas' });
+  await user.type(input, 'ana');
+  await waitFor(() => expect(search).toHaveBeenCalledWith('token', 'ana'));
+  expect(await screen.findByText('Ana')).toBeInTheDocument();
+  await user.clear(input);
+  expect(screen.queryByText('Ana')).not.toBeInTheDocument();
+});

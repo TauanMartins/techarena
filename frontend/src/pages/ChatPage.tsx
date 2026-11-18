@@ -1,8 +1,11 @@
+import styles from '../features/chat/styles/Chat.module.scss';
+import { useChatViewport } from '../features/chat/hooks/useChatViewport';
 import Row from 'react-bootstrap/Row';
+import { useNetworkOnline } from '../shared/hooks/useNetworkOnline';
 import Col from 'react-bootstrap/Col';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import { EmptyState, ErrorState, PageHeading } from '../components/ui/Feedback';
 import { ConversationDetailsModal } from '../features/chat/components/ConversationDetailsModal';
 import { ConversationHeader } from '../features/chat/components/ConversationHeader';
@@ -16,12 +19,11 @@ import { useChatThread } from '../features/chat/hooks/useChatThread';
 const EMPTY_CONVERSATIONS: Conversation[] = [];
 
 export function ChatPage() {
-  const { session, profile } = useAuth();
+  const networkOnline = useNetworkOnline();
+  const { profile, token, userId } = useAuthenticatedSession();
   const { kind: routeKind, id: routeId } = useParams();
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const conversationsQuery = useChatConversations(token, userId);
   const conversations = conversationsQuery.data ?? EMPTY_CONVERSATIONS;
   const selected = useMemo(
@@ -35,11 +37,16 @@ export function ChatPage() {
     conversation: selected,
     token,
     userId,
+    image: profile?.image,
     displayName: profile?.name ?? profile?.username ?? 'Atleta',
   });
 
+  const viewportRef = useChatViewport(Boolean(routeId));
   return (
-    <div className="d-flex flex-column h-100 overflow-hidden">
+    <div
+      ref={viewportRef}
+      className={`d-flex flex-column h-100 overflow-hidden ${styles.thread} ${routeId ? styles.fullscreen : ''}`}
+    >
       <div
         className={
           selected ? 'd-none d-md-block flex-shrink-0' : 'flex-shrink-0'
@@ -62,7 +69,7 @@ export function ChatPage() {
           />
         </div>
       )}
-      <Row className="g-0 border rounded-4 bg-body shadow-sm flex-grow-1 overflow-hidden flex-nowrap">
+      <Row className="g-0 border rounded-4 bg-body shadow-sm flex-grow-1 min-h-0 overflow-hidden flex-nowrap">
         <Col
           xs={12}
           md={4}
@@ -101,6 +108,14 @@ export function ChatPage() {
               />
               <MessageList
                 messages={thread.messages}
+                participantImage={
+                  selected.kind === 'direct' ? selected.image : undefined
+                }
+                typingPeople={
+                  networkOnline && thread.connection === 'connected'
+                    ? thread.typingPeople
+                    : []
+                }
                 userId={userId}
                 connection={thread.connection}
                 chatError={thread.chatError}
@@ -111,11 +126,12 @@ export function ChatPage() {
                 endRef={thread.messagesEndRef}
               />
               <MessageComposer
+                onBlur={thread.stopTyping}
                 text={thread.text}
                 onTextChange={thread.setText}
                 onSubmit={(event) => void thread.sendMessage(event)}
                 sending={thread.sending}
-                connected={thread.connection === 'connected'}
+                connected={networkOnline && thread.connection === 'connected'}
               />
             </>
           )}

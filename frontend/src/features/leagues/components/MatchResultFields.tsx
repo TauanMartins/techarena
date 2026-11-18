@@ -1,5 +1,5 @@
 import Button from 'react-bootstrap/Button';
-import Form from 'react-bootstrap/Form';
+import { NumberStepper } from '../../../components/ui/NumberStepper';
 
 export function MatchResultFields({
   matchId,
@@ -21,36 +21,37 @@ export function MatchResultFields({
   onSave: () => void;
 }) {
   return (
-    <div className="d-flex align-items-end gap-2 mt-3">
-      <Form.Group controlId={`home-score-${matchId}`}>
-        <Form.Label className="small">{homeName}</Form.Label>
-        <Form.Control
-          type="number"
-          min={0}
-          step={1}
-          aria-label={`Placar de ${homeName}`}
+    <div className="row g-2 align-items-end mt-2">
+      <div className="col-6 col-md-4">
+        <NumberStepper
+          id={`home-score-${matchId}`}
+          label={homeName}
           value={scores.home}
-          onChange={(event) => onChange('home', event.target.value)}
+          onChange={(value) => onChange('home', value)}
+          disabled={saving}
         />
-      </Form.Group>
-      <span className="pb-2">x</span>
-      <Form.Group controlId={`away-score-${matchId}`}>
-        <Form.Label className="small">{awayName}</Form.Label>
-        <Form.Control
-          type="number"
-          min={0}
-          step={1}
-          aria-label={`Placar de ${awayName}`}
+      </div>
+      <div className="col-6 col-md-4">
+        <NumberStepper
+          id={`away-score-${matchId}`}
+          label={awayName}
           value={scores.away}
-          onChange={(event) => onChange('away', event.target.value)}
+          onChange={(value) => onChange('away', value)}
+          disabled={saving}
         />
-      </Form.Group>
-      <Button
-        disabled={saving}
-        onClick={onSave}
-      >
-        {hasResult ? 'Atualizar resultado' : 'Registrar resultado'}
-      </Button>
+      </div>
+      <div className="col-12 col-md-4 d-grid">
+        <Button
+          disabled={saving}
+          onClick={onSave}
+        >
+          <i
+            className="bi bi-check-lg me-2"
+            aria-hidden="true"
+          />
+          {hasResult ? 'Atualizar resultado' : 'Registrar resultado'}
+        </Button>
+      </div>
     </div>
   );
 }

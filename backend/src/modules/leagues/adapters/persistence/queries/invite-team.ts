@@ -14,7 +14,7 @@ export function inviteTeamQueries(executor: SqlExecutor): InviteTeamQueries {
     inviteTeamReadTeamEligibility: (teamId) =>
       databaseWrite(() =>
         executor.query<{ exists: boolean; hasCaptain: boolean }[]>(
-          `SELECT EXISTS(SELECT 1 FROM public.team WHERE id=$1) AS exists,
+          `SELECT EXISTS(SELECT 1 FROM public.team WHERE id=$1 AND archived_at IS NULL) AS exists,
              EXISTS(SELECT 1 FROM public.user_team
                WHERE team_id=$1 AND role='captain') AS "hasCaptain"`,
           [teamId],

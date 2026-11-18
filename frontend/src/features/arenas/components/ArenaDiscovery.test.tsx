@@ -67,11 +67,12 @@ it('searches, filters, paginates and discovers nearby arenas without Places API'
   const list = vi.spyOn(api, 'listArenas').mockResolvedValue(page);
   renderWithProviders(<ArenaDiscovery />);
   await screen.findByText(
-    '21 arenas encontradas. Resultados desta página no mapa e na lista.',
+    /21 arenas encontradas\. Resultados paginados apenas na lista/,
   );
+  await user.click(screen.getByRole('button', { name: 'Lista' }));
   await user.click(screen.getByRole('button', { name: 'Próxima' }));
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({ page: 2 }),
     ),
@@ -79,15 +80,16 @@ it('searches, filters, paginates and discovers nearby arenas without Places API'
   await user.type(screen.getByLabelText('Endereço da arena'), 'Centro');
   await user.click(screen.getByRole('button', { name: 'Buscar arenas' }));
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({ page: 1, search: 'Centro' }),
     ),
   );
   await user.selectOptions(screen.getByLabelText('Modalidade'), '1');
+  await user.click(screen.getByRole('button', { name: 'Mapa' }));
   await user.click(screen.getByRole('button', { name: 'Buscar nesta região' }));
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({
         lat: -23,
@@ -99,7 +101,7 @@ it('searches, filters, paginates and discovers nearby arenas without Places API'
   );
   await user.selectOptions(screen.getByLabelText('Raio'), '25');
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({ radiusKm: 25 }),
     ),
@@ -163,7 +165,7 @@ it('offers a larger radius on empty results and displays request errors', async 
   await user.click(screen.getByRole('button', { name: 'Buscar nesta região' }));
   await user.click(await screen.findByRole('button', { name: 'Ampliar raio' }));
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({ radiusKm: 10 }),
     ),
@@ -188,7 +190,7 @@ it('opens the arena referenced by an appointment and clears the selection to exp
     screen.getByRole('button', { name: 'Explorar outras arenas' }),
   );
   await waitFor(() =>
-    expect(list).toHaveBeenLastCalledWith(
+    expect(list).toHaveBeenCalledWith(
       'token',
       expect.objectContaining({ arenaId: undefined }),
     ),
@@ -232,9 +234,7 @@ it('reuses catalog queries and discovery state when returning from another page'
   await user.click(
     await screen.findByRole('button', { name: 'Buscar nesta região' }),
   );
-  await screen.findByText(
-    '21 arenas encontradas em até 5 km. Resultados desta página no mapa e na lista.',
-  );
+  await screen.findByText(/21 arenas encontradas em até 5 km/);
   await user.click(screen.getByRole('button', { name: 'Lista' }));
   const calls = list.mock.calls.length;
   first.unmount();
@@ -246,4 +246,35 @@ it('reuses catalog queries and discovery state when returning from another page'
   expect(screen.getByLabelText('Raio')).toHaveValue('5');
   await user.click(screen.getByRole('button', { name: 'Mapa' }));
   expect(list).toHaveBeenCalledTimes(calls);
+});
+
+it('shows arenas from every API page within the selected radius on the map', async () => {
+  const user = userEvent.setup();
+  const farArena = {
+    ...arena,
+    id: '99',
+    address: 'Quadra a 90 km',
+    distanceKm: 90,
+  };
+  vi.spyOn(api, 'listArenas').mockImplementation(async (_token, filters) => {
+    const options = typeof filters === 'object' ? filters : {};
+    if (!options?.lat) return { ...page, hasNextPage: false };
+    return {
+      ...page,
+      items: options.page === 2 ? [farArena] : [arena],
+      hasNextPage: options.page !== 2,
+    };
+  });
+  renderWithProviders(<ArenaDiscovery />);
+  await user.click(screen.getByRole('button', { name: 'Buscar nesta região' }));
+  await user.selectOptions(screen.getByLabelText('Raio'), '100');
+  expect(
+    await screen.findByRole('button', { name: 'Marcador Quadra a 90 km' }),
+  ).toBeVisible();
+  expect(
+    screen.getByRole('button', { name: 'Marcador Quadra Central' }),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole('button', { name: 'Próxima' }),
+  ).not.toBeInTheDocument();
 });

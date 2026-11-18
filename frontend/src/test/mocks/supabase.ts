@@ -29,6 +29,7 @@ export function createSupabaseMock() {
       return channel;
     }),
     track: vi.fn().mockResolvedValue('ok'),
+    send: vi.fn().mockResolvedValue('ok'),
     presenceState: presence,
     unsubscribe: vi.fn().mockResolvedValue('ok'),
   };

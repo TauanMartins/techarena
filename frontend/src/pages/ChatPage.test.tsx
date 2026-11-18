@@ -88,11 +88,9 @@ describe('ChatPage', () => {
 
     await user.click(await screen.findByRole('button', { name: /Bia/ }));
     expect(
-      await screen.findByText('Verificando presença...'),
+      await screen.findByText('Presença indisponível'),
     ).toBeInTheDocument();
-    await user.click(
-      screen.getByRole('button', { name: 'Detalhes da conversa' }),
-    );
+    await user.click(screen.getByRole('button', { name: /Detalhes de/ }));
     expect(await screen.findByText('Detalhes da conversa')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Close' }));
     await user.click(

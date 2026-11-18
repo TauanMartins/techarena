@@ -1,7 +1,9 @@
-import Alert from 'react-bootstrap/Alert';
+import { ToastNotice } from '../components/ui/ToastNotice';
+import { useState } from 'react';
+import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -14,18 +16,20 @@ import { LeagueInvitations } from '../features/leagues/components/LeagueInvitati
 import { useLeagueWorkspace } from '../features/leagues/hooks/useLeagueWorkspace';
 
 export function LeaguePage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const page = useLeagueWorkspace(
-    session!.access_token,
-    session!.user.id,
-    '',
-    (id) => navigate(`/ligas/${id}`),
+  const page = useLeagueWorkspace(token, userId, '', (id) =>
+    navigate(`/ligas/${id}`),
   );
   const { data } = page;
+  const [showAll, setShowAll] = useState(false);
+  const leagues = data.leagues.filter(
+    (league) => showAll || ['open', 'active'].includes(league.status),
+  );
 
   return (
     <>
+      {page.confirmationDialog}
       <PageHeading
         eyebrow="COMPETIÇÃO E COMUNIDADE"
         title="Ligas e torneios"
@@ -42,13 +46,10 @@ export function LeaguePage() {
       />
       {page.error && <ErrorState message={page.error} />}
       {page.notice && (
-        <Alert
-          variant="success"
-          dismissible
-          onClose={() => page.setNotice(null)}
-        >
-          {page.notice}
-        </Alert>
+        <ToastNotice
+          message={page.notice}
+          requiresAcknowledgment={page.noticeRequiresAcknowledgment}
+        />
       )}
       <LeagueInvitations
         invitations={data.teamInvitations}
@@ -62,9 +63,22 @@ export function LeaguePage() {
           onSubmit={(event) => void page.createLeague(event)}
         />
       )}
+      <Form.Group
+        className="mb-3"
+        controlId="league-status-filter"
+      >
+        <Form.Label>Exibir ligas</Form.Label>
+        <Form.Select
+          value={showAll ? 'all' : 'active'}
+          onChange={(event) => setShowAll(event.target.value === 'all')}
+        >
+          <option value="active">Ativas</option>
+          <option value="all">Todas (incluindo encerradas e canceladas)</option>
+        </Form.Select>
+      </Form.Group>
       {data.isLoading ? (
         <LoadingState label="Carregando ligas..." />
-      ) : data.leagues.length === 0 ? (
+      ) : leagues.length === 0 ? (
         <EmptyState
           icon="bi-trophy"
           title="Nenhuma liga criada"
@@ -72,7 +86,7 @@ export function LeaguePage() {
         />
       ) : (
         <LeagueCatalog
-          leagues={data.leagues}
+          leagues={leagues}
           selectedId=""
           onSelect={(id) => navigate(`/ligas/${id}`)}
         />

@@ -1,0 +1,64 @@
+.thread {
+  min-height: 0;
+  min-width: 0;
+}
+.composer {
+  textarea {
+    resize: none;
+    min-height: 44px;
+    max-height: 144px;
+    overflow-y: auto;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+  }
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+.message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.bubble {
+  max-width: 88%;
+  width: fit-content;
+}
+.dots span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.2s infinite alternate;
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+@keyframes pulse {
+  to {
+    opacity: 0.3;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dots span {
+    animation: none;
+  }
+}
+@media (max-width: 767.98px) {
+  .fullscreen {
+    position: fixed;
+    inset-inline: 0;
+    top: var(--chat-top, 0px);
+    height: var(--chat-height, 100dvh) !important;
+    z-index: 1030;
+    background: var(--bs-body-bg);
+    padding-top: env(safe-area-inset-top);
+    > :global(.row) {
+      border: 0 !important;
+      border-radius: 0 !important;
+    }
+  }
+}

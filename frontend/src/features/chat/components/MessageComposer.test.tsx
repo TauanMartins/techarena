@@ -74,3 +74,43 @@ describe('MessageComposer', () => {
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 });
+
+it('uses multiline input and caps its growth while preserving line breaks', () => {
+  const props = {
+    onTextChange: vi.fn(),
+    onSubmit: vi.fn(),
+    sending: false,
+    connected: true,
+  };
+  const { rerender } = render(
+    <MessageComposer
+      {...props}
+      text="Olá"
+    />,
+  );
+  const input = screen.getByRole('textbox', { name: 'Mensagem' });
+  expect(input.tagName).toBe('TEXTAREA');
+  Object.defineProperty(input, 'scrollHeight', {
+    configurable: true,
+    value: 400,
+  });
+  rerender(
+    <MessageComposer
+      {...props}
+      text={'Olá\nSegunda linha'}
+    />,
+  );
+  expect(input).toHaveValue('Olá\nSegunda linha');
+  expect(input).toHaveStyle({ height: '144px' });
+  Object.defineProperty(input, 'scrollHeight', {
+    configurable: true,
+    value: 44,
+  });
+  rerender(
+    <MessageComposer
+      {...props}
+      text=""
+    />,
+  );
+  expect(input).toHaveStyle({ height: '46px' });
+});

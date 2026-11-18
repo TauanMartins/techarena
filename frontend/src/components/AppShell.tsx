@@ -1,3 +1,4 @@
+import { FeedbackNotifications } from './FeedbackNotifications';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -19,6 +20,7 @@ import { MobileNavigation } from './MobileNavigation';
 export function AppShell() {
   const { profile, logout, session, profileError, refreshProfile } = useAuth();
   const location = useLocation();
+  const inConversation = /^\/chat\/[^/]+\/[^/]+/.test(location.pathname);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [communitiesOpen, setCommunitiesOpen] = useState(() =>
     communityNavigation.some((item) =>
@@ -101,6 +103,7 @@ export function AppShell() {
       fluid
       className="vh-100 h-dvh d-flex flex-column bg-body-tertiary p-0 pt-safe-0 ps-safe-0 pe-safe-0 overflow-hidden"
     >
+      <FeedbackNotifications />
       <a
         href="#main-content"
         className="visually-hidden-focusable position-absolute top-0 start-0 z-3 bg-body p-3"
@@ -190,7 +193,9 @@ export function AppShell() {
           xxl={10}
           className="d-flex flex-column flex-grow-1 flex-shrink-1 min-h-0 overflow-hidden"
         >
-          <Navbar className="bg-body border-bottom px-3 px-md-4 py-2 py-lg-3 gap-3 flex-shrink-0">
+          <Navbar
+            className={`${inConversation ? 'd-none d-md-flex' : ''} bg-body border-bottom px-3 px-md-4 py-2 py-lg-3 gap-3 flex-shrink-0`}
+          >
             <div className="small text-body-secondary fw-semibold">
               {navigation.find((item) => item.to === location.pathname)
                 ?.label ??
@@ -226,7 +231,7 @@ export function AppShell() {
               as="nav"
               variant="pills"
               fill
-              className="d-lg-none flex-nowrap gap-1 p-2 bg-body border-bottom flex-shrink-0"
+              className={`${inConversation ? 'd-none d-md-flex d-lg-none' : 'd-lg-none'} flex-nowrap gap-1 p-2 bg-body border-bottom flex-shrink-0`}
               aria-label="Navegação social mobile"
             >
               {communityNavigation.map((item) => (
@@ -248,7 +253,7 @@ export function AppShell() {
             as="main"
             id="main-content"
             tabIndex={-1}
-            className="flex-grow-1 min-h-0 overflow-auto p-3 p-md-4"
+            className={`flex-grow-1 min-h-0 overflow-auto ${inConversation ? 'p-0 p-md-4' : 'p-3 p-md-4'}`}
           >
             <Outlet />
           </Container>
@@ -260,7 +265,9 @@ export function AppShell() {
           </footer>
         </Col>
       </Row>
-      <MobileNavigation communityActive={isCommunityRoute} />
+      <div className={inConversation ? 'd-none d-md-block' : ''}>
+        <MobileNavigation communityActive={isCommunityRoute} />
+      </div>
     </Container>
   );
 }

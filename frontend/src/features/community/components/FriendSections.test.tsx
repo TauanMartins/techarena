@@ -41,16 +41,19 @@ describe('FriendSections', () => {
         onAccept={onAccept}
         onBlock={onBlock}
         onChat={onChat}
+        onRemove={vi.fn()}
         busy={false}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Aceitar' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Bloquear' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Conversar' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Bloquear' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Conversar com Ana' }));
     expect(onAccept).toHaveBeenCalledWith('friend-1');
     expect(onBlock).toHaveBeenCalledWith('friend-1');
     expect(onChat).toHaveBeenCalledWith(friend.user);
-    expect(screen.getAllByRole('button', { name: 'Detalhes' })).toHaveLength(1);
+    expect(
+      screen.getAllByRole('button', { name: 'Ações para Ana' }),
+    ).toHaveLength(1);
   });
 
   it('disables request decisions while a mutation is pending', () => {

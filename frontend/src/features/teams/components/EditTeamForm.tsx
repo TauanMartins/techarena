@@ -2,7 +2,7 @@ import { useState, type SubmitEvent } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import { useAuth } from '../../../auth/useAuth';
+import { useAuthenticatedSession } from '../../../auth/useAuthenticatedSession';
 import { teamsApi } from '../api/teams.api';
 import { teamFormSchema, type TeamFormValues } from '../schemas/team.schema';
 import type { Team, TeamMembership } from '../../../shared/types';
@@ -14,7 +14,7 @@ export function EditTeamForm({
   team: Pick<TeamMembership, 'id' | 'name' | 'description' | 'image'>;
   onSaved: (team: Team) => void;
 }) {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const client = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(team.name);
@@ -23,7 +23,7 @@ export function EditTeamForm({
   const mutation = useMutation({
     mutationFn: (values: TeamFormValues) =>
       teamsApi.update(
-        session!.access_token,
+        token,
         team.id,
         values.name,
         values.description ?? '',
@@ -39,9 +39,7 @@ export function EditTeamForm({
           'chatConversations',
           'teamDetails',
           'leagueDetails',
-        ].map((key) =>
-          client.invalidateQueries({ queryKey: [key, session!.user.id] }),
-        ),
+        ].map((key) => client.invalidateQueries({ queryKey: [key, userId] })),
       );
     },
   });

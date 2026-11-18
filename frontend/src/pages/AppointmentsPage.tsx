@@ -1,10 +1,11 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { AppointmentFilters } from '../features/appointments/components/AppointmentFilters';
 import { PageControls } from '../components/ui/PageControls';
 import { useLocation } from '../features/arenas/hooks/useLocation';
 import { useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import { AppointmentCard } from '../features/appointments/components/AppointmentCard';
 import { BookingModal } from '../features/appointments/components/BookingModal';
 import {
@@ -19,17 +20,15 @@ import {
 } from '../features/appointments/api/appointments.api';
 
 export function AppointmentsPage() {
-  const { session } = useAuth();
+  const { session, token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const token = session!.access_token;
-  const userId = session!.user.id;
   const [notice, setNotice] = useState<string | null>(null);
   const [showBooking, setShowBooking] = useState(false);
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   const mine = params.get('view') === 'mine';
   const page = Math.max(1, Number(params.get('page')) || 1);
-  const sort = params.get('sort') ?? 'soon';
+  const sort = params.get('sort') ?? (location.point ? 'near' : 'soon');
   const period = params.get('period') ?? 'upcoming';
   const radius = Number(params.get('radius'));
   const useDistance = sort === 'near' || sort === 'far';
@@ -54,15 +53,15 @@ export function AppointmentsPage() {
       sportId: params.get('sportId') || undefined,
       arenaId: params.get('arenaId') || undefined,
       period:
-        mine && (period === 'upcoming' || period === 'past')
+        period === 'upcoming' || period === 'past' || period === 'all'
           ? period
           : undefined,
       orderByTime: sort === 'later' ? 'future' : 'recent',
       preferSports: params.get('favorites') === 'true',
-      ...(location.point && useDistance
+      ...(location.point
         ? {
             ...location.point,
-            distance: sort as 'near' | 'far',
+            distance: useDistance ? (sort as 'near' | 'far') : 'none',
             radiusKm: radius > 0 && radius <= 1000 ? radius : undefined,
           }
         : {}),
@@ -166,15 +165,7 @@ export function AppointmentsPage() {
           </Button>
         )}
       </div>
-      {notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {notice}
-        </div>
-      )}
+      {notice && <ToastNotice message={notice} />}
       {appointmentsQuery.isPending && (
         <LoadingState label="Carregando agendamentos..." />
       )}
@@ -224,7 +215,7 @@ export function AppointmentsPage() {
               >
                 <AppointmentCard
                   appointment={appointment}
-                  token={session!.access_token}
+                  token={token}
                   joined={joined}
                   error={
                     isCurrentMutation ? joinMutation.error?.message : undefined

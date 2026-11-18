@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import Button from 'react-bootstrap/Button';
+import { useCurrentTimestamp } from '../../../shared/clock';
 import ListGroup from 'react-bootstrap/ListGroup';
 import { IconButton } from '../../../components/ui/IconButton';
 import { LoadingState } from '../../../components/ui/Feedback';
@@ -17,6 +20,17 @@ export function ConversationList({
   onRefresh: () => void;
   onOpen: (conversation: Conversation) => void;
 }) {
+  const [showAll, setShowAll] = useState(false);
+  const [kind, setKind] = useState('all');
+  const now = useCurrentTimestamp();
+  const visible = conversations.filter(
+    (item) =>
+      (kind === 'all' || item.kind === kind) &&
+      (item.kind !== 'appointment' ||
+        showAll ||
+        ((!item.status || item.status === 'scheduled') &&
+          (!item.scheduledAt || new Date(item.scheduledAt).getTime() > now))),
+  );
   return (
     <aside className="bg-body">
       <div className="d-flex align-items-center justify-content-between gap-2 p-3 border-bottom sticky-top bg-body">
@@ -24,8 +38,7 @@ export function ConversationList({
           <strong>Conversas</strong>
           {!loading && (
             <small className="text-body-secondary">
-              {conversations.length}{' '}
-              {conversations.length === 1 ? 'conversa' : 'conversas'}
+              {visible.length} {visible.length === 1 ? 'conversa' : 'conversas'}
             </small>
           )}
         </div>
@@ -35,15 +48,50 @@ export function ConversationList({
           onClick={onRefresh}
         />
       </div>
+      <div className="d-flex align-items-center gap-1 p-2 border-bottom">
+        <div
+          className="d-flex flex-wrap gap-1 flex-grow-1"
+          role="group"
+          aria-label="Filtrar conversas"
+        >
+          {[
+            ['all', 'Todas'],
+            ['direct', 'Pessoas'],
+            ['team', 'Equipes'],
+            ['appointment', 'Agendamentos'],
+          ].map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={kind === value ? 'primary' : 'outline-secondary'}
+              className="rounded-pill"
+              aria-pressed={kind === value}
+              onClick={() => setKind(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        {(kind === 'all' || kind === 'appointment') && (
+          <IconButton
+            icon="bi-clock-history"
+            label="Incluir encerrados"
+            aria-pressed={showAll}
+            variant={showAll ? 'primary' : 'outline-secondary'}
+            onClick={() => setShowAll(!showAll)}
+          />
+        )}
+      </div>
       {loading && <LoadingState label="Carregando..." />}
-      {!loading && !conversations.length && (
+      {!loading && !visible.length && (
         <div className="p-3 small text-body-secondary">
           Adicione amizades, entre em equipes ou participe de partidas para
           iniciar uma conversa.
         </div>
       )}
       <ListGroup variant="flush">
-        {conversations.map((conversation) => (
+        {visible.map((conversation) => (
           <ListGroup.Item
             action
             type="button"

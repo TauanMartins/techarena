@@ -1,4 +1,4 @@
-import Alert from 'react-bootstrap/Alert';
+import { ToastNotice } from './ToastNotice';
 import Stack from 'react-bootstrap/Stack';
 import Spinner from 'react-bootstrap/Spinner';
 
@@ -20,17 +20,10 @@ export function LoadingState({ label = 'Carregando...' }: { label?: string }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <Alert
-      variant="danger"
-      role="alert"
-      className="mb-0"
-    >
-      <i
-        className="bi bi-exclamation-circle me-2"
-        aria-hidden="true"
-      />
-      {message}
-    </Alert>
+    <ToastNotice
+      message={message}
+      error
+    />
   );
 }
 

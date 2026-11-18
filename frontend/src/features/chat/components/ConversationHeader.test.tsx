@@ -28,14 +28,14 @@ describe('ConversationHeader', () => {
         onDetails={onDetails}
       />,
     );
-    expect(screen.getByText('Pessoa online agora')).toBeInTheDocument();
-    expect(screen.getByText('Sua conexão: indisponível')).toBeInTheDocument();
+    expect(screen.getByText('Presença indisponível')).toBeInTheDocument();
+    expect(
+      screen.getByText('Chat indisponível. Tente reconectar.'),
+    ).toBeInTheDocument();
     fireEvent.click(
       screen.getByRole('button', { name: 'Voltar para conversas' }),
     );
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Detalhes da conversa' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Detalhes de Bia' }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Reconectar conversa' }),
     );
@@ -59,7 +59,52 @@ describe('ConversationHeader', () => {
         onDetails={vi.fn()}
       />,
     );
-    expect(screen.getByText('Verificando presença...')).toBeInTheDocument();
-    expect(screen.getByText('Sua conexão: conectando...')).toBeInTheDocument();
+    expect(screen.getByText('Presença indisponível')).toBeInTheDocument();
+    expect(screen.getByText('Conectando ao chat…')).toBeInTheDocument();
   });
+});
+
+it('prioritizes typing, hides successful connection noise and reacts to lost internet', () => {
+  const thread = {
+    connection: 'connected',
+    presenceSynced: true,
+    onlineUserIds: ['friend'],
+    typingPeople: [
+      { id: 'friend', name: 'Bia', image: null, expiresAt: Date.now() + 5000 },
+    ],
+  } as unknown as ReturnType<typeof useChatThread>;
+  const props = {
+    conversation: {
+      id: 'friend',
+      otherUserId: 'friend',
+      kind: 'direct' as const,
+      label: 'Bia',
+    },
+    thread,
+    userId: 'me',
+    onBack: vi.fn(),
+    onDetails: vi.fn(),
+  };
+  const { rerender } = render(<ConversationHeader {...props} />);
+  expect(screen.getByText('Digitando…')).toBeInTheDocument();
+  expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  rerender(
+    <ConversationHeader
+      {...props}
+      thread={{ ...thread, typingPeople: [] }}
+    />,
+  );
+  expect(screen.getByText('Online')).toBeInTheDocument();
+  rerender(
+    <ConversationHeader
+      {...props}
+      thread={{ ...thread, typingPeople: [], onlineUserIds: [] }}
+    />,
+  );
+  expect(screen.getByText('Offline')).toBeInTheDocument();
+  const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+  fireEvent(window, new Event('offline'));
+  expect(screen.getByRole('status')).toHaveTextContent('Sem internet');
+  expect(screen.getByText('Presença indisponível')).toBeInTheDocument();
+  online.mockRestore();
 });

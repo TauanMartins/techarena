@@ -62,4 +62,28 @@ describe('friends migration workflows', () => {
     ]);
     expect(await h.db.getRepository(Friend).count()).toBe(1);
   });
+  it('removes accepted friendships, revokes both chat participants and preserves blocks', async () => {
+    const pending = await h
+      .post('/friend')
+      .send({ userId: actors.bob })
+      .expect(200);
+    await h
+      .put('/friend', 'bob')
+      .send({ friendId: pending.body.id, action: 'accept' })
+      .expect(200);
+    await h.delete(`/friend/${pending.body.id}`, 'carol').expect(403);
+    await h.delete(`/friend/${pending.body.id}`, 'bob').expect(200);
+    expect((await h.get('/friend')).body.friends.total).toBe(0);
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledTimes(4);
+    const next = await h
+      .post('/friend')
+      .send({ userId: actors.bob })
+      .expect(200);
+    await h
+      .put('/friend', 'bob')
+      .send({ friendId: next.body.id, action: 'block' })
+      .expect(200);
+    await h.delete(`/friend/${next.body.id}`).expect(409);
+    await h.post('/friend').send({ userId: actors.bob }).expect(409);
+  });
 });

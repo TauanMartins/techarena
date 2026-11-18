@@ -79,6 +79,9 @@ export class TypeormFriendsRepository implements FriendsRepository {
     return databaseWrite(() =>
       this.source.transaction((m) =>
         work({
+          remove: async (id) => {
+            await m.getRepository(Friend).delete({ id });
+          },
           userExists: (id) => m.getRepository(User).existsBy({ id }),
           relationshipExists: (actor, userId) =>
             m

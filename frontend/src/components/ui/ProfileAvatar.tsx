@@ -8,7 +8,7 @@ export function ProfileAvatar({
 }: {
   name: string | null;
   image: string | null;
-  size?: 40 | 80;
+  size?: 24 | 40 | 80;
   className?: string;
 }) {
   return (

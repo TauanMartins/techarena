@@ -167,7 +167,7 @@ it('preserves filters, resets pagination and switches to personal history', asyn
   await vi.waitFor(() =>
     expect(personal).toHaveBeenLastCalledWith(
       'token',
-      expect.objectContaining({ period: undefined }),
+      expect.objectContaining({ period: 'all' }),
     ),
   );
   await user.click(screen.getByRole('button', { name: 'Atualizar' }));

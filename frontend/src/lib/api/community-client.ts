@@ -2,6 +2,10 @@ import type { FriendGroups, Page, UserCard } from '../../shared/types';
 import { apiRequest } from './api-request';
 import { queryString } from './query-string';
 export const communityClient = {
+  removeFriend: (token: string, friendId: string) =>
+    apiRequest<{ success: boolean }>(`/friend/${friendId}`, token, {
+      method: 'DELETE',
+    }),
   searchUsers: (token: string, search: string) =>
     apiRequest<Page<UserCard>>(
       `/users${queryString({ page: 1, limit: 20, search })}`,

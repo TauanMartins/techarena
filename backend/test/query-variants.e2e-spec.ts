@@ -36,7 +36,7 @@ describe('SQL filter, ordering and pagination variants', () => {
       .expect(200);
     for (const path of ['/appointments', '/appointments/user']) {
       for (const preferSports of ['false', 'true']) {
-        for (const distance of ['near', 'far']) {
+        for (const distance of ['near', 'far', 'none']) {
           for (const orderByTime of ['recent', 'future']) {
             const query = {
               preferSports,

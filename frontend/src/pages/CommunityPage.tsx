@@ -1,7 +1,9 @@
-import { useState, type SubmitEvent } from 'react';
+import { useConfirmation } from '../components/ui/useConfirmation';
+import { ToastNotice } from '../components/ui/ToastNotice';
+import { useEffect, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from 'react-bootstrap/Card';
-import { useAuth } from '../auth/useAuth';
+import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
 import {
   EmptyState,
   ErrorState,
@@ -19,20 +21,28 @@ import {
 import type { UserCard } from '../features/community/types/community.types';
 
 export function CommunityPage() {
-  const { session } = useAuth();
+  const { token, userId } = useAuthenticatedSession();
   const navigate = useNavigate();
-  const token = session!.access_token;
-  const userId = session!.user.id;
+  const confirmation = useConfirmation();
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeRequiresAcknowledgment, setNoticeRequiresAcknowledgment] =
+    useState(false);
   const [selectedPerson, setSelectedPerson] = useState<UserCard | null>(null);
   const groupsQuery = useFriendGroups(token, userId);
   const directoryQuery = useAthleteDirectory(token, userId, submittedSearch);
   const mutations = useFriendMutations(token, userId);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSubmittedSearch(search.trim().length >= 2 ? search.trim() : '');
+      setSearchError(null);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
   const groups = groupsQuery.data;
-  const people = directoryQuery.data ?? [];
+  const people = search.trim().length >= 2 ? (directoryQuery.data ?? []) : [];
   const incoming = groups?.receivedFriends.items ?? [];
   const friends = groups?.friends.items ?? [];
   const friendIds = new Set(friends.map((friend) => friend.user.id));
@@ -57,6 +67,7 @@ export function CommunityPage() {
   async function requestFriend(id: string) {
     try {
       await mutations.request.mutateAsync(id);
+      setNoticeRequiresAcknowledgment(false);
       setNotice('Solicitação de amizade enviada.');
     } catch {
       setNotice(null);
@@ -65,6 +76,7 @@ export function CommunityPage() {
   async function decideFriend(friendId: string, action: 'accept' | 'block') {
     try {
       await mutations.decide.mutateAsync({ friendId, action });
+      setNoticeRequiresAcknowledgment(action === 'block');
       setNotice(
         action === 'accept'
           ? 'Solicitação aceita. Vocês já podem conversar.'
@@ -83,13 +95,10 @@ export function CommunityPage() {
         description="Encontre atletas, construa amizades e combine o próximo jogo."
       />
       {notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {notice}
-        </div>
+        <ToastNotice
+          message={notice}
+          requiresAcknowledgment={noticeRequiresAcknowledgment}
+        />
       )}
       {error && (
         <ErrorState
@@ -147,11 +156,33 @@ export function CommunityPage() {
         friends={friends}
         onDetails={setSelectedPerson}
         onAccept={(id) => void decideFriend(id, 'accept')}
-        onBlock={(id) => void decideFriend(id, 'block')}
+        onBlock={(id) =>
+          confirmation.request({
+            title: 'Bloquear atleta',
+            message:
+              'A conversa privada ficará indisponível e novas solicitações de amizade serão impedidas.',
+            label: 'Bloquear',
+            onConfirm: () => decideFriend(id, 'block'),
+          })
+        }
         onChat={(person) => navigate(`/chat/direct/${person.id}`)}
-        busy={mutations.decide.isPending}
+        onRemove={(id) =>
+          confirmation.request({
+            title: 'Desfazer amizade',
+            message:
+              'A conversa privada ficará indisponível. Vocês poderão enviar uma nova solicitação no futuro.',
+            label: 'Desfazer amizade',
+            onConfirm: async () => {
+              await mutations.remove.mutateAsync(id);
+              setNoticeRequiresAcknowledgment(true);
+              setNotice('Amizade desfeita.');
+            },
+          })
+        }
+        busy={mutations.decide.isPending || mutations.remove.isPending}
       />
       {groupsQuery.isPending && <LoadingState />}
+      {confirmation.dialog}
       <AthleteDetailsModal
         person={selectedPerson}
         onHide={() => setSelectedPerson(null)}

@@ -1,3 +1,4 @@
+import { venueTime } from '../../../../common/domain/venue-time.js';
 import { assertFutureSlot } from '../../../appointments/domain/booking-policy.js';
 import { assertLeagueSlot } from '../../domain/assert-league-slot.js';
 import { assertMatchCreation } from '../../domain/assert-match-creation.js';
@@ -32,7 +33,7 @@ export async function createMatch(
     const arena = requireLeagueArena(arenas[0]);
     const schedules = await manager.createMatchFindSchedule(input.scheduleId);
     requireLeagueSchedule(schedules[0]);
-    const scheduledAt = new Date(`${input.date}T${schedules[0].horary}Z`);
+    const scheduledAt = venueTime(input.date, schedules[0].horary);
     assertFutureSlot(scheduledAt, clock());
     const available = await manager.createMatchCheckSlot(
       input.arenaId,

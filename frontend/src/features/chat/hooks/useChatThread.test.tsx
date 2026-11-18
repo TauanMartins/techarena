@@ -24,6 +24,8 @@ vi.mock('./useChatRealtime', () => ({
     presenceSynced: true,
     retry: vi.fn(),
     retryCount: 0,
+    setTyping: vi.fn(),
+    typingPeople: [],
   }),
 }));
 vi.mock('../api/message-data', () => ({

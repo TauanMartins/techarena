@@ -4,6 +4,7 @@ import { queryKeys } from '../../../lib/query-client';
 
 export const communityApi = {
   listFriends: api.listFriends,
+  removeFriend: api.removeFriend,
   searchUsers: api.searchUsers,
   requestFriend: api.requestFriend,
   decideFriend: api.decideFriend,
@@ -43,6 +44,10 @@ export function useFriendMutations(token: string, userId: string) {
       }),
     ]);
   return {
+    remove: useMutation({
+      mutationFn: (id: string) => communityApi.removeFriend(token, id),
+      onSuccess: refreshDecisions,
+    }),
     request: useMutation({
       mutationFn: (friendId: string) =>
         communityApi.requestFriend(token, friendId),

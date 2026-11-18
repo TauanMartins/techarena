@@ -97,6 +97,31 @@ describe('catalogs migration workflows', () => {
     await h.get('/arenas/admin').expect(403);
     await h.get('/arenas/admin', 'admin').expect(200);
   });
+  it('includes courts inside a 100 km radius across pages and excludes those outside it', async () => {
+    for (const [address, lat] of [
+      ['Inside radius', 0.8],
+      ['Outside radius', 1.1],
+    ] as const) {
+      await h
+        .post('/arenas', 'admin')
+        .send({
+          address,
+          lat,
+          longitude: 0,
+          sportIds: ['1'],
+          isLeagueOnly: false,
+        })
+        .expect(201);
+    }
+    const result = await h
+      .get('/arenas')
+      .query({ lat: 0, longitude: 0, radiusKm: 100, limit: 1 })
+      .expect(200);
+    expect(result.body.items[0].address).toBe('Inside radius');
+    expect(result.body.items[0].distanceKm).toBeGreaterThan(80);
+    expect(result.body.items[0].distanceKm).toBeLessThan(100);
+    expect(result.body.total).toBe(1);
+  });
   it('limits arena writes to administrators and changes sports transactionally', async () => {
     const body = {
       address: 'Second court',

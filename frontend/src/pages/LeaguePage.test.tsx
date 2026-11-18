@@ -2,6 +2,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { LeagueDetailsPage } from './LeagueDetailsPage';
 import {
   cleanup,
+  within,
   fireEvent,
   render,
   screen,
@@ -171,7 +172,14 @@ describe('LeaguePage', () => {
     vi.mocked(api.setLeagueStatus).mockResolvedValue({ success: true });
     vi.stubGlobal('confirm', vi.fn().mockReturnValue(true));
     renderLeaguePage('/ligas/1');
-    await screen.findByRole('button', { name: 'Salvar configurações' });
+    await screen.findByRole('button', { name: 'Editar liga' });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar liga' }));
+    expect(
+      screen.getByRole('button', { name: 'Salvar configurações' }),
+    ).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Nome'), {
+      target: { value: 'Liga editada' },
+    });
     fireEvent.click(
       screen.getByRole('button', { name: 'Salvar configurações' }),
     );
@@ -179,10 +187,17 @@ describe('LeaguePage', () => {
       expect(api.updateLeague).toHaveBeenCalledWith(
         'test-token',
         '1',
-        expect.objectContaining({ name: 'Liga de teste' }),
+        expect.objectContaining({ name: 'Liga editada' }),
       ),
     );
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar liga' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancelar liga' }));
+    expect(api.setLeagueStatus).not.toHaveBeenCalled();
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Cancelar liga',
+      }),
+    );
     await waitFor(() =>
       expect(api.setLeagueStatus).toHaveBeenCalledWith(
         'test-token',
@@ -190,7 +205,7 @@ describe('LeaguePage', () => {
         'canceled',
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Close alert' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Entendi' }));
     expect(screen.queryByText('Liga cancelada.')).not.toBeInTheDocument();
   });
 
