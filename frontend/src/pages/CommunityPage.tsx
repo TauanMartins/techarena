@@ -1,6 +1,6 @@
 import { useConfirmation } from '../components/ui/useConfirmation';
 import { ToastNotice } from '../components/ui/ToastNotice';
-import { useState, type SubmitEvent } from 'react';
+import { useEffect, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from 'react-bootstrap/Card';
 import { useAuthenticatedSession } from '../auth/useAuthenticatedSession';
@@ -34,8 +34,15 @@ export function CommunityPage() {
   const groupsQuery = useFriendGroups(token, userId);
   const directoryQuery = useAthleteDirectory(token, userId, submittedSearch);
   const mutations = useFriendMutations(token, userId);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSubmittedSearch(search.trim().length >= 2 ? search.trim() : '');
+      setSearchError(null);
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [search]);
   const groups = groupsQuery.data;
-  const people = directoryQuery.data ?? [];
+  const people = search.trim().length >= 2 ? (directoryQuery.data ?? []) : [];
   const incoming = groups?.receivedFriends.items ?? [];
   const friends = groups?.friends.items ?? [];
   const friendIds = new Set(friends.map((friend) => friend.user.id));

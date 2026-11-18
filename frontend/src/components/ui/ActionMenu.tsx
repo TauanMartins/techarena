@@ -31,6 +31,7 @@ export function ActionMenu({
   return (
     <Dropdown align="end">
       <Dropdown.Toggle
+        bsPrefix="action-menu-toggle"
         variant="link"
         className="text-body p-2 shadow-none"
         aria-label={label}

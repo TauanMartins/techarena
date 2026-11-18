@@ -112,7 +112,9 @@ export function FriendSections({
                 onDetails={() => onDetails(friend.user)}
               >
                 <IconButton
-                  icon="bi-chat-dots"
+                  icon="bi-chat"
+                  variant="link"
+                  className="text-primary p-2"
                   label={`Conversar com ${friend.user.name}`}
                   onClick={() => onChat(friend.user)}
                 />
