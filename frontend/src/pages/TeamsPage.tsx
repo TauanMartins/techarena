@@ -1,3 +1,4 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { useState, type SubmitEvent } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -144,15 +145,7 @@ export function TeamsPage() {
           </Button>
         }
       />
-      {actions.notice && (
-        <div
-          className="alert alert-success d-flex align-items-center gap-2"
-          role="status"
-        >
-          <i className="bi bi-check-circle-fill" />
-          {actions.notice}
-        </div>
-      )}
+      {actions.notice && <ToastNotice message={actions.notice} />}
       {(actions.error || data.error) && (
         <ErrorState
           message={

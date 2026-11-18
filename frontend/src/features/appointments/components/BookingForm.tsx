@@ -1,3 +1,4 @@
+import { ToastNotice } from '../../../components/ui/ToastNotice';
 import { Link } from 'react-router-dom';
 import { useState, type SubmitEvent } from 'react';
 import { PageControls } from '../../../components/ui/PageControls';
@@ -150,9 +151,7 @@ export function BookingForm({
       noValidate
     >
       {errorMessage && <ErrorState message={errorMessage} />}
-      {success && (
-        <Alert variant="success">Agendamento criado com sucesso.</Alert>
-      )}
+      {success && <ToastNotice message={'Agendamento criado com sucesso.'} />}
       {(optionsQuery.isPending || availabilityQuery.isFetching) && (
         <div className="small text-body-secondary">Atualizando opções...</div>
       )}

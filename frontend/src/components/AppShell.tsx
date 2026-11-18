@@ -1,3 +1,4 @@
+import { FeedbackNotifications } from './FeedbackNotifications';
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -101,6 +102,7 @@ export function AppShell() {
       fluid
       className="vh-100 h-dvh d-flex flex-column bg-body-tertiary p-0 pt-safe-0 ps-safe-0 pe-safe-0 overflow-hidden"
     >
+      <FeedbackNotifications />
       <a
         href="#main-content"
         className="visually-hidden-focusable position-absolute top-0 start-0 z-3 bg-body p-3"

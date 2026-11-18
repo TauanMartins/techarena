@@ -1,8 +1,8 @@
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { SectionHeading } from '../components/ui/SectionHeading';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Alert from 'react-bootstrap/Alert';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
@@ -155,12 +155,7 @@ export function SettingsPage() {
         title="Configurações"
         description="Atualize seus dados e personalize sua experiência no TechArena."
       />
-      {notice && (
-        <Alert variant="success">
-          <i className="bi bi-check-circle me-2" />
-          {notice}
-        </Alert>
-      )}
+      {notice && <ToastNotice message={notice} />}
       {errorMessage && <ErrorState message={errorMessage} />}
       {settingsQuery.isPending && (
         <LoadingState label="Carregando preferências..." />
