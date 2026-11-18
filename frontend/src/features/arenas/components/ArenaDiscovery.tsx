@@ -1,3 +1,4 @@
+import { listRegionArenas } from '../api/list-region-arenas';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -77,19 +78,30 @@ export function ArenaDiscovery() {
     search: submittedSearch || undefined,
     ...(location.point ? { ...location.point, radiusKm } : {}),
   };
+  const regionMap = view === 'map' && Boolean(location.point) && !arenaId;
   const arenasQuery = useQuery({
+    enabled: !regionMap,
     queryKey: ['arenas', userId, filters],
     queryFn: () => api.listArenas(token, filters),
     staleTime: 5 * 60_000,
     gcTime: 30 * 60_000,
   });
+  const { page: _page, ...regionFilters } = filters;
+  const mapQuery = useQuery({
+    queryKey: ['arenaMapResults', userId, regionFilters],
+    enabled: regionMap,
+    queryFn: ({ signal }) => listRegionArenas(token, regionFilters, signal),
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+  });
+  const results = regionMap ? mapQuery : arenasQuery;
   const sportsQuery = useQuery({
     queryKey: ['sports', userId],
     queryFn: () => api.getSports(token),
     staleTime: 60 * 60_000,
     gcTime: 60 * 60_000,
   });
-  const arenas = arenasQuery.data?.items ?? [];
+  const arenas = results.data?.items ?? [];
   const activeArena = selected ?? (arenaId ? arenas[0] : null);
   const sports = sportsQuery.data?.items ?? [];
   function reset() {
@@ -216,8 +228,8 @@ export function ArenaDiscovery() {
         </Button>
         <Button
           variant="outline-secondary"
-          disabled={arenasQuery.isFetching}
-          onClick={() => void arenasQuery.refetch()}
+          disabled={results.isFetching}
+          onClick={() => void results.refetch()}
           aria-label="Atualizar quadras"
         >
           <i
@@ -289,17 +301,20 @@ export function ArenaDiscovery() {
         />
       )}
       {sportsQuery.error && <ErrorState message={sportsQuery.error.message} />}
-      {arenasQuery.error && <ErrorState message={arenasQuery.error.message} />}
-      {arenasQuery.isPending && <LoadingState label="Buscando arenas..." />}
-      {arenasQuery.data && (
+      {results.error && <ErrorState message={results.error.message} />}
+      {results.isPending && <LoadingState label="Buscando arenas..." />}
+      {results.data && (
         <>
           <p
             role="status"
             className="small text-body-secondary mt-3 mb-2"
           >
-            {arenasQuery.data.total} arenas encontradas
+            {results.data.total} arenas encontradas
             {location.point ? ` em até ${radiusKm} km` : ''}. Resultados desta
-            página no mapa e na lista.
+            página na lista.{' '}
+            {regionMap && mapQuery.data
+              ? `${mapQuery.data.items.length} quadras exibidas no mapa.`
+              : ''}
           </p>
           {!arenas.length && (
             <div className="alert alert-info">
@@ -338,16 +353,18 @@ export function ArenaDiscovery() {
               </button>
             ))}
           </div>
-          <PageControls
-            page={page}
-            hasNext={arenasQuery.data.hasNextPage}
-            busy={arenasQuery.isFetching}
-            onChange={(value) => {
-              setPage(value);
-              setSelected(null);
-            }}
-            label="Páginas de arenas"
-          />
+          {view === 'list' && (
+            <PageControls
+              page={page}
+              hasNext={results.data.hasNextPage}
+              busy={results.isFetching}
+              onChange={(value) => {
+                setPage(value);
+                setSelected(null);
+              }}
+              label="Páginas de arenas"
+            />
+          )}
         </>
       )}
       {booking && (
