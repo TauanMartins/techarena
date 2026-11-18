@@ -24,6 +24,7 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "test:notifications": "node scripts/test-notifications.mjs",
     "test:e2e": "vitest run --config ./vitest.config.e2e.ts",
     "typeorm": "node --import tsx ./node_modules/typeorm/cli.js",
     "db:migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
