@@ -1,3 +1,4 @@
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 import { Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -31,6 +32,7 @@ import { UsersModule } from './modules/users/users.module.js';
     LeaguesModule,
     FriendsModule,
     ChatModule,
+    NotificationsModule,
     ConfigurationModule,
     TypeOrmModule.forRootAsync({
       imports: [ConfigurationModule],
