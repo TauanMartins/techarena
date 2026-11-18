@@ -19,7 +19,7 @@ export function Avatar({
 }: {
   image: string | null;
   label: string;
-  size?: 40 | 80;
+  size?: 24 | 40 | 80;
   icon?: keyof typeof placeholderPaths;
   className?: string;
 }) {

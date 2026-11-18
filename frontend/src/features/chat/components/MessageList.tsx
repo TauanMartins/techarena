@@ -1,3 +1,5 @@
+import { ProfileAvatar } from '../../../components/ui/ProfileAvatar';
+import { TypingIndicator, type TypingParticipant } from './TypingIndicator';
 import styles from '../styles/Chat.module.scss';
 import Button from 'react-bootstrap/Button';
 import type { RefObject } from 'react';
@@ -6,6 +8,8 @@ import type { ChatMessage } from '../api/message-mapper';
 
 export function MessageList({
   messages,
+  participantImage,
+  typingPeople = [],
   userId,
   connection,
   chatError,
@@ -16,6 +20,8 @@ export function MessageList({
   endRef,
 }: {
   messages: ChatMessage[];
+  participantImage?: string | null;
+  typingPeople?: TypingParticipant[];
   userId: string;
   connection: string;
   chatError: string | null;
@@ -60,28 +66,38 @@ export function MessageList({
           const own = message.userId === userId;
           return (
             <div
-              className={`d-flex flex-column gap-1 flex-shrink-0 ${styles.bubble} ${own ? 'align-self-end' : 'align-self-start'}`}
+              className={`d-flex align-items-end gap-2 flex-shrink-0 ${styles.bubble} ${own ? 'align-self-end' : 'align-self-start'}`}
               key={message.id}
             >
               {!own && (
-                <span className="small text-body-secondary">
-                  {message.name}
-                </span>
+                <ProfileAvatar
+                  size={24}
+                  name={message.name}
+                  image={participantImage ?? null}
+                />
               )}
-              <div
-                className={`d-flex flex-column gap-1 p-3 border rounded-4 text-break ${own ? 'bg-primary-subtle text-primary-emphasis border-primary-subtle' : 'bg-body text-body'}`}
-              >
-                <span className={styles.message}>{message.text}</span>
-                <time className="small align-self-end">
-                  {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </time>
+              <div className="d-flex flex-column gap-1 overflow-hidden">
+                {!own && (
+                  <span className="small text-body-secondary">
+                    {message.name}
+                  </span>
+                )}
+                <div
+                  className={`d-flex flex-column gap-1 p-3 border rounded-4 text-break ${own ? 'bg-primary-subtle text-primary-emphasis border-primary-subtle' : 'bg-body text-body'}`}
+                >
+                  <span className={styles.message}>{message.text}</span>
+                  <time className="small align-self-end">
+                    {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </time>
+                </div>
               </div>
             </div>
           );
         })}
+        <TypingIndicator people={typingPeople} />
         <div ref={endRef} />
       </div>
       {chatError && (

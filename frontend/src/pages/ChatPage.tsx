@@ -1,7 +1,7 @@
-import { TypingIndicator } from '../features/chat/components/TypingIndicator';
 import styles from '../features/chat/styles/Chat.module.scss';
 import { useChatViewport } from '../features/chat/hooks/useChatViewport';
 import Row from 'react-bootstrap/Row';
+import { useNetworkOnline } from '../shared/hooks/useNetworkOnline';
 import Col from 'react-bootstrap/Col';
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { useChatThread } from '../features/chat/hooks/useChatThread';
 const EMPTY_CONVERSATIONS: Conversation[] = [];
 
 export function ChatPage() {
+  const networkOnline = useNetworkOnline();
   const { profile, token, userId } = useAuthenticatedSession();
   const { kind: routeKind, id: routeId } = useParams();
   const navigate = useNavigate();
@@ -107,6 +108,14 @@ export function ChatPage() {
               />
               <MessageList
                 messages={thread.messages}
+                participantImage={
+                  selected.kind === 'direct' ? selected.image : undefined
+                }
+                typingPeople={
+                  networkOnline && thread.connection === 'connected'
+                    ? thread.typingPeople
+                    : []
+                }
                 userId={userId}
                 connection={thread.connection}
                 chatError={thread.chatError}
@@ -116,14 +125,13 @@ export function ChatPage() {
                 listRef={thread.messageListRef}
                 endRef={thread.messagesEndRef}
               />
-              <TypingIndicator people={thread.typingPeople ?? []} />
               <MessageComposer
                 onBlur={thread.stopTyping}
                 text={thread.text}
                 onTextChange={thread.setText}
                 onSubmit={(event) => void thread.sendMessage(event)}
                 sending={thread.sending}
-                connected={thread.connection === 'connected'}
+                connected={networkOnline && thread.connection === 'connected'}
               />
             </>
           )}

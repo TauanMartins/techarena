@@ -63,7 +63,9 @@ export function ConversationList({
             <Button
               key={value}
               type="button"
-              className={`btn btn-sm rounded-pill ${kind === value ? 'btn-primary' : 'btn-outline-secondary'}`}
+              size="sm"
+              variant={kind === value ? 'primary' : 'outline-secondary'}
+              className="rounded-pill"
               aria-pressed={kind === value}
               onClick={() => setKind(value)}
             >

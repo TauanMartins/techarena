@@ -102,3 +102,29 @@ describe('MessageList', () => {
     ).toBeDisabled();
   });
 });
+
+it('places a compact avatar and typing bubble inside the message history', () => {
+  render(
+    <MessageList
+      {...props}
+      connection="connected"
+      messages={[message]}
+      participantImage="/bia.png"
+      typingPeople={[
+        {
+          id: 'other',
+          name: 'Bia',
+          image: '/bia.png',
+          expiresAt: Date.now() + 5000,
+        },
+      ]}
+    />,
+  );
+  expect(screen.getAllByRole('img', { name: 'Foto de Bia' })).toHaveLength(2);
+  expect(
+    screen.getAllByRole('img', { name: 'Foto de Bia' })[0],
+  ).toHaveAttribute('width', '24');
+  expect(listRef.current).toContainElement(
+    screen.getByRole('status', { name: 'Bia digitando' }),
+  );
+});

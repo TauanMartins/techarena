@@ -142,7 +142,7 @@ export function useChatThread({
       return;
     }
     if (stickToBottom.current) messageList.scrollTop = messageList.scrollHeight;
-  }, [messages]);
+  }, [messages, realtime.typingPeople]);
 
   useEffect(() => {
     const list = messageListRef.current;

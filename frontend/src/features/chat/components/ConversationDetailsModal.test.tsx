@@ -28,7 +28,7 @@ describe('ConversationDetailsModal', () => {
         onHide={vi.fn()}
       />,
     );
-    expect(screen.getByText('CONVERSA PRIVADA')).toBeInTheDocument();
+    expect(screen.getByText('AMIZADE')).toBeInTheDocument();
     expect(screen.getByText('Atleta da sua rede')).toBeInTheDocument();
   });
 

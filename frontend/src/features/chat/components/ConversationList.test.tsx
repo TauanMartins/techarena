@@ -48,3 +48,22 @@ it('keeps friendships and teams visible while hiding old or canceled appointment
   expect(screen.getByText('Anterior')).toBeVisible();
   expect(screen.getByText('Cancelado')).toBeVisible();
 });
+
+it('uses exactly one Bootstrap color variant for each category', () => {
+  render(
+    <ConversationList
+      conversations={[]}
+      loading={false}
+      onRefresh={vi.fn()}
+      onOpen={vi.fn()}
+    />,
+  );
+  const all = screen.getByRole('button', { name: 'Todas' });
+  const teams = screen.getByRole('button', { name: 'Equipes' });
+  expect(all).toHaveClass('btn-primary');
+  expect(teams).toHaveClass('btn-outline-secondary');
+  expect(teams).not.toHaveClass('btn-primary');
+  fireEvent.click(teams);
+  expect(all).not.toHaveClass('btn-primary');
+  expect(teams).toHaveClass('btn-primary');
+});

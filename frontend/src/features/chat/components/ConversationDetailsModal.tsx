@@ -29,7 +29,7 @@ export function ConversationDetailsModal({
           <div className="d-flex flex-column align-items-center gap-2 text-center text-break">
             <span className="d-block small fw-semibold text-body-secondary mb-1">
               {conversation.kind === 'direct'
-                ? 'CONVERSA PRIVADA'
+                ? 'AMIZADE'
                 : conversation.kind === 'team'
                   ? 'CONVERSA DE EQUIPE'
                   : 'CONVERSA DO AGENDAMENTO'}
@@ -56,6 +56,11 @@ export function ConversationDetailsModal({
                 {conversation.username
                   ? `@${conversation.username}`
                   : 'Atleta da sua rede'}
+              </p>
+            )}
+            {conversation.kind === 'direct' && (
+              <p className="small text-body-secondary">
+                Vocês são amigos. Esta conversa é privada entre vocês.
               </p>
             )}
             {conversation.kind === 'team' && (
