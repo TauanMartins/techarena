@@ -1,3 +1,4 @@
+import { venueTime } from '../../../../common/domain/venue-time.js';
 import { assertFutureSlot } from '../../../appointments/domain/booking-policy.js';
 import { assertLeagueSlot } from '../../domain/assert-league-slot.js';
 import { assertMatchRescheduling } from '../../domain/assert-match-rescheduling.js';
@@ -26,7 +27,7 @@ export async function rescheduleMatch(
       input.scheduleId,
     );
     requireLeagueSchedule(scheduleRows[0]);
-    const scheduledAt = new Date(`${input.date}T${scheduleRows[0].horary}Z`);
+    const scheduledAt = venueTime(input.date, scheduleRows[0].horary);
     assertFutureSlot(scheduledAt, clock());
     const slots = await manager.rescheduleMatchCheckSlot(
       input.arenaId,

@@ -1,3 +1,4 @@
+import { venueTime } from '../../../../common/domain/venue-time.js';
 import { assertFutureSlot } from '../../../appointments/domain/booking-policy.js';
 import { assertLeagueSlot } from '../../domain/assert-league-slot.js';
 import type { Fixture } from '../../domain/league-policy.js';
@@ -32,7 +33,7 @@ export async function createFixtureAppointments(
       fixtureDate.getUTCDate() + index * input.daysBetweenMatches,
     );
     const date = fixtureDate.toISOString().slice(0, 10);
-    const scheduledAt = new Date(`${date}T${schedule.horary}Z`);
+    const scheduledAt = venueTime(date, schedule.horary);
     assertFutureSlot(scheduledAt, clock());
     const slotRows = await manager.createFixtureAppointmentsCheckSlot(
       input.arenaId,

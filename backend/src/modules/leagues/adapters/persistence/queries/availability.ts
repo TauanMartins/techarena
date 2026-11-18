@@ -29,11 +29,11 @@ export function availabilityQueries(
         executor.query<{ id: string; horary: string }[]>(
           `SELECT schedule.id::text AS id, schedule.horary
        FROM public.schedule schedule
-       WHERE ((CAST($1 AS date) + schedule.horary) AT TIME ZONE 'UTC') > $2
+       WHERE ((CAST($1 AS date) + schedule.horary) AT TIME ZONE 'America/Sao_Paulo') > $2
          AND NOT EXISTS (
            SELECT 1 FROM public.appointment a
            WHERE a.arena_id=$3
-             AND a.scheduled_at=((CAST($1 AS date) + schedule.horary) AT TIME ZONE 'UTC')
+             AND a.scheduled_at=((CAST($1 AS date) + schedule.horary) AT TIME ZONE 'America/Sao_Paulo')
              AND a.deleted_at IS NULL AND a.status IN ('scheduled', 'in_progress')
          )
        ORDER BY schedule.horary`,

@@ -214,14 +214,14 @@ export class TypeormAppointmentsRepository implements AppointmentsRepository {
       .getRepository(Schedule)
       .createQueryBuilder('schedule')
       .where(
-        "((CAST(:date AS date) + schedule.horary) AT TIME ZONE 'UTC') > :now",
+        "((CAST(:date AS date) + schedule.horary) AT TIME ZONE 'America/Sao_Paulo') > :now",
         {
           date: query.date,
           now,
         },
       )
       .andWhere(
-        `NOT EXISTS(SELECT 1 FROM public.appointment a WHERE a.arena_id=:arenaId AND a.scheduled_at=((CAST(:date AS date)+schedule.horary) AT TIME ZONE 'UTC') AND a.deleted_at IS NULL AND a.status IN ('scheduled','in_progress'))`,
+        `NOT EXISTS(SELECT 1 FROM public.appointment a WHERE a.arena_id=:arenaId AND a.scheduled_at=((CAST(:date AS date)+schedule.horary) AT TIME ZONE 'America/Sao_Paulo') AND a.deleted_at IS NULL AND a.status IN ('scheduled','in_progress'))`,
         { arenaId: query.arenaId },
       )
       .orderBy('schedule.horary', 'ASC')

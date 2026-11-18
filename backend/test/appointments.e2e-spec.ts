@@ -1,3 +1,4 @@
+import { TypeormAppointmentsRepository } from '../src/modules/appointments/adapters/persistence/typeorm-appointments.repository.js';
 import {
   Appointment,
   UserAppointment,
@@ -82,12 +83,10 @@ describe('appointments migration workflows', () => {
       (await h.get('/appointments/user').query({ period: 'past' }).expect(200))
         .body.total,
     ).toBe(0);
-    await h.db
-      .getRepository(Appointment)
-      .update(created.body.id, {
-        scheduledAt: new Date('2020-01-01T18:00:00Z'),
-        status: 'finished',
-      });
+    await h.db.getRepository(Appointment).update(created.body.id, {
+      scheduledAt: new Date('2020-01-01T18:00:00Z'),
+      status: 'finished',
+    });
     const past = await h
       .get('/appointments/user')
       .query({ period: 'past', limit: 1 })
@@ -230,5 +229,23 @@ describe('appointments migration workflows', () => {
     const mine = await h.get('/appointments/user').expect(200);
     expect(mine.body.total).toBe(1);
     expect(mine.body.items[0].isInside).toBe(true);
+  });
+  it('offers 10:00 at 09:38 Brasília and persists the same local time', async () => {
+    const repository = new TypeormAppointmentsRepository(h.db);
+    const query = {
+      arenaId: fixture.arena.id,
+      sportId: '1',
+      date: '2035-11-18',
+    };
+    const now = new Date('2035-11-18T12:38:00Z');
+    const available = await repository.available(query, now);
+    expect(available[0].horary).toBe('10:00:00');
+    const created = await h
+      .post('/appointments')
+      .send({ ...query, scheduleId: available[0].id })
+      .expect(201);
+    expect(created.body.scheduledAt).toBe('2035-11-18T13:00:00.000Z');
+    const remaining = await repository.available(query, now);
+    expect(remaining.some((slot) => slot.id === available[0].id)).toBe(false);
   });
 });
