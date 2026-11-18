@@ -31,3 +31,11 @@ Telas protegidas usam `useAuthenticatedSession` para obter token atualizado e id
 A migração `1793154000000-archive-teams` deve rodar no banco do backend **antes** da nova versão do backend atender requisições. Em ambiente compilado, utilize o procedimento existente `npm run db:migrate:prod` na pasta backend; não é necessária variável nova.
 
 A exclusão lógica remove membros e solicitações e revoga o chat, preservando a equipe referenciada por resultados antigos. Liga aberta ou em andamento bloqueia a exclusão; liga encerrada ou cancelada não bloqueia. Nomes das equipes arquivadas podem ser reutilizados. Por isso, reverter a migração exige resolver previamente eventuais nomes duplicados entre registros ativos e arquivados; o índice antigo recusará a reversão sem apagar dados silenciosamente.
+
+## Quadras e horários
+
+O formulário de agendamento começa pela quadra, com até dez opções e distância quando a localização está disponível. O mapa permite explorar todos os resultados dos filtros, buscando todas as páginas da API; a paginação fica apenas nas listagens. Selecionar uma quadra restringe os esportes às modalidades cadastradas nela.
+
+Novos agendamentos e partidas interpretam data e horário de funcionamento em `America/Sao_Paulo` (Brasília) e persistem o instante em UTC. A consulta de disponibilidade usa a mesma conversão. Instantes já gravados não são reinterpretados. O modelo ainda não possui fuso por arena.
+
+Os toasts ficam no topo central abaixo de 768 px e no canto inferior direito a partir desse tamanho. Fundo opaco, borda e recorte dos cantos usam utilitários Bootstrap e respeitam o tema.
