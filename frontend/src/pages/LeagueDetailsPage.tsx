@@ -1,4 +1,4 @@
-import Alert from 'react-bootstrap/Alert';
+import { ToastNotice } from '../components/ui/ToastNotice';
 import { useAuth } from '../auth/useAuth';
 import {
   EmptyState,
@@ -33,15 +33,7 @@ export function LeagueDetailsPage() {
         ← Voltar para ligas
       </Link>
       {page.error && <ErrorState message={page.error} />}
-      {page.notice && (
-        <Alert
-          variant="success"
-          dismissible
-          onClose={() => page.setNotice(null)}
-        >
-          {page.notice}
-        </Alert>
-      )}
+      {page.notice && <ToastNotice message={page.notice} />}
       {data.isLoadingDetails ? (
         <LoadingState label="Carregando detalhes da liga..." />
       ) : !details ? (
@@ -58,7 +50,7 @@ export function LeagueDetailsPage() {
               <LeagueSettingsPanel
                 league={details.league}
                 saving={page.saving}
-                onSubmit={(event) => void page.updateLeague(event)}
+                onSubmit={page.updateLeague}
                 onStatus={(status) => void page.updateStatus(status)}
               />
             )}

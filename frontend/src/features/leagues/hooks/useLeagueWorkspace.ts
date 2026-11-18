@@ -240,6 +240,23 @@ export function useLeagueWorkspace(
       setError(parsed.error.issues[0]?.message ?? 'Confira os dados da liga.');
       return;
     }
+    const keys = [
+      'name',
+      'description',
+      ...(details.league.matchCount === 0
+        ? ['tournamentFormat', 'groupCount', 'qualifiersPerGroup']
+        : []),
+    ] as const;
+    if (
+      keys.every(
+        (key) =>
+          String(parsed.data[key as keyof typeof parsed.data] ?? '') ===
+          String(details.league[key as keyof typeof details.league] ?? ''),
+      )
+    ) {
+      setNotice(null);
+      return false;
+    }
     const updated = await run(
       {
         kind: 'update',
@@ -259,6 +276,7 @@ export function useLeagueWorkspace(
       'Configurações da liga atualizadas.',
     );
     if (updated) await refresh();
+    return Boolean(updated);
   }
   async function updateStatus(status: 'completed' | 'canceled') {
     const details = data.details;

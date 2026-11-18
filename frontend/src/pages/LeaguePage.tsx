@@ -1,4 +1,6 @@
-import Alert from 'react-bootstrap/Alert';
+import { ToastNotice } from '../components/ui/ToastNotice';
+import { useState } from 'react';
+import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -23,6 +25,10 @@ export function LeaguePage() {
     (id) => navigate(`/ligas/${id}`),
   );
   const { data } = page;
+  const [showAll, setShowAll] = useState(false);
+  const leagues = data.leagues.filter(
+    (league) => showAll || ['open', 'active'].includes(league.status),
+  );
 
   return (
     <>
@@ -41,15 +47,7 @@ export function LeaguePage() {
         }
       />
       {page.error && <ErrorState message={page.error} />}
-      {page.notice && (
-        <Alert
-          variant="success"
-          dismissible
-          onClose={() => page.setNotice(null)}
-        >
-          {page.notice}
-        </Alert>
-      )}
+      {page.notice && <ToastNotice message={page.notice} />}
       <LeagueInvitations
         invitations={data.teamInvitations}
         saving={page.saving}
@@ -62,9 +60,22 @@ export function LeaguePage() {
           onSubmit={(event) => void page.createLeague(event)}
         />
       )}
+      <Form.Group
+        className="mb-3"
+        controlId="league-status-filter"
+      >
+        <Form.Label>Exibir ligas</Form.Label>
+        <Form.Select
+          value={showAll ? 'all' : 'active'}
+          onChange={(event) => setShowAll(event.target.value === 'all')}
+        >
+          <option value="active">Ativas</option>
+          <option value="all">Todas (incluindo encerradas e canceladas)</option>
+        </Form.Select>
+      </Form.Group>
       {data.isLoading ? (
         <LoadingState label="Carregando ligas..." />
-      ) : data.leagues.length === 0 ? (
+      ) : leagues.length === 0 ? (
         <EmptyState
           icon="bi-trophy"
           title="Nenhuma liga criada"
@@ -72,7 +83,7 @@ export function LeaguePage() {
         />
       ) : (
         <LeagueCatalog
-          leagues={data.leagues}
+          leagues={leagues}
           selectedId=""
           onSelect={(id) => navigate(`/ligas/${id}`)}
         />
