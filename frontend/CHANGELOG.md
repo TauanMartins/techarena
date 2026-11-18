@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/TauanMartins/techarena/compare/frontend-v1.2.0...frontend-v1.3.0) (2026-11-18)
+
+
+### Features
+
+* add live notifications for chat and social activity ([#12](https://github.com/TauanMartins/techarena/issues/12)) ([1315950](https://github.com/TauanMartins/techarena/commit/1315950570ca8c03cdc7a60f5505c247fd1b1e42))
+
 ## [1.2.0](https://github.com/TauanMartins/techarena/compare/frontend-v1.1.0...frontend-v1.2.0) (2026-11-18)
 
 

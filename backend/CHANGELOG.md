@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/TauanMartins/techarena/compare/backend-v0.3.0...backend-v0.4.0) (2026-11-18)
+
+
+### Features
+
+* add live notifications for chat and social activity ([#12](https://github.com/TauanMartins/techarena/issues/12)) ([1315950](https://github.com/TauanMartins/techarena/commit/1315950570ca8c03cdc7a60f5505c247fd1b1e42))
+
 ## [0.3.0](https://github.com/TauanMartins/techarena/compare/backend-v0.2.0...backend-v0.3.0) (2026-11-18)
 
 
