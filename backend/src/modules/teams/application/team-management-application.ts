@@ -40,7 +40,7 @@ export class TeamManagementApplication {
       assertTeamExists(await store.lockTeam(teamId));
       assertTeamDeletion(
         await store.isCaptain(actor, teamId),
-        await store.hasCompetitions(teamId),
+        await store.hasActiveCompetitions(teamId),
       );
       const members = await store.memberIds(teamId);
       await store.removeTeam(teamId);

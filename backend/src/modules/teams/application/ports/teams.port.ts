@@ -20,7 +20,7 @@ export interface MembershipRecord {
 }
 export interface TeamTransaction {
   memberIds(teamId: string): Promise<string[]>;
-  hasCompetitions(teamId: string): Promise<boolean>;
+  hasActiveCompetitions(teamId: string): Promise<boolean>;
   removeMember(teamId: string, userId: string): Promise<void>;
   removeTeam(teamId: string): Promise<void>;
   lockTeam(id: string): Promise<TeamView | null>;

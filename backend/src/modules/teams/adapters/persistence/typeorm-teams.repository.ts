@@ -1,5 +1,5 @@
 import type { EntityManager } from 'typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import { DomainError } from '../../../../common/domain/domain-error.js';
 import type { PageRequest } from '../../../../common/domain/pagination.js';
 import { paginate } from '../../../../common/domain/pagination.js';
@@ -23,9 +23,12 @@ import type {
 export class TypeormTeamsRepository implements TeamsRepository {
   constructor(private readonly source: DataSource) {}
   async list(query: TeamQuery) {
-    const q = this.source.getRepository(Team).createQueryBuilder('team');
+    const q = this.source
+      .getRepository(Team)
+      .createQueryBuilder('team')
+      .where('team.archived_at IS NULL');
     if (query.search)
-      q.where('team.name ILIKE :search', {
+      q.andWhere('team.name ILIKE :search', {
         search: `%${escapeLike(query.search)}%`,
       });
     const [items, total] = await q
@@ -51,6 +54,7 @@ export class TypeormTeamsRepository implements TeamsRepository {
       .getRepository(Team)
       .createQueryBuilder('team')
       .where('lower(btrim(team.name))=lower(btrim(:name))', { name })
+      .andWhere('team.archived_at IS NULL')
       .getExists();
   }
   private async captain(manager: EntityManager, actor: string, teamId: string) {
@@ -94,9 +98,9 @@ export class TypeormTeamsRepository implements TeamsRepository {
                 .getRepository(UserTeam)
                 .find({ where: { teamId }, select: { userId: true } })
             ).map((row) => row.userId),
-          hasCompetitions: async (teamId) => {
+          hasActiveCompetitions: async (teamId) => {
             const [row] = await m.query<{ linked: boolean }[]>(
-              `SELECT EXISTS(SELECT 1 FROM public.league_team WHERE team_id=$1) OR EXISTS(SELECT 1 FROM public.league_match WHERE home_team_id=$1 OR away_team_id=$1) AS linked`,
+              `SELECT EXISTS(SELECT 1 FROM public.league_team lt JOIN public.league l ON l.id=lt.league_id WHERE lt.team_id=$1 AND l.status IN ('open','active')) OR EXISTS(SELECT 1 FROM public.league_match lm JOIN public.league l ON l.id=lm.league_id WHERE (lm.home_team_id=$1 OR lm.away_team_id=$1) AND l.status IN ('open','active')) AS linked`,
               [teamId],
             );
             return row.linked;
@@ -105,12 +109,21 @@ export class TypeormTeamsRepository implements TeamsRepository {
             await m.getRepository(UserTeam).delete({ teamId, userId });
           },
           removeTeam: async (id) => {
-            await m.getRepository(Team).delete({ id });
+            await m
+              .getRepository(Team)
+              .update({ id }, { archivedAt: new Date() });
+            await m.getRepository(UserTeam).delete({ teamId: id });
+            await m.getRepository(TeamMembershipRequest).delete({ teamId: id });
+            await m.query(
+              "UPDATE public.league_team_invitation SET status='declined', responded_at=now() WHERE team_id=$1 AND status='pending'",
+              [id],
+            );
           },
           lockTeam: (id) =>
-            m
-              .getRepository(Team)
-              .findOne({ where: { id }, lock: { mode: 'pessimistic_write' } }),
+            m.getRepository(Team).findOne({
+              where: { id, archivedAt: IsNull() },
+              lock: { mode: 'pessimistic_write' },
+            }),
           isCaptain: (actor, teamId) =>
             m
               .getRepository(UserTeam)
@@ -161,7 +174,11 @@ export class TypeormTeamsRepository implements TeamsRepository {
   }
   async requests(actor: string, query: PageRequest, teamId?: string) {
     if (teamId) {
-      if (!(await this.source.getRepository(Team).existsBy({ id: teamId })))
+      if (
+        !(await this.source
+          .getRepository(Team)
+          .existsBy({ id: teamId, archivedAt: IsNull() }))
+      )
         throw new DomainError('not_found', 'TEAM_NOT_FOUND', 'Team not found');
       await this.captain(this.source.manager, actor, teamId);
     }
@@ -191,7 +208,11 @@ export class TypeormTeamsRepository implements TeamsRepository {
   }
 
   async members(teamId: string, query: PageRequest) {
-    if (!(await this.source.getRepository(Team).existsBy({ id: teamId })))
+    if (
+      !(await this.source
+        .getRepository(Team)
+        .existsBy({ id: teamId, archivedAt: IsNull() }))
+    )
       throw new DomainError('not_found', 'TEAM_NOT_FOUND', 'Team not found');
     const [rows, total] = await this.source
       .getRepository(UserTeam)

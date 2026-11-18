@@ -232,4 +232,74 @@ describe('teams migration workflows', () => {
     await h.delete(`/team/${created.id}`).expect(409);
     expect(h.chatAccess.revokeParticipant).not.toHaveBeenCalled();
   });
+  it.each(['completed', 'canceled'])(
+    'archives a team from a %s league while preserving historical results',
+    async (status) => {
+      const fixture = await h.reset();
+      const created = await team();
+      const opponent = (
+        await h.post('/team').send({ name: 'Opponent' }).expect(201)
+      ).body;
+      const league = (
+        await h
+          .post('/leagues')
+          .send({
+            name: 'Historical league',
+            sportId: '1',
+            tournamentFormat: 'round_robin',
+            groupCount: 2,
+            qualifiersPerGroup: 2,
+          })
+          .expect(201)
+      ).body;
+      for (const teamId of [created.id, opponent.id])
+        await h
+          .post(`/leagues/${league.id}/teams`)
+          .send({ teamId })
+          .expect(201);
+      const booking = (
+        await h
+          .post('/appointments')
+          .send({
+            arenaId: fixture.arena.id,
+            scheduleId: fixture.schedule.id,
+            sportId: '1',
+            date: fixture.date,
+          })
+          .expect(201)
+      ).body;
+      await h.db.query(
+        'INSERT INTO public.league_match (league_id, appointment_id, match_number, home_team_id, away_team_id) VALUES ($1,$2,1,$3,$4)',
+        [league.id, booking.id, created.id, opponent.id],
+      );
+      await h.db.query('UPDATE public.league SET status=$1 WHERE id=$2', [
+        status,
+        league.id,
+      ]);
+      await h.delete(`/team/${created.id}`).expect(200);
+      await h.get('/team/members').query({ teamId: created.id }).expect(404);
+      const catalog = await h
+        .get('/team')
+        .query({ search: 'Test team' })
+        .expect(200);
+      expect(catalog.body.items).toEqual([]);
+      expect(
+        await h.db.getRepository(UserTeam).countBy({ teamId: created.id }),
+      ).toBe(0);
+      const [history] = await h.db.query(
+        'SELECT t.name FROM public.league_match lm JOIN public.team t ON t.id=lm.home_team_id WHERE lm.league_id=$1',
+        [league.id],
+      );
+      expect(history.name).toBe('Test team');
+      await h
+        .post(`/leagues/${league.id}/teams`)
+        .send({ teamId: created.id })
+        .expect(409);
+      await h.post('/team').send({ name: 'Test team' }).expect(201);
+      expect(h.chatAccess.revokeParticipant).toHaveBeenCalledWith(
+        `team:${created.id}`,
+        actors.alice,
+      );
+    },
+  );
 });

@@ -37,6 +37,9 @@ export class Team {
   })
   image!: string | null;
 
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
+  archivedAt!: Date | null;
+
   @Column({
     name: 'created_at',
     type: 'timestamp',
