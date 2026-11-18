@@ -88,6 +88,25 @@ export class TypeormTeamsRepository implements TeamsRepository {
     return databaseWrite(() =>
       this.source.transaction((m) =>
         work({
+          memberIds: async (teamId) =>
+            (
+              await m
+                .getRepository(UserTeam)
+                .find({ where: { teamId }, select: { userId: true } })
+            ).map((row) => row.userId),
+          hasCompetitions: async (teamId) => {
+            const [row] = await m.query<{ linked: boolean }[]>(
+              `SELECT EXISTS(SELECT 1 FROM public.league_team WHERE team_id=$1) OR EXISTS(SELECT 1 FROM public.league_match WHERE home_team_id=$1 OR away_team_id=$1) AS linked`,
+              [teamId],
+            );
+            return row.linked;
+          },
+          removeMember: async (teamId, userId) => {
+            await m.getRepository(UserTeam).delete({ teamId, userId });
+          },
+          removeTeam: async (id) => {
+            await m.getRepository(Team).delete({ id });
+          },
           lockTeam: (id) =>
             m
               .getRepository(Team)

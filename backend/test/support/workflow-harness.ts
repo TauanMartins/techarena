@@ -71,6 +71,8 @@ export async function workflowHarness() {
       raw().get(path).auth(tokens[actor], { type: 'bearer' }),
     post: (path: string, actor: Actor = 'alice') =>
       raw().post(path).auth(tokens[actor], { type: 'bearer' }),
+    delete: (path: string, actor: Actor = 'alice') =>
+      raw().delete(path).auth(tokens[actor], { type: 'bearer' }),
     put: (path: string, actor: Actor = 'alice') =>
       raw().put(path).auth(tokens[actor], { type: 'bearer' }),
     async reset() {

@@ -173,4 +173,63 @@ describe('teams migration workflows', () => {
       .expect(201);
     expect(await h.db.getRepository(TeamMembershipRequest).count()).toBe(2);
   });
+  it('lets members leave, captains remove members and only captains delete unlinked teams', async () => {
+    const created = await team();
+    await h.db.getRepository(UserTeam).insert({
+      teamId: created.id,
+      userId: actors.bob,
+      role: 'member',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await h
+      .delete(`/team/${created.id}/members/${actors.bob}`, 'carol')
+      .expect(403);
+    await h.delete(`/team/${created.id}/members/me`).expect(409);
+    await h.delete(`/team/${created.id}`, 'bob').expect(403);
+    await h.delete(`/team/${created.id}/members/me`, 'bob').expect(200);
+    expect(
+      await h.db
+        .getRepository(UserTeam)
+        .existsBy({ teamId: created.id, userId: actors.bob }),
+    ).toBe(false);
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledWith(
+      `team:${created.id}`,
+      actors.bob,
+    );
+    await h.db.getRepository(UserTeam).insert({
+      teamId: created.id,
+      userId: actors.carol,
+      role: 'member',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await h.delete(`/team/${created.id}/members/${actors.carol}`).expect(200);
+    await h.delete(`/team/${created.id}`).expect(200);
+    expect(h.chatAccess.revokeParticipant).toHaveBeenCalledWith(
+      `team:${created.id}`,
+      actors.alice,
+    );
+    await h.get('/team/members').query({ teamId: created.id }).expect(404);
+  });
+
+  it('preserves teams registered in a league', async () => {
+    const created = await team();
+    const league = await h
+      .post('/leagues')
+      .send({
+        name: 'Protected league',
+        sportId: '1',
+        tournamentFormat: 'round_robin',
+        groupCount: 2,
+        qualifiersPerGroup: 2,
+      })
+      .expect(201);
+    await h
+      .post(`/leagues/${league.body.id}/teams`)
+      .send({ teamId: created.id })
+      .expect(201);
+    await h.delete(`/team/${created.id}`).expect(409);
+    expect(h.chatAccess.revokeParticipant).not.toHaveBeenCalled();
+  });
 });
